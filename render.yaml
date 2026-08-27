@@ -1,0 +1,46 @@
+# Blueprint do Render: cria o backend (a partir do Dockerfile em backend/) e o
+# Postgres juntos, já conectados. Pra usar: no dashboard do Render, "New +" ->
+# "Blueprint" -> aponte pro repositório no GitHub. As credenciais do banco
+# (host/porta/usuário/senha) são injetadas automaticamente via fromDatabase —
+# ninguém precisa copiar isso manualmente.
+#
+# OPENAI_API_KEY e CORS_ALLOWED_ORIGINS têm "sync: false" de propósito: o
+# Render vai pedir esses valores no dashboard na hora de criar o Blueprint,
+# em vez de vir preenchido do repositório (são segredos / dependem da URL do
+# frontend, que só existe depois do deploy do Vercel).
+databases:
+  - name: entrevista-ia-db
+    plan: free
+    databaseName: entrevista_ia
+    user: entrevista_ia_user
+
+services:
+  - type: web
+    name: entrevista-ia-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: entrevista-ia-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: entrevista-ia-db
+          property: port
+      - key: DB_USERNAME
+        fromDatabase:
+          name: entrevista-ia-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: entrevista-ia-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false

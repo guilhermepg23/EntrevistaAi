@@ -1,0 +1,25 @@
+# Segredos reais (DB_PASSWORD, JWT_SECRET, OPENAI_API_KEY) — nunca commitar.
+# Só .env.example (sem valores reais) fica versionado.
+.env
+.env.*
+!.env.example
+!*/.env.example
+
+# Backend (Maven)
+backend/target/
+
+# Frontend (cache incremental do tsc)
+frontend/*.tsbuildinfo
+
+# IDE
+.idea/
+*.iml
+
+# Config local do Claude Code — pode acumular comandos aprovados que incluem
+# valores literais (ex.: uma chave de API colada num "export" aprovado uma
+# vez). Nunca deve ir pro repositório.
+**/.claude/settings.local.json
+
+# SO
+.DS_Store
+Thumbs.db

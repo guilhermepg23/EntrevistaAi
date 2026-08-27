@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: entrevista-ia-postgres
+    environment:
+      POSTGRES_DB: entrevista_ia
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    ports:
+      # Porta do host configurável (default 5433) para não colidir com um
+      # Postgres local já rodando na 5432. Dentro da rede do compose, o
+      # backend sempre fala com "postgres:5432" (ver DB_HOST abaixo).
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - entrevista_ia_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d entrevista_ia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: entrevista-ia-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?defina OPENAI_API_KEY no .env}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    ports:
+      # Porta do host configurável (default 8080) — útil se já houver algo
+      # local ocupando a 8080 (ex.: backend rodando direto pela IDE).
+      - "${BACKEND_PORT:-8080}:8080"
+
+volumes:
+  entrevista_ia_pgdata:
