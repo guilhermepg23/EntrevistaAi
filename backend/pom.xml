@@ -18,7 +18,7 @@
     <description>Simulador de Entrevista Tecnica com IA</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <!-- Sobrescreve a versão gerenciada pelo Spring Boot 3.3 (1.19.8, de
              meados de 2024) — versões mais novas do Testcontainers lidam
              melhor com releases recentes do Docker Desktop no Windows

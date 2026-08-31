@@ -84,6 +84,13 @@ public class OpenAiReportGenerator implements AiReportGenerator {
             sb.append("\nLeitura prévia do currículo do candidato:\n");
             sb.append("Nível percebido pelo currículo: ").append(resume.getNivelPercebidoCurriculo()).append("\n");
             sb.append("Resumo: ").append(resume.getResumo()).append("\n");
+        } else {
+            // Afirmação negativa explícita de propósito: sem esta linha, o modelo
+            // às vezes alucina uma comparação com currículo no resumo executivo
+            // (ex.: "a leitura do currículo sugere...") mesmo sem nenhum currículo
+            // no contexto. Dar o "não existe" explícito elimina isso.
+            sb.append("\nNenhum currículo foi enviado para esta entrevista. ")
+                .append("NÃO mencione nem faça inferências sobre currículo no relatório.\n");
         }
 
         sb.append("\nHistórico completo da entrevista:\n");

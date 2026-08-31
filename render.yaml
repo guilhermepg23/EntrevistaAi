@@ -21,6 +21,10 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
+    # Sem Actuator no projeto; /v3/api-docs é público (permitAll no
+    # SecurityConfig) e só responde 200 depois que o Spring terminou de
+    # subir — serve bem como health check de deploy no Render.
+    healthCheckPath: /v3/api-docs
     envVars:
       - key: DB_HOST
         fromDatabase:
