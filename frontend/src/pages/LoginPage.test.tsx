@@ -5,6 +5,7 @@ import { LoginPage } from './LoginPage';
 import { renderWithProviders } from '../test-utils';
 import { authApi } from '../api/authApi';
 import { SESSION_EXPIRED_EVENT } from '../hooks/useAuth';
+import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 
 const navigateSpy = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -16,10 +17,15 @@ vi.mock('../api/authApi', () => ({
   authApi: { login: vi.fn(), register: vi.fn() },
 }));
 
+// O gatilho por tempo do aviso de cold start é testado em
+// useSlowRequestHint.test.ts; aqui só checamos a fiação na página.
+vi.mock('../hooks/useSlowRequestHint', () => ({ useSlowRequestHint: vi.fn() }));
+
 describe('LoginPage', () => {
   beforeEach(() => {
     navigateSpy.mockReset();
     vi.mocked(authApi.login).mockReset();
+    vi.mocked(useSlowRequestHint).mockReset();
   });
   afterEach(() => localStorage.clear());
 
@@ -71,5 +77,19 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: 'Entrando...' })).toBeDisabled();
     resolver({ token: 't', nome: 'n' });
     await waitFor(() => expect(navigateSpy).toHaveBeenCalled());
+  });
+
+  it('renderiza o aviso de "servidor hibernando" quando useSlowRequestHint indica lentidão', () => {
+    vi.mocked(useSlowRequestHint).mockReturnValue(true);
+    renderWithProviders(<LoginPage />, { route: '/login' });
+
+    expect(screen.getByText(/servidor gratuito estava hibernando/i)).toBeInTheDocument();
+  });
+
+  it('não mostra o aviso enquanto useSlowRequestHint retorna false', () => {
+    vi.mocked(useSlowRequestHint).mockReturnValue(false);
+    renderWithProviders(<LoginPage />, { route: '/login' });
+
+    expect(screen.queryByText(/servidor gratuito estava hibernando/i)).not.toBeInTheDocument();
   });
 });

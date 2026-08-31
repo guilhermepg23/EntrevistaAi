@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RegisterPage } from './RegisterPage';
 import { renderWithProviders } from '../test-utils';
 import { authApi } from '../api/authApi';
+import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 
 const navigateSpy = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -15,10 +16,14 @@ vi.mock('../api/authApi', () => ({
   authApi: { login: vi.fn(), register: vi.fn() },
 }));
 
+// Gatilho por tempo coberto em useSlowRequestHint.test.ts.
+vi.mock('../hooks/useSlowRequestHint', () => ({ useSlowRequestHint: vi.fn() }));
+
 describe('RegisterPage', () => {
   beforeEach(() => {
     navigateSpy.mockReset();
     vi.mocked(authApi.register).mockReset();
+    vi.mocked(useSlowRequestHint).mockReset();
   });
   afterEach(() => localStorage.clear());
 
@@ -71,5 +76,12 @@ describe('RegisterPage', () => {
     expect(await screen.findByText('As senhas não conferem.')).toBeInTheDocument();
     expect(authApi.register).not.toHaveBeenCalled();
     expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('renderiza o aviso de "servidor hibernando" quando useSlowRequestHint indica lentidão', () => {
+    vi.mocked(useSlowRequestHint).mockReturnValue(true);
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    expect(screen.getByText(/servidor gratuito estava hibernando/i)).toBeInTheDocument();
   });
 });

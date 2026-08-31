@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
+import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 
 export function RegisterPage() {
   const [nome, setNome] = useState('');
@@ -11,6 +12,7 @@ export function RegisterPage() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const acordandoServidor = useSlowRequestHint(carregando);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -73,6 +75,12 @@ export function RegisterPage() {
         <button type="submit" disabled={carregando}>
           {carregando ? 'Cadastrando...' : 'Cadastrar'}
         </button>
+        {acordandoServidor && (
+          <p className="hint-servidor">
+            O servidor gratuito estava hibernando e está acordando — a primeira
+            requisição pode levar até 1 minuto.
+          </p>
+        )}
         <p className="auth-switch">
           Já tem conta? <Link to="/login">Entrar</Link>
         </p>
