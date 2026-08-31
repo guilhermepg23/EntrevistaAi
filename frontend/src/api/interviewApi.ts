@@ -1,7 +1,6 @@
 import type { AnswerFeedback, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, TranscriptItem } from '../types/interview';
 import { SESSION_EXPIRED_EVENT } from '../hooks/useAuth';
-
-const API_BASE = import.meta.env.VITE_API_URL;
+import { API_BASE } from './config';
 
 function authHeaders(): HeadersInit {
   const token = localStorage.getItem('token');
