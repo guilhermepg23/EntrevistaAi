@@ -50,19 +50,30 @@ perguntas, avaliar respostas e produzir um relatório final.
   de pergunta token a token, retry da mesma ação em caso de falha)
 - Client fetch (`api/interviewApi.ts`, `api/authApi.ts`) cobrindo toda a API do backend,
   incluindo streaming (SSE), upload de currículo e compartilhamento público
-- `.env` com `VITE_API_URL` apontando pro backend
-- Testes automatizados (Vitest + Testing Library, `npm test`, 21 testes): parsing do
-  streaming SSE e tratamento de sessão expirada (`interviewApi`), `useAuth` (persistência
-  de sessão, evento de sessão expirada) e `useInterview` (máquina de estados do chat,
-  retomada de entrevista em andamento, retry da ação que de fato falhou)
+- Base da API em `api/config.ts`: `VITE_API_URL` (do `.env`) com fallback pro backend em
+  produção, pra o deploy não quebrar se a env var não entrar no build
+- Testes automatizados (Vitest + Testing Library, `npm test`, 71 testes):
+  - **Client/hooks**: parsing do streaming SSE e sessão expirada (`interviewApi`), `useAuth`
+    (persistência de sessão, evento de sessão expirada), `useInterview` (máquina de estados
+    do chat, retomada de entrevista em andamento, retry da ação que de fato falhou)
+  - **Componentes**: `FeedbackBadge`, `AnswerInput`, `ChatBubble`, `Layout`, `ProtectedRoute`
+  - **Páginas** (render + interação, API/hooks mockados): `LoginPage`, `RegisterPage`,
+    `HomePage`, `InterviewChat`, `InterviewChatPage`, `InterviewReportPage`, `PublicReportPage`
+
+## Deploy
+
+Publicado e validado ponta a ponta em produção:
+
+- **Backend**: Render (`render.yaml` blueprint — web service Docker + Postgres), health em
+  `/v3/api-docs`. Free tier: hiberna após 15 min (cold start ~50s), Postgres expira ~30 dias.
+- **Frontend**: Vercel (root directory `frontend`, `VITE_API_URL` apontando pro backend).
+  Push em `main` dispara build/deploy automático nas duas plataformas.
+- CORS liberado pra origem exata do frontend via `CORS_ALLOWED_ORIGINS` no Render.
 
 ## Próximos passos
 
-1. Deploy (hoje só roda localmente / via Docker Compose)
-2. Polimento visual e responsividade das telas existentes
-3. Suporte a áudio nas respostas (hoje só texto — ver decisões de design)
-4. Testes de componente/página no frontend (hoje a cobertura é só de hooks e do client de
-   API, não de páginas React renderizadas)
+1. Polimento visual e responsividade das telas existentes
+2. Suporte a áudio nas respostas (hoje só texto — ver decisões de design)
 
 ## Como rodar o backend
 
