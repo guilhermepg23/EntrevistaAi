@@ -516,10 +516,11 @@ a {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  /* Folga pro campo de resposta fixo no rodapé não cobrir a última bolha
-     (ver o scrollIntoView na âncora do fim da conversa, em InterviewChat). */
-  padding-bottom: 5rem;
-  scroll-padding-bottom: 5rem;
+  /* Folga pro campo de resposta fixo no rodapé não cobrir a última bolha: a
+     âncora do fim da conversa fica no fim deste padding e o scrollIntoView
+     (ver InterviewChat) alinha ela à base da viewport, deixando a última
+     bolha ~6.5rem acima — o input ocupa ~5.5rem a partir da base. */
+  padding-bottom: 6.5rem;
 }
 
 .chat-bubble {
