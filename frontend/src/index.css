@@ -756,8 +756,8 @@ a {
 
 .answer-input {
   display: flex;
-  gap: 0.6rem;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 0.4rem;
   position: sticky;
   bottom: 1rem;
   background: var(--color-surface);
@@ -765,6 +765,12 @@ a {
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);
+}
+
+.answer-input-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
 }
 
 .answer-input textarea {
@@ -786,6 +792,32 @@ a {
   align-items: center;
   justify-content: center;
   padding: 0.65rem 0.9rem;
+}
+
+/* Botão de ditado por voz — só aparece em navegadores com Web Speech API */
+.answer-input .mic-button {
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.answer-input .mic-button:hover:not(:disabled) {
+  color: var(--color-text);
+  transform: none;
+}
+
+.answer-input .mic-button.mic-listening {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.answer-input-aviso {
+  margin: 0;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.82rem;
+  color: var(--color-danger);
 }
 
 .ver-relatorio {

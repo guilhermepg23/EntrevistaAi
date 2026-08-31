@@ -22,10 +22,18 @@ describe('RegisterPage', () => {
   });
   afterEach(() => localStorage.clear());
 
-  async function preencherEEnviar(user: ReturnType<typeof userEvent.setup>) {
+  async function preencher(
+    user: ReturnType<typeof userEvent.setup>,
+    { senha = 'segredo123', confirmar = 'segredo123' } = {},
+  ) {
     await user.type(screen.getByLabelText('Nome'), 'Bruno');
     await user.type(screen.getByLabelText('Email'), 'bruno@teste.com');
-    await user.type(screen.getByLabelText('Senha'), 'segredo123');
+    await user.type(screen.getByLabelText('Senha'), senha);
+    await user.type(screen.getByLabelText('Confirmar senha'), confirmar);
+  }
+
+  async function preencherEEnviar(user: ReturnType<typeof userEvent.setup>) {
+    await preencher(user);
     await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
   }
 
@@ -50,6 +58,18 @@ describe('RegisterPage', () => {
     await preencherEEnviar(user);
 
     expect(await screen.findByText('Email já cadastrado')).toBeInTheDocument();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('senha e confirmação diferentes: mostra erro e nem chama a API', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await preencher(user, { senha: 'segredo123', confirmar: 'outra-coisa' });
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await screen.findByText('As senhas não conferem.')).toBeInTheDocument();
+    expect(authApi.register).not.toHaveBeenCalled();
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 });

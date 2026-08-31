@@ -8,6 +8,7 @@ export function RegisterPage() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const { login } = useAuth();
@@ -16,6 +17,14 @@ export function RegisterPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErro(null);
+
+    // Confirmação de senha é só no cliente — o backend recebe um campo só
+    // (ver RegisterRequest). Barra o erro de digitação antes de gastar a chamada.
+    if (senha !== confirmarSenha) {
+      setErro('As senhas não conferem.');
+      return;
+    }
+
     setCarregando(true);
     try {
       const { token, nome: nomeResposta } = await authApi.register(email, senha, nome);
@@ -47,6 +56,16 @@ export function RegisterPage() {
             type="password"
             value={senha}
             onChange={e => setSenha(e.target.value)}
+            minLength={6}
+            required
+          />
+        </label>
+        <label>
+          Confirmar senha
+          <input
+            type="password"
+            value={confirmarSenha}
+            onChange={e => setConfirmarSenha(e.target.value)}
             minLength={6}
             required
           />
