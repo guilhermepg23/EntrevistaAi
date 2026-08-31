@@ -142,6 +142,22 @@ export const interviewApi = {
     }).then(res => handleResponse<ResumeAnalysis>(res));
   },
 
+  // Manda o áudio da resposta falada (gravado no navegador via MediaRecorder)
+  // pro backend transcrever com a OpenAI e devolve só o texto — o AnswerInput
+  // joga isso no campo pro candidato revisar antes de enviar de fato.
+  transcribe: async (audio: Blob): Promise<string> => {
+    const ext = audio.type.includes('mp4') ? 'mp4' : audio.type.includes('ogg') ? 'ogg' : 'webm';
+    const form = new FormData();
+    form.append('audio', audio, `resposta.${ext}`);
+    const res = await fetch(`${API_BASE}/interviews/transcribe`, {
+      method: 'POST',
+      headers: authHeadersMultipart(),
+      body: form,
+    });
+    const { texto } = await handleResponse<{ texto: string }>(res);
+    return texto;
+  },
+
   // 404 aqui só significa "candidato não enviou currículo" — não é erro,
   // então devolve null em vez de propagar a exceção de handleResponse.
   getResume: async (interviewId: string): Promise<ResumeAnalysis | null> => {

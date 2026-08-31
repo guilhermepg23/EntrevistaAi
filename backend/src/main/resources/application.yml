@@ -10,11 +10,13 @@ spring:
     password: ${DB_PASSWORD}
   servlet:
     multipart:
-      # Limite pro upload do currículo (POST /interviews/{id}/resume) — um PDF
-      # de currículo normal fica bem abaixo disso; existe só pra rejeitar
-      # arquivo errado/gigante antes de gastar tempo tentando extrair texto.
-      max-file-size: 5MB
-      max-request-size: 5MB
+      # Cobre os dois uploads da app: currículo PDF (POST /interviews/{id}/resume,
+      # normalmente < 1MB) e o áudio da resposta falada (POST /interviews/transcribe,
+      # webm/opus de alguns minutos raramente passa de poucos MB; a própria OpenAI
+      # recusa áudio acima de 25MB). O limite existe só pra barrar arquivo
+      # errado/gigante antes de gastar processamento.
+      max-file-size: 20MB
+      max-request-size: 20MB
   jpa:
     hibernate:
       ddl-auto: update
@@ -39,6 +41,9 @@ jwt:
 openai:
   api-key: ${OPENAI_API_KEY:}
   model: gpt-4o-mini
+  # Modelo de transcrição de áudio (POST /interviews/transcribe). gpt-4o-mini-transcribe
+  # é mais barato e mais preciso que o whisper-1 antigo; troque via env se precisar.
+  transcription-model: ${OPENAI_TRANSCRIPTION_MODEL:gpt-4o-mini-transcribe}
 
 # Origens do front-end autorizadas a chamar a API pelo navegador (ver
 # SecurityConfig.corsConfigurationSource()). Múltiplas origens separadas por

@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.controller;
 
+import com.guilherme.entrevistaia.ai.AiAudioTranscriber;
 import com.guilherme.entrevistaia.ai.AiQuestionStreamGenerator;
 import com.guilherme.entrevistaia.entity.*;
 import com.guilherme.entrevistaia.exception.*;
@@ -54,6 +55,8 @@ class InterviewControllerTest {
     // — não testamos SSE aqui via MockMvc (não é o ambiente pra isso), só
     // precisa existir pro Spring conseguir construir o InterviewController.
     @MockBean private AiQuestionStreamGenerator questionStreamGenerator;
+    // Dependência do endpoint POST /interviews/transcribe.
+    @MockBean private AiAudioTranscriber audioTranscriber;
     // Dependências transitivas do JwtAuthenticationFilter real (trazido pelo
     // @Import(SecurityConfig.class)) — não são exercidas porque autenticamos
     // via authentication(), sem passar Authorization header.
@@ -357,6 +360,55 @@ class InterviewControllerTest {
                 .with(authentication(auth())))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errorCode").value("RESUME_PARSE_ERROR"));
+    }
+
+    @Test
+    void transcribe_deveRetornar200ComOTextoTranscrito() throws Exception {
+        when(audioTranscriber.transcribe(any(), any())).thenReturn("essa é a minha resposta falada");
+
+        MockMultipartFile audio = new MockMultipartFile(
+            "audio", "resposta.webm", "audio/webm", "bytes-de-audio-fake".getBytes());
+
+        mockMvc.perform(multipart("/interviews/transcribe")
+                .file(audio)
+                .with(authentication(auth())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.texto").value("essa é a minha resposta falada"));
+    }
+
+    @Test
+    void transcribe_deveRetornar400QuandoOArquivoDeAudioVemVazio() throws Exception {
+        MockMultipartFile audio = new MockMultipartFile(
+            "audio", "resposta.webm", "audio/webm", new byte[0]);
+
+        mockMvc.perform(multipart("/interviews/transcribe")
+                .file(audio)
+                .with(authentication(auth())))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void transcribe_deveRetornar503QuandoATranscricaoFalha() throws Exception {
+        when(audioTranscriber.transcribe(any(), any()))
+            .thenThrow(new AudioTranscriptionException("falhou", null));
+
+        MockMultipartFile audio = new MockMultipartFile(
+            "audio", "resposta.webm", "audio/webm", "bytes".getBytes());
+
+        mockMvc.perform(multipart("/interviews/transcribe")
+                .file(audio)
+                .with(authentication(auth())))
+            .andExpect(status().isServiceUnavailable())
+            .andExpect(jsonPath("$.errorCode").value("AUDIO_TRANSCRIPTION_ERROR"));
+    }
+
+    @Test
+    void transcribe_semAutenticacaoDeveRetornar401Ou403() throws Exception {
+        MockMultipartFile audio = new MockMultipartFile(
+            "audio", "resposta.webm", "audio/webm", "bytes".getBytes());
+
+        mockMvc.perform(multipart("/interviews/transcribe").file(audio))
+            .andExpect(status().is4xxClientError());
     }
 
     @Test

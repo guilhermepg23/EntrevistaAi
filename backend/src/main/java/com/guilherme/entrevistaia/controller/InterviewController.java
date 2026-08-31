@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.controller;
 
+import com.guilherme.entrevistaia.ai.AiAudioTranscriber;
 import com.guilherme.entrevistaia.ai.AiQuestionResult;
 import com.guilherme.entrevistaia.ai.AiQuestionStreamGenerator;
 import com.guilherme.entrevistaia.dto.*;
@@ -35,6 +36,7 @@ public class InterviewController {
 
     private final InterviewService interviewService;
     private final AiQuestionStreamGenerator questionStreamGenerator;
+    private final AiAudioTranscriber audioTranscriber;
 
     // Executor dedicado só pro streaming: a chamada de rede à OpenAI em modo
     // streaming bloqueia a thread por vários segundos, o que NUNCA pode
@@ -44,9 +46,11 @@ public class InterviewController {
     private final ExecutorService streamingExecutor = Executors.newCachedThreadPool();
 
     public InterviewController(InterviewService interviewService,
-                                AiQuestionStreamGenerator questionStreamGenerator) {
+                                AiQuestionStreamGenerator questionStreamGenerator,
+                                AiAudioTranscriber audioTranscriber) {
         this.interviewService = interviewService;
         this.questionStreamGenerator = questionStreamGenerator;
+        this.audioTranscriber = audioTranscriber;
     }
 
     // POST /interviews — inicia uma nova entrevista para o usuário logado.
@@ -135,6 +139,28 @@ public class InterviewController {
         Answer answer = interviewService.submitAnswer(questionId, user, request.resposta());
         boolean finalizada = answer.getQuestion().getInterview().getStatus() == InterviewStatus.FINALIZADA;
         return ResponseEntity.ok(AnswerResponse.from(answer, finalizada));
+    }
+
+    // POST /interviews/transcribe — recebe o áudio da resposta falada
+    // (multipart, campo "audio") e devolve só o texto transcrito pela IA. NÃO
+    // avalia nada e não toca no banco: o front joga o texto no campo, o
+    // candidato revisa/corrige e envia pelo endpoint de resposta acima. Exige
+    // autenticação como qualquer rota /interviews/**, mas não precisa de id de
+    // entrevista — transcrição é independente de contexto.
+    @PostMapping(value = "/transcribe", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TranscriptionResponse> transcribe(@RequestParam("audio") MultipartFile audio,
+                                                             @AuthenticationPrincipal User user) throws IOException {
+        if (audio.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        String nomeArquivo = audio.getOriginalFilename() != null ? audio.getOriginalFilename() : "resposta.webm";
+        log.info("[AUDIO_TRANSCRIPTION_REQUEST] userId={} bytes={} arquivo={}",
+            user.getId(), audio.getSize(), nomeArquivo);
+
+        String texto = audioTranscriber.transcribe(audio.getBytes(), nomeArquivo);
+
+        log.info("[AUDIO_TRANSCRIPTION_COMPLETE] userId={} chars={}", user.getId(), texto.length());
+        return ResponseEntity.ok(new TranscriptionResponse(texto));
     }
 
     // POST /interviews/{id}/abandon — candidato desistiu no meio da entrevista

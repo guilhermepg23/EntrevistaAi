@@ -1,11 +1,51 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnswerInput } from './AnswerInput';
+import { interviewApi } from '../api/interviewApi';
 
-const PLACEHOLDER = 'Digite ou dite sua resposta...';
+const PLACEHOLDER = 'Digite ou grave sua resposta...';
+
+// useAudioRecorder é mockado: capturamos o onRecordingComplete pra disparar a
+// "gravação terminou" na mão, e controlamos supported/recording/error por teste.
+let recorderOpts: { onRecordingComplete: (audio: Blob) => void } | null = null;
+let recorderState: {
+  supported: boolean;
+  recording: boolean;
+  error: string | null;
+  start: ReturnType<typeof vi.fn>;
+  stop: ReturnType<typeof vi.fn>;
+};
+
+function stubRecorder(over: Partial<typeof recorderState> = {}) {
+  recorderState = {
+    supported: true,
+    recording: false,
+    error: null,
+    start: vi.fn(),
+    stop: vi.fn(),
+    ...over,
+  };
+}
+
+vi.mock('../hooks/useAudioRecorder', () => ({
+  useAudioRecorder: (opts: { onRecordingComplete: (audio: Blob) => void }) => {
+    recorderOpts = opts;
+    return recorderState;
+  },
+}));
+
+vi.mock('../api/interviewApi', () => ({
+  interviewApi: { transcribe: vi.fn() },
+}));
 
 describe('AnswerInput', () => {
+  beforeEach(() => {
+    stubRecorder();
+    vi.mocked(interviewApi.transcribe).mockReset();
+  });
+  afterEach(() => { recorderOpts = null; });
+
   it('envia o texto (com trim) ao clicar no botão e limpa o campo', async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
@@ -40,7 +80,7 @@ describe('AnswerInput', () => {
     expect(screen.getByRole('button', { name: 'Enviar resposta' })).toBeDisabled();
   });
 
-  it('o botão fica desabilitado enquanto o campo está vazio ou só com espaços', async () => {
+  it('o botão de enviar fica desabilitado enquanto o campo está vazio ou só com espaços', async () => {
     const user = userEvent.setup();
     render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
 
@@ -54,87 +94,65 @@ describe('AnswerInput', () => {
     expect(botao).toBeEnabled();
   });
 
-  describe('ditado por voz', () => {
-    // Fake mínimo da Web Speech API: guarda os handlers e deixa o teste
-    // disparar onresult/onerror/onend manualmente.
-    class FakeRecognition {
-      static instances: FakeRecognition[] = [];
-      lang = '';
-      continuous = false;
-      interimResults = false;
-      maxAlternatives = 1;
-      onresult: ((ev: SpeechRecognitionEvent) => unknown) | null = null;
-      onerror: ((ev: SpeechRecognitionErrorEvent) => unknown) | null = null;
-      onend: ((ev: Event) => unknown) | null = null;
-      onstart: ((ev: Event) => unknown) | null = null;
-      start = vi.fn(() => { FakeRecognition.instances.push(this); });
-      stop = vi.fn(() => this.onend?.(new Event('end')));
-      abort = vi.fn();
-      addEventListener = vi.fn();
-      removeEventListener = vi.fn();
-      dispatchEvent = vi.fn(() => true);
-
-      emitFinal(text: string) {
-        const event = {
-          resultIndex: 0,
-          results: { length: 1, 0: { 0: { transcript: text, confidence: 1 }, isFinal: true, length: 1 } },
-        } as unknown as SpeechRecognitionEvent;
-        this.onresult?.(event);
-      }
-      emitError(error: string) {
-        this.onerror?.({ error } as SpeechRecognitionErrorEvent);
-      }
-    }
-
-    afterEach(() => {
-      FakeRecognition.instances = [];
-      delete (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
-      delete (window as { SpeechRecognition?: unknown }).SpeechRecognition;
-    });
-
-    it('não renderiza o botão de microfone quando o navegador não suporta a API', () => {
+  describe('resposta por voz (gravar + transcrever no backend)', () => {
+    it('não renderiza o botão de microfone quando o navegador não suporta gravação', () => {
+      stubRecorder({ supported: false });
       render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
-      expect(screen.queryByRole('button', { name: /ditar/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /gravar/i })).not.toBeInTheDocument();
     });
 
-    it('com suporte: o botão de microfone alterna entre iniciar e parar o reconhecimento', async () => {
+    it('parado: o botão de microfone dispara start()', async () => {
       const user = userEvent.setup();
-      (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = FakeRecognition;
       render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
 
-      const mic = screen.getByRole('button', { name: 'Ditar resposta por voz' });
+      const mic = screen.getByRole('button', { name: 'Gravar resposta por voz' });
+      expect(mic).toHaveAttribute('aria-pressed', 'false');
       await user.click(mic);
-
-      expect(FakeRecognition.instances).toHaveLength(1);
-      expect(FakeRecognition.instances[0].lang).toBe('pt-BR');
-      expect(screen.getByRole('button', { name: 'Parar ditado por voz' })).toHaveAttribute('aria-pressed', 'true');
-
-      await user.click(screen.getByRole('button', { name: 'Parar ditado por voz' }));
-      expect(FakeRecognition.instances[0].stop).toHaveBeenCalled();
-      expect(screen.getByRole('button', { name: 'Ditar resposta por voz' })).toHaveAttribute('aria-pressed', 'false');
+      expect(recorderState.start).toHaveBeenCalledTimes(1);
     });
 
-    it('o texto reconhecido é anexado ao conteúdo do campo', async () => {
+    it('gravando: mostra "Parar e transcrever" e o clique dispara stop()', async () => {
       const user = userEvent.setup();
-      (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = FakeRecognition;
+      stubRecorder({ recording: true });
+      render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
+
+      const parar = screen.getByRole('button', { name: 'Parar e transcrever' });
+      expect(parar).toHaveAttribute('aria-pressed', 'true');
+      await user.click(parar);
+      expect(recorderState.stop).toHaveBeenCalledTimes(1);
+    });
+
+    it('ao terminar a gravação: transcreve pelo backend e anexa o texto ao campo', async () => {
+      const user = userEvent.setup();
+      vi.mocked(interviewApi.transcribe).mockResolvedValue('resposta transcrita do áudio');
       render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
 
       const textarea = screen.getByPlaceholderText(PLACEHOLDER);
       await user.type(textarea, 'Comecei digitando.');
-      await user.click(screen.getByRole('button', { name: 'Ditar resposta por voz' }));
 
-      act(() => FakeRecognition.instances[0].emitFinal('E terminei falando'));
+      const blob = new Blob(['audio'], { type: 'audio/webm' });
+      recorderOpts!.onRecordingComplete(blob);
 
-      expect(textarea).toHaveValue('Comecei digitando. E terminei falando');
+      await waitFor(() =>
+        expect(textarea).toHaveValue('Comecei digitando. resposta transcrita do áudio'),
+      );
+      expect(interviewApi.transcribe).toHaveBeenCalledWith(blob);
     });
 
-    it('mostra aviso quando a permissão de microfone é negada', async () => {
-      const user = userEvent.setup();
-      (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = FakeRecognition;
+    it('mostra aviso quando a transcrição falha', async () => {
+      vi.mocked(interviewApi.transcribe).mockRejectedValue(new Error('boom'));
       render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
 
-      await user.click(screen.getByRole('button', { name: 'Ditar resposta por voz' }));
-      act(() => FakeRecognition.instances[0].emitError('not-allowed'));
+      recorderOpts!.onRecordingComplete(new Blob(['x'], { type: 'audio/webm' }));
+
+      expect(
+        await screen.findByText(/Não foi possível transcrever o áudio/i),
+      ).toBeInTheDocument();
+    });
+
+    it('propaga o erro de permissão de microfone vindo do hook', () => {
+      stubRecorder({ error: 'Permissão de microfone negada.' });
+      render(<AnswerInput disabled={false} onSubmit={vi.fn()} />);
 
       expect(screen.getByText('Permissão de microfone negada.')).toBeInTheDocument();
     });

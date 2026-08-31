@@ -23,6 +23,9 @@ perguntas, avaliar respostas e produzir um relatório final.
 - **Análise de currículo (PDF)**: upload opcional (`POST /{id}/resume`), extração de
   texto (PDFBox) e leitura via IA, que passa a influenciar as próximas perguntas e é
   comparada ao desempenho real no relatório final
+- **Transcrição de áudio** (`POST /interviews/transcribe`, multipart): recebe o áudio da
+  resposta falada e devolve só o texto (OpenAI Audio Transcriptions, `gpt-4o-mini-transcribe`,
+  com retry). Não avalia nem persiste — o candidato revisa o texto antes de enviar
 - **Compartilhamento público de relatório**: geração/revogação de link (`/{id}/share`,
   `DELETE /{id}/share`) com token, e rota pública sem autenticação
   (`GET /public/{shareToken}/report`)
@@ -31,10 +34,10 @@ perguntas, avaliar respostas e produzir um relatório final.
 - Service layer (InterviewService) com controle de posse (ownership) e máquina de estados
   da entrevista (EM_ANDAMENTO → FINALIZADA / ABANDONADA)
 - Controllers + DTOs REST, documentados via Swagger/OpenAPI
-- Testes automatizados (`mvn test`, 77 testes): unitários (service, JWT, streaming),
-  controller (MockMvc — cobre todas as rotas, incluindo currículo, compartilhamento,
-  transcript e abandono) e integração com Postgres real via Testcontainers (exige Docker
-  rodando; roda separado dos demais)
+- Testes automatizados (`mvn test`, 86 testes): unitários (service, JWT, streaming,
+  transcrição de áudio via MockRestServiceServer), controller (MockMvc — cobre todas as
+  rotas, incluindo currículo, transcrição, compartilhamento, transcript e abandono) e
+  integração com Postgres real via Testcontainers (exige Docker rodando; roda separado)
 - Docker Compose (Postgres + backend) — validado manualmente, sobe limpo
 
 ### Frontend — funcional, roda de ponta a ponta
@@ -47,22 +50,23 @@ perguntas, avaliar respostas e produzir um relatório final.
 - Componentes visuais: `ChatBubble`, `AnswerInput`, `LoadingIndicator`, `FeedbackBadge`,
   `Layout`, `ProtectedRoute`
 - Hooks: `useAuth` (sessão/token), `useInterview` (máquina de estados do chat, streaming
-  de pergunta token a token, retry da mesma ação em caso de falha) e `useSpeechRecognition`
-  (ditado por voz via Web Speech API do navegador)
+  de pergunta token a token, retry da mesma ação em caso de falha), `useAudioRecorder`
+  (grava o microfone via MediaRecorder) e `useSlowRequestHint` (aviso de cold start)
 - Cadastro com confirmação de senha (checagem no cliente antes de chamar a API)
-- Resposta por voz opcional: em Chrome/Edge, um botão de microfone no `AnswerInput`
-  transcreve a fala e anexa ao texto do campo (nenhum áudio sai do navegador)
+- Resposta por voz opcional (todos os navegadores modernos): o botão de microfone no
+  `AnswerInput` grava, manda pro backend transcrever (`POST /interviews/transcribe`) e
+  anexa o texto ao campo — o candidato revisa antes de enviar
 - Client fetch (`api/interviewApi.ts`, `api/authApi.ts`) cobrindo toda a API do backend,
   incluindo streaming (SSE), upload de currículo e compartilhamento público
 - Base da API em `api/config.ts`: `VITE_API_URL` (do `.env`) com fallback pro backend em
   produção, pra o deploy não quebrar se a env var não entrar no build
-- Testes automatizados (Vitest + Testing Library, `npm test`, 83 testes):
+- Testes automatizados (Vitest + Testing Library, `npm test`, 92 testes):
   - **Client/hooks**: parsing do streaming SSE e sessão expirada (`interviewApi`), `useAuth`
     (persistência de sessão, evento de sessão expirada), `useInterview` (máquina de estados
     do chat, retomada de entrevista em andamento, retry da ação que de fato falhou)
-  - **Client/hooks (extra)**: `useSpeechRecognition` (suporte ausente, ciclo start/stop,
-    só segmentos finais, erro de permissão, abort no unmount)
-  - **Componentes**: `FeedbackBadge`, `AnswerInput` (incl. ditado por voz), `ChatBubble`,
+  - **Client/hooks (extra)**: `useAudioRecorder` (suporte ausente, ciclo start/stop, Blob
+    no fim, permissão negada, cleanup no unmount), `useSlowRequestHint`
+  - **Componentes**: `FeedbackBadge`, `AnswerInput` (incl. gravar → transcrever), `ChatBubble`,
     `Layout`, `ProtectedRoute`
   - **Páginas** (render + interação, API/hooks mockados): `LoginPage`, `RegisterPage`
     (incl. senhas divergentes), `HomePage`, `InterviewChat`, `InterviewChatPage`,
@@ -80,13 +84,10 @@ Publicado e validado ponta a ponta em produção:
 
 ## Próximos passos
 
-1. Fechar o polimento visual: feitos breakpoint mobile, `prefers-reduced-motion`,
-   `:focus-visible`, auto-scroll do chat, range slider e `input[type=file]` estilizados,
-   aviso de cold start no login/cadastro. Falta só conferir os breakpoints mobile num
-   device/DevTools real (não deu pra validar responsivo na sessão de dev).
-2. Resposta por voz via backend (Whisper) — hoje o ditado é 100% no navegador
-   (Web Speech API), o que exclui Firefox e depende da qualidade do reconhecimento
-   nativo. Mandar o áudio pro backend transcrever seria mais robusto e cross-browser.
+1. Conferir os breakpoints mobile num device/DevTools real — o resto do polimento visual
+   está feito (breakpoint mobile no CSS, `prefers-reduced-motion`, `:focus-visible`,
+   auto-scroll do chat, range slider e `input[type=file]` estilizados, aviso de cold start
+   no login/cadastro), mas não deu pra validar responsivo na sessão de dev.
 
 ## Como rodar o backend
 
@@ -114,9 +115,10 @@ configurável via `BACKEND_PORT` no `.env`.
 
 - IA: OpenAI GPT-4o-mini (custo baixo), `response_format: json_object`
 - Perguntas 100% adaptativas (IA decide próximo tópico/dificuldade com base no histórico)
-- Entrevistas de 5-15 perguntas. Resposta é sempre texto; o ditado por voz
-  (Web Speech API, no navegador) só preenche o campo — a API recebe texto puro,
-  sem endpoint nem armazenamento de áudio
+- Entrevistas de 5-15 perguntas. Resposta é sempre texto; a gravação de voz é
+  transcrita pelo backend (`POST /interviews/transcribe`, OpenAI) e só preenche o
+  campo — o candidato revisa antes de enviar, a API de resposta recebe texto puro,
+  e o áudio não é persistido (só transita pra transcrição)
 - Arquitetura de duas chamadas separadas: avaliar resposta primeiro, gerar próxima pergunta depois
 - Frontend: useState + fetch simples (sem React Query por enquanto), estilo híbrido chat + input fixo
 - Erros: exceções customizadas por tipo + GlobalExceptionHandler com errorCode em cada log

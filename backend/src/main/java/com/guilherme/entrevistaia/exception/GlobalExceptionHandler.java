@@ -86,6 +86,13 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(ex.getErrorCode(), "Não foi possível gerar a pergunta em tempo real. Tente novamente."));
     }
 
+    @ExceptionHandler(AudioTranscriptionException.class)
+    public ResponseEntity<ErrorResponse> handleAudioTranscription(AudioTranscriptionException ex) {
+        log.error("[{}] {}", ex.getErrorCode(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(new ErrorResponse(ex.getErrorCode(), "Não foi possível transcrever o áudio. Tente de novo ou digite a resposta."));
+    }
+
     @ExceptionHandler(ShareLinkNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleShareLinkNotFound(ShareLinkNotFoundException ex) {
         log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());

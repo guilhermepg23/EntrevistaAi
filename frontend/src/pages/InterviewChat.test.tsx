@@ -8,7 +8,7 @@ import type { ChatItem } from '../types/interview';
 
 vi.mock('../hooks/useInterview', () => ({ useInterview: vi.fn() }));
 vi.mock('../api/interviewApi', () => ({
-  interviewApi: { getResume: vi.fn(), abandon: vi.fn() },
+  interviewApi: { getResume: vi.fn(), abandon: vi.fn(), transcribe: vi.fn() },
 }));
 
 type HookReturn = ReturnType<typeof useInterview>;
@@ -81,7 +81,7 @@ describe('InterviewChat', () => {
   it('status "waiting-answer": o campo de resposta está habilitado', () => {
     stubHook({ status: 'waiting-answer' });
     renderChat();
-    expect(screen.getByPlaceholderText('Digite ou dite sua resposta...')).toBeEnabled();
+    expect(screen.getByPlaceholderText('Digite ou grave sua resposta...')).toBeEnabled();
   });
 
   it('status "evaluating": mostra o indicador "Analisando sua resposta..." e trava o input', () => {
@@ -113,7 +113,7 @@ describe('InterviewChat', () => {
     stubHook({ status: 'finished' });
     renderChat();
 
-    expect(screen.queryByPlaceholderText('Digite ou dite sua resposta...')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Digite ou grave sua resposta...')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Ver relatório completo' }));
     expect(onFinished).toHaveBeenCalledTimes(1);
   });
