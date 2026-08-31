@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
+import { PasswordInput } from '../components/PasswordInput';
 
 export function RegisterPage() {
   const [nome, setNome] = useState('');
@@ -54,20 +55,20 @@ export function RegisterPage() {
         </label>
         <label>
           Senha
-          <input
-            type="password"
+          <PasswordInput
             value={senha}
             onChange={e => setSenha(e.target.value)}
+            autoComplete="new-password"
             minLength={6}
             required
           />
         </label>
         <label>
           Confirmar senha
-          <input
-            type="password"
+          <PasswordInput
             value={confirmarSenha}
             onChange={e => setConfirmarSenha(e.target.value)}
+            autoComplete="new-password"
             minLength={6}
             required
           />

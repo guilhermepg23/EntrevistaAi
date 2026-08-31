@@ -158,6 +158,38 @@ a {
   font-weight: 600;
 }
 
+/* Campo de senha com botão de mostrar/ocultar (ver PasswordInput.tsx) */
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 2.9rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0.35rem;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.password-toggle:hover:not(:disabled) {
+  color: var(--color-text);
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(-50%);
+}
+
 .erro, .aviso {
   border-radius: var(--radius-sm);
   padding: 0.7rem 0.9rem;

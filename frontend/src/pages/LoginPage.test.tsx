@@ -92,4 +92,17 @@ describe('LoginPage', () => {
 
     expect(screen.queryByText(/servidor gratuito estava hibernando/i)).not.toBeInTheDocument();
   });
+
+  it('o botão "Mostrar senha" revela o que foi digitado no campo de senha', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<LoginPage />, { route: '/login' });
+
+    const senha = screen.getByLabelText('Senha');
+    await user.type(senha, 'minha-senha-secreta');
+    expect(senha).toHaveAttribute('type', 'password');
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar senha' }));
+    expect(senha).toHaveAttribute('type', 'text');
+    expect(senha).toHaveValue('minha-senha-secreta');
+  });
 });

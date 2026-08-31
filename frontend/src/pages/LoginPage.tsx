@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
+import { PasswordInput } from '../components/PasswordInput';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -44,7 +45,12 @@ export function LoginPage() {
         </label>
         <label>
           Senha
-          <input type="password" value={senha} onChange={e => setSenha(e.target.value)} required />
+          <PasswordInput
+            value={senha}
+            onChange={e => setSenha(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
         </label>
         <button type="submit" disabled={carregando}>
           {carregando ? 'Entrando...' : 'Entrar'}
