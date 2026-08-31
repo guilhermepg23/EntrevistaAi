@@ -80,7 +80,10 @@ Publicado e validado ponta a ponta em produção:
 
 ## Próximos passos
 
-1. Polimento visual e responsividade das telas existentes
+1. Fechar o polimento visual: 1ª rodada feita (breakpoint mobile, `prefers-reduced-motion`,
+   `:focus-visible`, auto-scroll do chat pro fim da conversa). Falta conferir os
+   breakpoints num device real, estilizar `input[type=file]` e o range slider, e dar
+   feedback de "acordando o servidor" no login/cadastro (cold start do free tier ~1min).
 2. Resposta por voz via backend (Whisper) — hoje o ditado é 100% no navegador
    (Web Speech API), o que exclui Firefox e depende da qualidade do reconhecimento
    nativo. Mandar o áudio pro backend transcrever seria mais robusto e cross-browser.
