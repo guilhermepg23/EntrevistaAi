@@ -23,6 +23,15 @@ export function InterviewChat({
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [saindo, setSaindo] = useState(false);
 
+  // Mantém o fim da conversa visível: quando entra uma bolha nova, muda o
+  // status (avaliando / carregando) ou chega mais texto do streaming, rola até
+  // a âncora no fim da lista — senão a pergunta nova aparecia escondida atrás
+  // do campo de resposta fixo no rodapé.
+  const fimDaConversa = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fimDaConversa.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [chatItems.length, status, streamingQuestionText]);
+
   // Guarda por interviewId (não um simples useRef<boolean>) — initialize() faz
   // uma chamada de rede que gera e persiste uma pergunta nova a cada execução
   // (getNextQuestion não é idempotente, ver InterviewService), e o StrictMode
@@ -133,6 +142,7 @@ export function InterviewChat({
             {errorMessage} — <button onClick={retry}>Tentar novamente</button>
           </div>
         )}
+        <div ref={fimDaConversa} aria-hidden="true" />
       </div>
 
       {status === 'finished' ? (

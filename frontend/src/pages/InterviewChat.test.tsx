@@ -50,6 +50,22 @@ describe('InterviewChat', () => {
     expect(initialize).toHaveBeenCalledTimes(1);
   });
 
+  it('rola até o fim da conversa quando entra uma bolha nova', () => {
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    const { rerender } = renderChat();
+    scrollSpy.mockClear();
+
+    stubHook({
+      chatItems: [
+        { tipo: 'pergunta', question: { id: 'q1', interviewId: 'int-1', ordem: 1, pergunta: 'P1', topico: 'T', dificuldade: 'BASICO' } },
+      ],
+    });
+    rerender(<InterviewChat interviewId="int-1" onFinished={onFinished} onExit={onExit} />);
+
+    expect(scrollSpy).toHaveBeenCalled();
+    scrollSpy.mockRestore();
+  });
+
   it('renderiza o histórico de chat (pergunta + resposta com feedback)', () => {
     const chatItems: ChatItem[] = [
       { tipo: 'pergunta', question: { id: 'q1', interviewId: 'int-1', ordem: 1, pergunta: 'O que é a JVM?', topico: 'JVM', dificuldade: 'BASICO' } },
