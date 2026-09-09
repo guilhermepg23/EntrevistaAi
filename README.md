@@ -90,6 +90,8 @@ perguntas, avaliar respostas e produzir um relatório final.
 
 Publicado e validado ponta a ponta em produção:
 
+- **App**: https://entrevista-ai-five.vercel.app
+- **Análise de currículo** (tela avulsa, sem entrevista): https://entrevista-ai-five.vercel.app/curriculo
 - **Backend**: Render (`render.yaml` blueprint — web service Docker + Postgres), health em
   `/v3/api-docs`. Free tier: hiberna após 15 min (cold start ~50s), Postgres expira ~30 dias.
 - **Frontend**: Vercel (root directory `frontend`, `VITE_API_URL` apontando pro backend).
