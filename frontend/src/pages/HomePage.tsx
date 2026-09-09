@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import type { Interview } from '../types/interview';
 
@@ -117,6 +117,9 @@ export function HomePage() {
             {etapaCriacao === 'curriculo' ? 'Analisando currículo...' : criando ? 'Iniciando...' : 'Começar entrevista'}
           </button>
         </form>
+        <p className="start-interview-alt">
+          Só quer um retorno sobre o currículo? <Link to="/curriculo">Analisar currículo sem entrevista</Link>
+        </p>
       </section>
 
       <section className="historico">

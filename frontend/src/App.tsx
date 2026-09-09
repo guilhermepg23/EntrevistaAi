@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
+import { ResumeReviewPage } from './pages/ResumeReviewPage';
 import { InterviewChatPage } from './pages/InterviewChatPage';
 import { InterviewReportPage } from './pages/InterviewReportPage';
 import { PublicReportPage } from './pages/PublicReportPage';
@@ -16,6 +17,7 @@ export function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/relatorio-publico/:token" element={<PublicReportPage />} />
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/curriculo" element={<ProtectedRoute><ResumeReviewPage /></ProtectedRoute>} />
         <Route path="/interview/:id" element={<ProtectedRoute><InterviewChatPage /></ProtectedRoute>} />
         <Route path="/interview/:id/report" element={<ProtectedRoute><InterviewReportPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />

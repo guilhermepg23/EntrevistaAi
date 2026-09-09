@@ -7,6 +7,7 @@ export type NivelDominio = 'SEM_CONHECIMENTO' | 'BASICO' | 'INTERMEDIARIO' | 'AV
 export type NivelPercebido = 'JUNIOR' | 'PLENO' | 'SENIOR';
 export type Recomendacao = 'APROVADO' | 'APROVADO_COM_RESSALVAS' | 'NAO_APROVADO';
 export type InterviewStatus = 'EM_ANDAMENTO' | 'FINALIZADA' | 'ABANDONADA';
+export type VeredictoCurriculo = 'RUIM' | 'REGULAR' | 'BOM' | 'EXCELENTE';
 
 export interface Question {
   id: string;
@@ -83,6 +84,19 @@ export interface ResumeAnalysis {
   aderenciaVagaPercentual: number | null;
   pontosAderenciaVaga: string[];
   gapsVaga: string[];
+}
+
+// Devolvido por POST /resume-reviews (análise recém-feita) e por cada item de
+// GET /resume-reviews (histórico). Análise de currículo AVULSA — sem entrevista
+// nem vaga de contexto: só nota, veredito e melhorias acionáveis.
+export interface ResumeReview {
+  id: string;
+  nota: number;
+  veredito: VeredictoCurriculo;
+  resumo: string;
+  pontosFortes: string[];
+  melhorias: string[];
+  criadoEm: string;
 }
 
 // Devolvido por GET /interviews/public/{shareToken}/report — versão enxuta

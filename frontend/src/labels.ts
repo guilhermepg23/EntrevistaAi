@@ -1,4 +1,4 @@
-import type { Dificuldade, NivelDominio, NivelPercebido, Recomendacao } from './types/interview';
+import type { Dificuldade, NivelDominio, NivelPercebido, Recomendacao, VeredictoCurriculo } from './types/interview';
 
 // Traduz os valores de enum que vêm crus da API (sempre em maiúsculas, ver
 // types/interview.ts) para o rótulo exibido na tela — mantém os componentes
@@ -26,4 +26,11 @@ export const recomendacaoLabel: Record<Recomendacao, string> = {
   APROVADO: 'Aprovado',
   APROVADO_COM_RESSALVAS: 'Aprovado com ressalvas',
   NAO_APROVADO: 'Não aprovado',
+};
+
+export const veredictoCurriculoLabel: Record<VeredictoCurriculo, string> = {
+  RUIM: 'Ruim',
+  REGULAR: 'Regular',
+  BOM: 'Bom',
+  EXCELENTE: 'Excelente',
 };

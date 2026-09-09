@@ -25,6 +25,18 @@ describe('Layout', () => {
     expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument();
   });
 
+  it('logado: mostra o link "Analisar currículo" apontando para /curriculo', () => {
+    renderWithProviders(<Layout><p>página</p></Layout>, { auth: { token: 'tok', nome: 'Guilherme' } });
+
+    const link = screen.getByRole('link', { name: 'Analisar currículo' });
+    expect(link).toHaveAttribute('href', '/curriculo');
+  });
+
+  it('deslogado: não mostra o link "Analisar currículo"', () => {
+    renderWithProviders(<Layout><p>página</p></Layout>);
+    expect(screen.queryByRole('link', { name: 'Analisar currículo' })).not.toBeInTheDocument();
+  });
+
   it('clicar em "Sair" desloga (limpa o localStorage e some com o botão)', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Layout><p>página</p></Layout>, { auth: { token: 'tok', nome: 'Guilherme' } });

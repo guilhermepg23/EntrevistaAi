@@ -20,6 +20,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </Link>
         {isAuthenticated && (
           <div className="header-user">
+            <Link to="/curriculo" className="header-nav-link">Analisar currículo</Link>
             <span className="header-user-name">
               <span className="header-avatar" aria-hidden="true">
                 {nome ? nome.trim().charAt(0).toUpperCase() : '?'}

@@ -1,4 +1,4 @@
-import type { AnswerFeedback, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, TranscriptItem } from '../types/interview';
+import type { AnswerFeedback, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
 import { SESSION_EXPIRED_EVENT } from '../hooks/useAuth';
 import { API_BASE } from './config';
 
@@ -157,6 +157,24 @@ export const interviewApi = {
     const { texto } = await handleResponse<{ texto: string }>(res);
     return texto;
   },
+
+  // Análise de currículo AVULSA (POST /resume-reviews) — não depende de
+  // entrevista. Manda o PDF e recebe nota + veredito + melhorias.
+  reviewResume: (arquivo: File) => {
+    const form = new FormData();
+    form.append('arquivo', arquivo);
+    return fetch(`${API_BASE}/resume-reviews`, {
+      method: 'POST',
+      headers: authHeadersMultipart(),
+      body: form,
+    }).then(res => handleResponse<ResumeReview>(res));
+  },
+
+  // Histórico de análises de currículo avulsas do usuário logado.
+  resumeReviewHistory: () =>
+    fetch(`${API_BASE}/resume-reviews`, {
+      headers: authHeaders(),
+    }).then(res => handleResponse<ResumeReview[]>(res)),
 
   // 404 aqui só significa "candidato não enviou currículo" — não é erro,
   // então devolve null em vez de propagar a exceção de handleResponse.

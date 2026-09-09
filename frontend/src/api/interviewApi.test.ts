@@ -136,3 +136,38 @@ describe('interviewApi.getResume', () => {
     await expect(interviewApi.getResume('i1')).resolves.toEqual(analysis);
   });
 });
+
+describe('interviewApi.reviewResume', () => {
+  beforeEach(() => {
+    localStorage.setItem('token', 'token-fake');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it('faz POST multipart em /resume-reviews com o Authorization e devolve a análise', async () => {
+    const review = { id: 'rev-1', nota: 8, veredito: 'BOM', resumo: 'ok', pontosFortes: [], melhorias: ['x'], criadoEm: '2026-09-01T10:00:00Z' };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(review), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pdf = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' });
+    await expect(interviewApi.reviewResume(pdf)).resolves.toEqual(review);
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://localhost:8080/resume-reviews');
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).get('arquivo')).toBe(pdf);
+    expect(init.headers).toEqual({ Authorization: 'Bearer token-fake' });
+  });
+
+  it('propaga erro do backend (ex.: PDF inválido -> 400)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ errorCode: 'RESUME_PARSE_ERROR', message: 'PDF inválido' }), { status: 400 })
+    ));
+
+    await expect(interviewApi.reviewResume(new File([''], 'x.pdf'))).rejects.toThrow('PDF inválido');
+  });
+});

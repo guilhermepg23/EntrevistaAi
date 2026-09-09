@@ -26,6 +26,12 @@ perguntas, avaliar respostas e produzir um relatório final.
 - **Transcrição de áudio** (`POST /interviews/transcribe`, multipart): recebe o áudio da
   resposta falada e devolve só o texto (OpenAI Audio Transcriptions, `gpt-4o-mini-transcribe`,
   com retry). Não avalia nem persiste — o candidato revisa o texto antes de enviar
+- **Análise de currículo avulsa** (`POST /resume-reviews`, multipart; `GET /resume-reviews`
+  pro histórico): fora de qualquer entrevista — extrai o texto do PDF (PDFBox, reaproveitado)
+  e a IA devolve nota 0-10, veredito (`RUIM`/`REGULAR`/`BOM`/`EXCELENTE`) e uma lista de
+  melhorias acionáveis, focando na qualidade do currículo em si (estrutura, resultados
+  quantificados, consistência de datas). Cada envio vira uma linha nova em `ResumeReview`
+  (`@ManyToOne User`), sem regra de posse de entrevista
 - **Compartilhamento público de relatório**: geração/revogação de link (`/{id}/share`,
   `DELETE /{id}/share`) com token, e rota pública sem autenticação
   (`GET /public/{shareToken}/report`)
@@ -34,19 +40,21 @@ perguntas, avaliar respostas e produzir um relatório final.
 - Service layer (InterviewService) com controle de posse (ownership) e máquina de estados
   da entrevista (EM_ANDAMENTO → FINALIZADA / ABANDONADA)
 - Controllers + DTOs REST, documentados via Swagger/OpenAPI
-- Testes automatizados (`mvn test`, 86 testes): unitários (service, JWT, streaming,
-  transcrição de áudio via MockRestServiceServer), controller (MockMvc — cobre todas as
-  rotas, incluindo currículo, transcrição, compartilhamento, transcript e abandono) e
-  integração com Postgres real via Testcontainers (exige Docker rodando; roda separado)
+- Testes automatizados (`mvn test`, 102 testes): unitários (service, JWT, streaming,
+  transcrição de áudio via MockRestServiceServer, análise de currículo avulsa), controller
+  (MockMvc — cobre todas as rotas, incluindo currículo, análise avulsa, transcrição,
+  compartilhamento, transcript e abandono) e integração com Postgres real via Testcontainers
+  (exige Docker rodando; roda separado)
 - Docker Compose (Postgres + backend) — validado manualmente, sobe limpo
 
 ### Frontend — funcional, roda de ponta a ponta
 
 - Projeto Vite configurado e rodando (`vite.config.ts`, `tsconfig.json`, `index.html`)
 - Roteamento completo (`react-router-dom`): login, registro, home (criação de entrevista
-  + histórico), chat da entrevista, relatório, relatório público, rotas protegidas
+  + histórico), chat da entrevista, relatório, relatório público, análise de currículo
+  avulsa (`/curriculo`), rotas protegidas
 - Páginas: `LoginPage`, `RegisterPage`, `HomePage`, `InterviewChat`/`InterviewChatPage`,
-  `InterviewReportPage`, `PublicReportPage`
+  `InterviewReportPage`, `PublicReportPage`, `ResumeReviewPage`
 - Componentes visuais: `ChatBubble`, `AnswerInput`, `LoadingIndicator`, `FeedbackBadge`,
   `Layout`, `ProtectedRoute`
 - Hooks: `useAuth` (sessão/token), `useInterview` (máquina de estados do chat, streaming
@@ -56,12 +64,17 @@ perguntas, avaliar respostas e produzir um relatório final.
 - Resposta por voz opcional (todos os navegadores modernos): o botão de microfone no
   `AnswerInput` grava, manda pro backend transcrever (`POST /interviews/transcribe`) e
   anexa o texto ao campo — o candidato revisa antes de enviar
+- Análise de currículo avulsa (`ResumeReviewPage`, rota `/curriculo`, link no header): envia
+  o PDF (`POST /resume-reviews`), mostra anel de nota, badge de veredito, resumo e lista de
+  melhorias, mais um histórico de análises anteriores — sem precisar iniciar entrevista
 - Client fetch (`api/interviewApi.ts`, `api/authApi.ts`) cobrindo toda a API do backend,
-  incluindo streaming (SSE), upload de currículo e compartilhamento público
+  incluindo streaming (SSE), upload de currículo, análise de currículo avulsa e
+  compartilhamento público
 - Base da API em `api/config.ts`: `VITE_API_URL` (do `.env`) com fallback pro backend em
   produção, pra o deploy não quebrar se a env var não entrar no build
-- Testes automatizados (Vitest + Testing Library, `npm test`, 92 testes):
-  - **Client/hooks**: parsing do streaming SSE e sessão expirada (`interviewApi`), `useAuth`
+- Testes automatizados (Vitest + Testing Library, `npm test`, 106 testes):
+  - **Client/hooks**: parsing do streaming SSE e sessão expirada (`interviewApi`), upload
+    multipart da análise de currículo avulsa (`interviewApi.reviewResume`), `useAuth`
     (persistência de sessão, evento de sessão expirada), `useInterview` (máquina de estados
     do chat, retomada de entrevista em andamento, retry da ação que de fato falhou)
   - **Client/hooks (extra)**: `useAudioRecorder` (suporte ausente, ciclo start/stop, Blob
@@ -70,7 +83,8 @@ perguntas, avaliar respostas e produzir um relatório final.
     `Layout`, `ProtectedRoute`
   - **Páginas** (render + interação, API/hooks mockados): `LoginPage`, `RegisterPage`
     (incl. senhas divergentes), `HomePage`, `InterviewChat`, `InterviewChatPage`,
-    `InterviewReportPage`, `PublicReportPage`
+    `InterviewReportPage`, `PublicReportPage`, `ResumeReviewPage` (upload → nota/veredito/
+    melhorias, histórico, botão travado sem PDF)
 
 ## Deploy
 
@@ -131,3 +145,8 @@ configurável via `BACKEND_PORT` no `.env`.
   não pode ocupar threads HTTP normais
 - Upload de currículo é opcional e não bloqueia a entrevista: se o candidato não envia
   currículo, `GET /{id}/resume` simplesmente responde 404 (não é tratado como erro)
+- Análise de currículo avulsa (`/resume-reviews`) é uma trilha separada da do fluxo de
+  entrevista (`ResumeAnalysis`): entidade, service, controller e prompt próprios. A do
+  fluxo é 1-para-1 com `Interview` e serve pra calibrar perguntas + comparar com o
+  desempenho; a avulsa é sobre a qualidade do currículo em si (nota + veredito + melhorias),
+  não é idempotente (cada envio vira uma linha), e o "histórico" é a lista por usuário
