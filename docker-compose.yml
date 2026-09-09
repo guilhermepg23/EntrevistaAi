@@ -33,6 +33,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       OPENAI_API_KEY: ${OPENAI_API_KEY:?defina OPENAI_API_KEY no .env}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      # Recuperação de senha por email — opcional. Sem MAIL_HOST, o backend só
+      # loga o link em vez de enviar (ver SmtpPasswordResetMailer).
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@entrevista-ia.local}
     ports:
       # Porta do host configurável (default 8080) — útil se já houver algo
       # local ocupando a 8080 (ex.: backend rodando direto pela IDE).

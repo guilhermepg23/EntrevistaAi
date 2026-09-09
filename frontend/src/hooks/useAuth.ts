@@ -13,6 +13,9 @@ interface AuthContextValue {
   login: (token: string, nome: string) => void;
   logout: () => void;
   clearSessionExpired: () => void;
+  // Atualiza só o nome exibido (header, saudações) depois de editar o perfil na
+  // tela de conta — o token continua o mesmo (não carrega o nome).
+  updateNome: (nome: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -43,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSessionExpired = useCallback(() => setSessionExpired(false), []);
 
+  const updateNome = useCallback((novoNome: string) => {
+    localStorage.setItem(NOME_KEY, novoNome);
+    setNome(novoNome);
+  }, []);
+
   // interviewApi dispara este evento quando uma chamada volta 401/403 sem
   // corpo de erro de negócio (ver handleResponse em api/interviewApi.ts) —
   // ou seja, token ausente/expirado/inválido, não uma regra de negócio.
@@ -57,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return createElement(
     AuthContext.Provider,
-    { value: { isAuthenticated, nome, sessionExpired, login, logout, clearSessionExpired } },
+    { value: { isAuthenticated, nome, sessionExpired, login, logout, clearSessionExpired, updateNome } },
     children
   );
 }

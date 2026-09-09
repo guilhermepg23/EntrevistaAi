@@ -114,6 +114,20 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
     }
 
+    @ExceptionHandler(CpfAlreadyInUseException.class)
+    public ResponseEntity<ErrorResponse> handleCpfTaken(CpfAlreadyInUseException ex) {
+        log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidResetToken(InvalidResetTokenException ex) {
+        log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    }
+
     // Erro de validação do @Valid (ex.: @Email, @NotBlank em RegisterRequest/
     // LoginRequest/etc.) — sem esse handler, cai no catch-all genérico abaixo
     // e vira 500, escondendo que o problema é só um campo mal preenchido.

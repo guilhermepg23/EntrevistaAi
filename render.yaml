@@ -48,3 +48,18 @@ services:
         sync: false
       - key: CORS_ALLOWED_ORIGINS
         sync: false
+      # Recuperação de senha por email. Todos com "sync: false": preenchidos no
+      # dashboard. Enquanto MAIL_HOST ficar em branco, o backend sobe normal e
+      # só loga o link de recuperação em vez de enviar (ver SmtpPasswordResetMailer).
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false

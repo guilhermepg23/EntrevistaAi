@@ -1,6 +1,7 @@
 package com.guilherme.entrevistaia.entity;
 
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,17 @@ public class User {
 
     private String nome;
 
+    // Só dígitos (11 chars), sem máscara — a normalização acontece no
+    // AuthController.register antes de salvar (ver CpfValidator.stripToDigits).
+    // unique = true impede dois cadastros com o mesmo CPF. Fica nullable porque
+    // usuários criados antes desta coluna existir não têm CPF.
+    @Column(unique = true)
+    private String cpf;
+
+    // Quando a conta foi criada — exibido em "membro desde" na tela de conta.
+    // Null pros usuários anteriores a esta coluna.
+    private OffsetDateTime criadoEm;
+
     // Lado "inverso" do relacionamento: cada Interview tem um campo "user" (dono
     // do relacionamento, com @JoinColumn). mappedBy = "user" diz ao JPA "não crie
     // uma coluna nova aqui, só reflita o relacionamento que já existe do outro lado".
@@ -49,6 +61,12 @@ public class User {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public String getCpf() { return cpf; }
+    public void setCpf(String cpf) { this.cpf = cpf; }
+
+    public OffsetDateTime getCriadoEm() { return criadoEm; }
+    public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }
 
     public List<Interview> getInterviews() { return interviews; }
     public void setInterviews(List<Interview> interviews) { this.interviews = interviews; }

@@ -43,6 +43,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Envio do email com o link de recuperação de senha (ver
+             service/PasswordResetService e mail/SmtpPasswordResetMailer). O
+             JavaMailSender só é autoconfigurado quando spring.mail.host está
+             preenchido; sem isso, o mailer cai no modo "loga o link no servidor". -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>

@@ -61,7 +61,8 @@ public class SecurityConfig {
                 // Swagger, e o relatório público via link de compartilhamento (ver
                 // InterviewController.publicReport) — de propósito acessível sem
                 // login, é isso que torna o link enviável pra quem não usa a aplicação.
-                .requestMatchers("/auth/register", "/auth/login").permitAll()
+                .requestMatchers("/auth/register", "/auth/login",
+                    "/auth/forgot-password", "/auth/reset-password").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/interviews/public/**").permitAll()
                 // Todo o resto (ex.: /interviews/**) exige um usuário autenticado

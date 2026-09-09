@@ -17,6 +17,17 @@ spring:
       # errado/gigante antes de gastar processamento.
       max-file-size: 20MB
       max-request-size: 20MB
+  # SMTP do email de recuperação de senha. Sem MAIL_HOST definido, o
+  # spring-boot-starter-mail NÃO autoconfigura o JavaMailSender e o
+  # SmtpPasswordResetMailer passa a só logar o link (ver a classe).
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
   jpa:
     hibernate:
       ddl-auto: update
@@ -37,6 +48,18 @@ spring:
 jwt:
   secret: ${JWT_SECRET:troque-este-segredo-em-producao-min-32-caracteres}
   expiration-ms: 86400000 # 24h
+
+app:
+  # Base do front-end, usada pra montar o link do email de recuperação de senha
+  # (<base>/redefinir-senha?token=...). Em produção aponta pra URL da Vercel.
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  mail:
+    # Remetente do email de recuperação. Alguns provedores SMTP exigem que
+    # bata com o usuário autenticado / domínio verificado.
+    from: ${MAIL_FROM:no-reply@entrevista-ia.local}
+  password-reset:
+    # Validade do token de recuperação, em minutos.
+    ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}
 
 openai:
   api-key: ${OPENAI_API_KEY:}

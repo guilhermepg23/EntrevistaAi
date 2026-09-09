@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Layout } from './Layout';
 import { renderWithProviders } from '../test-utils';
 
+const auth = { token: 'tok', nome: 'Guilherme' };
+
 describe('Layout', () => {
   afterEach(() => localStorage.clear());
 
@@ -12,38 +14,42 @@ describe('Layout', () => {
     expect(screen.getByText('Entrevista IA')).toBeInTheDocument();
   });
 
-  it('deslogado: não mostra nome nem botão "Sair"', () => {
+  it('deslogado: não mostra o menu de conta nem o link de currículo', () => {
     renderWithProviders(<Layout><p>página</p></Layout>);
-    expect(screen.queryByRole('button', { name: 'Sair' })).not.toBeInTheDocument();
-  });
-
-  it('logado: mostra o nome, a inicial no avatar e o botão "Sair"', () => {
-    renderWithProviders(<Layout><p>página</p></Layout>, { auth: { token: 'tok', nome: 'Guilherme' } });
-
-    expect(screen.getByText('Guilherme')).toBeInTheDocument();
-    expect(screen.getByText('G')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument();
-  });
-
-  it('logado: mostra o link "Analisar currículo" apontando para /curriculo', () => {
-    renderWithProviders(<Layout><p>página</p></Layout>, { auth: { token: 'tok', nome: 'Guilherme' } });
-
-    const link = screen.getByRole('link', { name: 'Analisar currículo' });
-    expect(link).toHaveAttribute('href', '/curriculo');
-  });
-
-  it('deslogado: não mostra o link "Analisar currículo"', () => {
-    renderWithProviders(<Layout><p>página</p></Layout>);
+    expect(screen.queryByRole('button', { name: 'Guilherme' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Analisar currículo' })).not.toBeInTheDocument();
   });
 
-  it('clicar em "Sair" desloga (limpa o localStorage e some com o botão)', async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<Layout><p>página</p></Layout>, { auth: { token: 'tok', nome: 'Guilherme' } });
+  it('logado: mostra o nome, a inicial no avatar e o link "Analisar currículo"', () => {
+    renderWithProviders(<Layout><p>página</p></Layout>, { auth });
 
-    await user.click(screen.getByRole('button', { name: 'Sair' }));
+    expect(screen.getByText('Guilherme')).toBeInTheDocument();
+    expect(screen.getByText('G')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Analisar currículo' })).toHaveAttribute('href', '/curriculo');
+  });
+
+  it('o menu de conta abre no clique e traz "Detalhes da conta", "Configurações" e "Sair"', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Layout><p>página</p></Layout>, { auth });
+
+    // Fechado por padrão.
+    expect(screen.queryByRole('menuitem', { name: 'Sair' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Guilherme/ }));
+
+    expect(screen.getByRole('menuitem', { name: 'Detalhes da conta' })).toHaveAttribute('href', '/conta');
+    expect(screen.getByRole('menuitem', { name: 'Configurações' })).toHaveAttribute('href', '/conta?tab=config');
+    expect(screen.getByRole('menuitem', { name: 'Sair' })).toBeInTheDocument();
+  });
+
+  it('clicar em "Sair" desloga (limpa o localStorage e fecha o menu)', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Layout><p>página</p></Layout>, { auth });
+
+    await user.click(screen.getByRole('button', { name: /Guilherme/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sair' }));
 
     expect(localStorage.getItem('token')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Sair' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Guilherme/ })).not.toBeInTheDocument();
   });
 });

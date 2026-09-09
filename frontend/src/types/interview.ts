@@ -118,6 +118,16 @@ export interface AuthResponse {
   nome: string;
 }
 
+// Devolvido por GET/PATCH /account — dados da conta do usuário logado.
+// cpfMascarado vem como 123.***.***-09 (ou null pra contas antigas sem CPF);
+// criadoEm é null pra contas anteriores à coluna.
+export interface AccountDetails {
+  nome: string;
+  email: string;
+  cpfMascarado: string | null;
+  criadoEm: string | null;
+}
+
 // Item do histórico exibido no chat (view model, não vem direto da API)
 export type ChatItem =
   | { tipo: 'pergunta'; question: Question }

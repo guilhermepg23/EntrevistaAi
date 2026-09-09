@@ -13,4 +13,8 @@ public interface ResumeReviewRepository extends JpaRepository<ResumeReview, UUID
     // Nome do método vira a query: "WHERE user = :user ORDER BY criadoEm DESC".
     // Usado em ResumeReviewService.listByUser() pro histórico de análises.
     List<ResumeReview> findByUserOrderByCriadoEmDesc(User user);
+
+    // Usado na exclusão de conta (AccountService.deleteAccount): ResumeReview
+    // tem FK pra User sem cascade, então precisa ser apagado antes do usuário.
+    void deleteByUser(User user);
 }

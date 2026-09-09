@@ -18,4 +18,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Vira um SELECT COUNT/EXISTS otimizado (não traz a entidade inteira).
     // Usado no AuthController pra checar duplicidade de email antes de cadastrar.
     boolean existsByEmail(String email);
+
+    // Idem, pra duplicidade de CPF no cadastro (o CPF é normalizado pra só
+    // dígitos antes desta checagem — ver AuthController.register).
+    boolean existsByCpf(String cpf);
 }

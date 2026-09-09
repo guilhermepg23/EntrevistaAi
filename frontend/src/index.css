@@ -1294,6 +1294,227 @@ a {
   background: var(--color-primary-light);
 }
 
+/* Header — menu de conta no nome do usuário */
+
+.header-conta {
+  position: relative;
+}
+
+.header-conta-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+  box-shadow: none;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.header-conta-trigger:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  transform: none;
+  box-shadow: none;
+}
+
+.header-conta-caret {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.header-conta-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  min-width: 190px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem;
+  z-index: 20;
+}
+
+.header-conta-menu a,
+.header-conta-menu button {
+  text-align: left;
+  background: transparent;
+  color: var(--color-text);
+  border: none;
+  box-shadow: none;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+}
+
+.header-conta-menu a:hover,
+.header-conta-menu button:hover:not(:disabled) {
+  background: var(--color-surface-alt);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Auth — textos auxiliares nas telas de recuperação de senha */
+
+.auth-intro {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Página "Minha conta" (/conta) */
+
+.conta-page {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.conta-page h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.conta-abas {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.conta-aba {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.conta-aba:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--color-text);
+}
+
+.conta-aba.ativa {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.conta-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.conta-secao:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.conta-secao h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.conta-secao form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.conta-secao label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.conta-secao button {
+  align-self: flex-start;
+}
+
+.conta-detalhes {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.conta-detalhes > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.conta-detalhes dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.conta-detalhes dd {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.conta-perigo {
+  border: 1px solid #fecaca;
+  background: var(--color-danger-bg);
+  border-radius: var(--radius-sm);
+  padding: 1.15rem;
+}
+
+.conta-perigo h2 {
+  color: var(--color-danger);
+}
+
+.conta-perigo p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.conta-perigo-check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+  font-weight: 500 !important;
+  color: var(--color-text) !important;
+  font-size: 0.85rem !important;
+}
+
+.botao-perigo {
+  align-self: flex-start;
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.botao-perigo:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
 /* Página de análise de currículo avulsa (/curriculo) */
 
 .resume-review-page {

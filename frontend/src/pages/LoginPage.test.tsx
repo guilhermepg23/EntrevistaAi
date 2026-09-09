@@ -93,6 +93,11 @@ describe('LoginPage', () => {
     expect(screen.queryByText(/servidor gratuito estava hibernando/i)).not.toBeInTheDocument();
   });
 
+  it('mostra o link "Esqueceu sua senha?" apontando para /esqueci-senha', () => {
+    renderWithProviders(<LoginPage />, { route: '/login' });
+    expect(screen.getByRole('link', { name: 'Esqueceu sua senha?' })).toHaveAttribute('href', '/esqueci-senha');
+  });
+
   it('o botão "Mostrar senha" revela o que foi digitado no campo de senha', async () => {
     const user = userEvent.setup();
     renderWithProviders(<LoginPage />, { route: '/login' });

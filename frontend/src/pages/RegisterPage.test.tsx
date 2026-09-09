@@ -19,6 +19,8 @@ vi.mock('../api/authApi', () => ({
 // Gatilho por tempo coberto em useSlowRequestHint.test.ts.
 vi.mock('../hooks/useSlowRequestHint', () => ({ useSlowRequestHint: vi.fn() }));
 
+const CPF_VALIDO = '529.982.247-25';
+
 describe('RegisterPage', () => {
   beforeEach(() => {
     navigateSpy.mockReset();
@@ -29,10 +31,11 @@ describe('RegisterPage', () => {
 
   async function preencher(
     user: ReturnType<typeof userEvent.setup>,
-    { senha = 'segredo123', confirmar = 'segredo123' } = {},
+    { senha = 'segredo123', confirmar = 'segredo123', cpf = CPF_VALIDO } = {},
   ) {
     await user.type(screen.getByLabelText('Nome'), 'Bruno');
     await user.type(screen.getByLabelText('Email'), 'bruno@teste.com');
+    await user.type(screen.getByLabelText('CPF'), cpf);
     await user.type(screen.getByLabelText('Senha'), senha);
     await user.type(screen.getByLabelText('Confirmar senha'), confirmar);
   }
@@ -42,7 +45,15 @@ describe('RegisterPage', () => {
     await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
   }
 
-  it('cadastro com sucesso: chama authApi.register(email, senha, nome), loga e navega pra "/"', async () => {
+  it('formata o CPF enquanto digita', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await user.type(screen.getByLabelText('CPF'), '52998224725');
+    expect(screen.getByLabelText('CPF')).toHaveValue('529.982.247-25');
+  });
+
+  it('cadastro com sucesso: chama register(email, senha, nome, cpf só dígitos), loga e navega', async () => {
     const user = userEvent.setup();
     vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-novo', nome: 'Bruno' });
     renderWithProviders(<RegisterPage />, { route: '/register' });
@@ -50,9 +61,20 @@ describe('RegisterPage', () => {
     await preencherEEnviar(user);
 
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
-    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno');
+    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno', '52998224725');
     expect(localStorage.getItem('token')).toBe('tok-novo');
-    expect(localStorage.getItem('nome')).toBe('Bruno');
+  });
+
+  it('CPF inválido: mostra erro e nem chama a API', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await preencher(user, { cpf: '111.111.111-11' });
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await screen.findByText('CPF inválido. Confira os números.')).toBeInTheDocument();
+    expect(authApi.register).not.toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
   });
 
   it('erro da API (ex.: email já usado) aparece na tela e não navega', async () => {

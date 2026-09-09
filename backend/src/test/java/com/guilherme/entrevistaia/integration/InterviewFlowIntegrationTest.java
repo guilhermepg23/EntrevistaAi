@@ -78,7 +78,7 @@ class InterviewFlowIntegrationTest {
         MvcResult registerResult = mockMvc.perform(post("/auth/register")
                 .contentType("application/json")
                 .content("""
-                    {"email": "%s", "senha": "123456", "nome": "Integração"}
+                    {"email": "%s", "senha": "123456", "nome": "Integração", "cpf": "52998224725"}
                     """.formatted(email)))
             .andExpect(status().isCreated())
             .andReturn();
@@ -151,7 +151,7 @@ class InterviewFlowIntegrationTest {
         MvcResult registerResult = mockMvc.perform(post("/auth/register")
                 .contentType("application/json")
                 .content("""
-                    {"email": "%s", "senha": "123456", "nome": "Integração Report"}
+                    {"email": "%s", "senha": "123456", "nome": "Integração Report", "cpf": "11144477735"}
                     """.formatted(email)))
             .andExpect(status().isCreated())
             .andReturn();

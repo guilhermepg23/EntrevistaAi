@@ -55,6 +55,9 @@ export function LoginPage() {
         <button type="submit" disabled={carregando}>
           {carregando ? 'Entrando...' : 'Entrar'}
         </button>
+        <p className="auth-switch">
+          <Link to="/esqueci-senha">Esqueceu sua senha?</Link>
+        </p>
         {acordandoServidor && (
           <p className="hint-servidor">
             O servidor gratuito estava hibernando e está acordando — a primeira

@@ -5,10 +5,12 @@ import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 import { PasswordInput } from '../components/PasswordInput';
+import { formatCpf, isValidCpf, onlyDigits } from '../lib/cpf';
 
 export function RegisterPage() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
@@ -21,6 +23,13 @@ export function RegisterPage() {
     e.preventDefault();
     setErro(null);
 
+    // Checagem de CPF no cliente (mesmo algoritmo do backend, ver lib/cpf) —
+    // barra o erro antes de gastar a chamada. O back revalida de qualquer jeito.
+    if (!isValidCpf(cpf)) {
+      setErro('CPF inválido. Confira os números.');
+      return;
+    }
+
     // Confirmação de senha é só no cliente — o backend recebe um campo só
     // (ver RegisterRequest). Barra o erro de digitação antes de gastar a chamada.
     if (senha !== confirmarSenha) {
@@ -30,7 +39,7 @@ export function RegisterPage() {
 
     setCarregando(true);
     try {
-      const { token, nome: nomeResposta } = await authApi.register(email, senha, nome);
+      const { token, nome: nomeResposta } = await authApi.register(email, senha, nome, onlyDigits(cpf));
       login(token, nomeResposta);
       navigate('/');
     } catch (err) {
@@ -52,6 +61,18 @@ export function RegisterPage() {
         <label>
           Email
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+        </label>
+        <label>
+          CPF
+          <input
+            type="text"
+            inputMode="numeric"
+            value={cpf}
+            onChange={e => setCpf(formatCpf(e.target.value))}
+            placeholder="000.000.000-00"
+            maxLength={14}
+            required
+          />
         </label>
         <label>
           Senha
