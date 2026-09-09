@@ -14,6 +14,19 @@ describe('Layout', () => {
     expect(screen.getByText('Entrevista IA')).toBeInTheDocument();
   });
 
+  it('mostra o botão "Voltar" fora da home/login', () => {
+    renderWithProviders(<Layout><p>página</p></Layout>, { route: '/conta', auth });
+    expect(screen.getByRole('button', { name: 'Voltar' })).toBeInTheDocument();
+  });
+
+  it('não mostra "Voltar" na home nem no login', () => {
+    const { unmount } = renderWithProviders(<Layout><p>x</p></Layout>, { route: '/' });
+    expect(screen.queryByRole('button', { name: 'Voltar' })).not.toBeInTheDocument();
+    unmount();
+    renderWithProviders(<Layout><p>x</p></Layout>, { route: '/login' });
+    expect(screen.queryByRole('button', { name: 'Voltar' })).not.toBeInTheDocument();
+  });
+
   it('deslogado: não mostra o menu de conta nem o link de currículo', () => {
     renderWithProviders(<Layout><p>página</p></Layout>);
     expect(screen.queryByRole('button', { name: 'Guilherme' })).not.toBeInTheDocument();

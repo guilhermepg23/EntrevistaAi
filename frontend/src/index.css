@@ -230,6 +230,33 @@ a {
   z-index: 10;
 }
 
+.header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.header-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1.5px solid var(--color-border);
+  box-shadow: none;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.header-back:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: none;
+  box-shadow: none;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -1208,6 +1235,16 @@ a {
 @media (max-width: 600px) {
   .app-header {
     padding: 0.75rem 1rem;
+  }
+
+  /* No mobile o "Voltar" fica só com a seta pra economizar largura do header
+     (o aria-label="Voltar" mantém a acessibilidade). */
+  .header-back-label {
+    display: none;
+  }
+
+  .header-left {
+    gap: 0.55rem;
   }
 
   .app-main {
