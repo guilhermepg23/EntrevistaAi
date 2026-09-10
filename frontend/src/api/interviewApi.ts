@@ -1,19 +1,5 @@
 import type { AnswerFeedback, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
-import { SESSION_EXPIRED_EVENT } from '../hooks/useAuth';
-import { API_BASE } from './config';
-
-function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('token');
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-// Sem Content-Type aqui de propósito: o navegador define
-// "multipart/form-data; boundary=..." sozinho ao mandar um FormData — setar
-// manualmente quebraria o parsing do multipart no servidor.
-function authHeadersMultipart(): HeadersInit {
-  const token = localStorage.getItem('token');
-  return { Authorization: `Bearer ${token}` };
-}
+import { API_BASE, authHeaders, authHeadersMultipart, handleResponse } from './client';
 
 // Faz o parse manual de UM evento SSE já isolado (texto entre duas quebras de
 // linha duplas), extraindo "event:" e "data:" — não usamos EventSource porque
@@ -27,25 +13,6 @@ function parseSseEvent(raw: string): { event: string; data: string } {
     else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
   }
   return { event, data: dataLines.join('\n') };
-}
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-
-    // 401/403 SEM errorCode = o Spring Security barrou antes de chegar num
-    // controller (token ausente/expirado/inválido) — corpo vem vazio, ver
-    // JwtAuthenticationFilter. Com errorCode é regra de negócio (ex.:
-    // InterviewAccessDeniedException, entrevista de outro usuário), aí só
-    // mostra a mensagem normalmente, sem derrubar a sessão.
-    if ((res.status === 401 || res.status === 403) && !body?.errorCode) {
-      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-      throw new Error('Sessão expirada. Faça login novamente.');
-    }
-
-    throw new Error(body?.message ?? `Erro ${res.status}`);
-  }
-  return res.json();
 }
 
 export const interviewApi = {

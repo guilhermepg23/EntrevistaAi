@@ -1552,6 +1552,29 @@ a {
   background: #b91c1c;
 }
 
+/* Fallback do ErrorBoundary (ver components/ErrorBoundary) */
+
+.error-boundary {
+  max-width: 420px;
+  margin: 4rem auto;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.error-boundary h1 {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+
+.error-boundary p {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
 /* Página de análise de currículo avulsa (/curriculo) */
 
 .resume-review-page {

@@ -1,57 +1,64 @@
 # Backend — Simulador de Entrevista Técnica com IA
 
-Spring Boot 3 + Java 17.
+Spring Boot 3.3 · Java 21 · PostgreSQL. A visão geral do projeto (features,
+deploy, decisões de design) está no [README da raiz](../README.md) — aqui ficam
+só as notas de quem vai mexer no código do backend.
 
-## O que já está pronto
-
-- Entidades JPA completas (`entity/`)
-- Repositories (`repository/`) — interfaces simples, prontas pra uso
-- Autenticação JWT completa (`security/`) — filter, service, config
-- Exceções customizadas + `GlobalExceptionHandler` com log estruturado por errorCode (`exception/`)
-- Service layer (`service/InterviewService.java`) — orquestra tudo, valida posse (ownership),
-  controla transições de estado
-- Controllers + DTOs REST (`controller/`, `dto/`)
-- Interfaces de IA (`ai/AiQuestionGenerator`, `AiAnswerEvaluator`, `AiReportGenerator`) —
-  **contratos definidos, implementação real ainda falta**
-
-## O que falta implementar (próximos passos com Claude Code)
-
-1. **Implementações concretas das interfaces de IA** (`ai/impl/` — pasta ainda não criada):
-   - Client HTTP para a OpenAI API (`response_format: json_object`)
-   - Lógica de retry (até 3 tentativas) + validação de schema manual
-   - Os três system prompts (pergunta adaptativa, avaliação de resposta, relatório final)
-     foram desenhados em conversa — pedir para o Claude Code recuperar o histórico ou
-     redigir prompts equivalentes seguindo as regras já definidas:
-     - Pergunta: adaptativa por histórico completo, JSON com `pergunta/topico/dificuldade/motivo_escolha`
-     - Avaliação: nota 0-10, JSON com `nota/resumo/pontos_fortes/gaps/nivel_dominio`
-     - Relatório: pondera evolução ao longo da entrevista, JSON com `nota_geral/resumo_executivo/pontos_fortes/pontos_fracos/sugestoes_estudo/nivel_percebido/recomendacao`
-2. Testar a compilação: `mvn clean install`
-3. Configurar variáveis de ambiente reais (`.env` ou export): `DB_USERNAME`, `DB_PASSWORD`,
-   `JWT_SECRET` (mínimo 32 caracteres), `OPENAI_API_KEY`
-4. Subir um Postgres local (ou via Docker) e testar o fluxo completo
-5. Testes de integração do fluxo: register → login → start interview → next-question →
-   answer → (repete) → report
-
-## Estrutura
+## Estrutura (`src/main/java/com/guilherme/entrevistaia/`)
 
 ```
-entity/       — JPA entities
-repository/   — Spring Data JPA repositories
-security/     — JWT (filter, service, security config)
-exception/    — Exceções customizadas + GlobalExceptionHandler
-service/      — Lógica de negócio (InterviewService)
-controller/   — REST controllers
-dto/          — Request/Response records
-ai/           — Interfaces dos geradores de IA (implementação pendente)
+entity/       — entidades JPA (User, Interview, Question, Answer, FeedbackReport,
+                ResumeAnalysis, ResumeReview, PasswordResetToken) + enums
+repository/    — Spring Data JPA (interfaces puras)
+security/     — JWT (filtro, service, config), rate limiting por IP
+validation/    — @Cpf (formato + dígitos verificadores)
+exception/     — exceções de negócio + GlobalExceptionHandler (errorCode por log)
+service/       — regra de negócio (InterviewService, PasswordResetService, AccountService,
+                ResumeReviewService); controllers ficam magros
+controller/    — REST controllers + Swagger/OpenAPI
+dto/           — records de request/response
+ai/           — interfaces dos pontos de IA (AiQuestionGenerator, AiAnswerEvaluator,
+                AiReportGenerator, AiResumeAnalyzer, AiResumeReviewer,
+                AiQuestionStreamGenerator, AiAudioTranscriber, ResumeTextExtractor)
+ai/impl/       — implementações OpenAI/PDFBox (isoladas das interfaces pra testar sem rede)
+mail/          — PasswordResetMailer (SMTP; sem MAIL_HOST, só loga o link)
 ```
 
-## Rodar localmente (depois de implementar o client de IA)
+## Rodar localmente
+
+Requer Postgres na porta configurada (`DB_PORT`, default 5433) com o banco
+`entrevista_ia`, e estas env vars: `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`
+(≥ 32 chars), `OPENAI_API_KEY`. Opcionais: `MAIL_*` + `FRONTEND_BASE_URL` (email
+de recuperação — sem eles, o link vai só pro log).
 
 ```bash
-export DB_USERNAME=postgres
-export DB_PASSWORD=postgres
-export JWT_SECRET=uma-chave-bem-grande-e-aleatoria-aqui-32-chars
-export OPENAI_API_KEY=sk-...
-
 mvn spring-boot:run
 ```
+
+Sobe em `http://localhost:8080` — Swagger em `/swagger-ui/index.html`, health em
+`/health`. Ou use o `docker compose up` da raiz pra subir Postgres + backend juntos.
+
+## Testes
+
+```bash
+mvn test          # 142 testes
+```
+
+- **Unitários**: services (Mockito), `JwtService`, `CpfValidator`, `RateLimitFilter`,
+  streaming e transcrição de áudio via `MockRestServiceServer`, mapeamento do JSON
+  da IA (mock do `OpenAiClient`).
+- **Controller** (`@WebMvcTest` + MockMvc): status codes, tradução de exceção pelo
+  `GlobalExceptionHandler`, rotas públicas x autenticadas.
+- **Integração** (`InterviewFlowIntegrationTest`): sobe a app inteira contra um
+  Postgres real via Testcontainers (pulado automaticamente se não houver Docker).
+
+## Notas de design
+
+- Controllers são casca fina: validam `@Valid`, delegam pro service, devolvem DTO.
+- Pontos de IA são interfaces com impl OpenAI trocável → o service é testável sem
+  chamar a API de verdade.
+- `spring.jpa.open-in-view=true` mantido de propósito (ver comentário no
+  `application.yml`).
+- Sem migrations: `ddl-auto=update` cria/ajusta o schema no boot. Trade-off
+  conhecido pro tamanho atual.
+- Sem Spring Boot Actuator: `/health` é um controller de uma linha.

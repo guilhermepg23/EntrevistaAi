@@ -60,6 +60,12 @@ app:
   password-reset:
     # Validade do token de recuperação, em minutos.
     ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}
+  rate-limit:
+    # Limite por IP, por minuto (janela fixa). auth cobre /auth/**; ai cobre os
+    # endpoints que chamam a OpenAI (criar entrevista, próxima pergunta,
+    # transcrição, avaliação, análise de currículo). Ver security/RateLimitFilter.
+    auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:60}
+    ai-per-minute: ${RATE_LIMIT_AI_PER_MINUTE:40}
 
 openai:
   api-key: ${OPENAI_API_KEY:}

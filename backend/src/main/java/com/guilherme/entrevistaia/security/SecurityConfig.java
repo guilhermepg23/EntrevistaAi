@@ -63,6 +63,7 @@ public class SecurityConfig {
                 // login, é isso que torna o link enviável pra quem não usa a aplicação.
                 .requestMatchers("/auth/register", "/auth/login",
                     "/auth/forgot-password", "/auth/reset-password").permitAll()
+                .requestMatchers("/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/interviews/public/**").permitAll()
                 // Todo o resto (ex.: /interviews/**) exige um usuário autenticado

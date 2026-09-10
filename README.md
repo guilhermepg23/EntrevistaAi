@@ -1,12 +1,23 @@
 # Simulador de Entrevista Técnica com IA
 
+[![CI](https://github.com/guilhermepg23/EntrevistaAi/actions/workflows/ci.yml/badge.svg)](https://github.com/guilhermepg23/EntrevistaAi/actions/workflows/ci.yml)
+&nbsp;·&nbsp; **Demo:** https://entrevista-ai-five.vercel.app
+
 Projeto de portfólio: simulador de entrevistas técnicas adaptativo, usando IA para gerar
 perguntas, avaliar respostas e produzir um relatório final.
+
+> **Cold start**: o backend roda no free tier do Render e hiberna após 15 min. A primeira
+> requisição depois disso leva ~1 min (o app mostra um aviso). Abra a demo um pouco antes.
 
 ## Estrutura
 
 - `backend/` — Spring Boot (Java), API REST + integração com OpenAI
 - `frontend/` — React + TypeScript, interface tipo chat
+
+## Telas
+
+Capturas em [`docs/`](docs/): home (nova entrevista), chat com a pergunta em streaming,
+feedback de uma resposta, relatório final, análise de currículo avulsa e tela de conta.
 
 ## Status atual
 
@@ -50,13 +61,20 @@ perguntas, avaliar respostas e produzir um relatório final.
   andamento (`/{id}/abandon`)
 - Service layer (InterviewService) com controle de posse (ownership) e máquina de estados
   da entrevista (EM_ANDAMENTO → FINALIZADA / ABANDONADA)
-- Controllers + DTOs REST, documentados via Swagger/OpenAPI
-- Testes automatizados (`mvn test`, 136 testes): unitários (service, JWT, streaming,
-  transcrição de áudio via MockRestServiceServer, análise de currículo avulsa, validação de
-  CPF, recuperação de senha, conta), controller (MockMvc — cobre todas as rotas, incluindo
-  currículo, análise avulsa, CPF/forgot/reset no auth, `/account`, transcrição,
-  compartilhamento, transcript e abandono) e integração com Postgres real via Testcontainers
-  (exige Docker rodando; roda separado)
+- **Rate limiting por IP** (`RateLimitFilter`, janela de 1 min, sem dependência externa):
+  protege `/auth/**` de força bruta e os endpoints que chamam a OpenAI (criar entrevista,
+  próxima pergunta, transcrição, avaliação, análise de currículo) de abuso/custo. Limites
+  configuráveis por env (`RATE_LIMIT_AUTH_PER_MINUTE`, `RATE_LIMIT_AI_PER_MINUTE`)
+- Health check próprio em `/health` (sem Actuator); controllers + DTOs REST documentados
+  via Swagger/OpenAPI
+- Testes automatizados (`mvn test`, 142 testes): unitários (service, JWT, `CpfValidator`,
+  `RateLimitFilter`, streaming e transcrição de áudio via MockRestServiceServer, mapeamento
+  do JSON da IA, recuperação de senha, conta), controller (MockMvc — cobre todas as rotas,
+  incluindo currículo, análise avulsa, CPF/forgot/reset no auth, `/account`, `/health`,
+  transcrição, compartilhamento, transcript e abandono) e integração com Postgres real via
+  Testcontainers (pulado automaticamente sem Docker)
+- **CI** no GitHub Actions (`.github/workflows/ci.yml`): `mvn test` + `npm test` + build do
+  front em cada push/PR na `main`
 - Docker Compose (Postgres + backend) — validado manualmente, sobe limpo
 
 ### Frontend — funcional, roda de ponta a ponta
@@ -89,12 +107,14 @@ perguntas, avaliar respostas e produzir um relatório final.
 - Análise de currículo avulsa (`ResumeReviewPage`, rota `/curriculo`, link no header): envia
   o PDF (`POST /resume-reviews`), mostra anel de nota, badge de veredito, resumo e lista de
   melhorias, mais um histórico de análises anteriores — sem precisar iniciar entrevista
-- Client fetch (`api/interviewApi.ts`, `api/authApi.ts`, `api/accountApi.ts`) cobrindo toda
-  a API do backend, incluindo streaming (SSE), upload de currículo, análise de currículo
+- Client fetch (`api/interviewApi.ts`, `api/authApi.ts`, `api/accountApi.ts`) sobre um
+  `api/client.ts` comum (headers com token, `handleResponse` com o tratamento de sessão
+  expirada num lugar só), cobrindo toda a API: streaming (SSE), upload de currículo, análise
   avulsa, recuperação de senha, gestão de conta e compartilhamento público
+- `ErrorBoundary` no topo da árvore: um erro de renderização vira tela amigável, não branca
 - Base da API em `api/config.ts`: `VITE_API_URL` (do `.env`) com fallback pro backend em
   produção, pra o deploy não quebrar se a env var não entrar no build
-- Testes automatizados (Vitest + Testing Library, `npm test`, 127 testes):
+- Testes automatizados (Vitest + Testing Library, `npm test`, 131 testes):
   - **Client/hooks**: parsing do streaming SSE e sessão expirada (`interviewApi`), upload
     multipart da análise de currículo avulsa (`interviewApi.reviewResume`), `useAuth`
     (persistência de sessão, evento de sessão expirada), `useInterview` (máquina de estados
@@ -103,7 +123,8 @@ perguntas, avaliar respostas e produzir um relatório final.
     no fim, permissão negada, cleanup no unmount), `useSlowRequestHint`
   - **Libs**: `lib/cpf` (máscara progressiva, dígitos verificadores, sequências repetidas)
   - **Componentes**: `FeedbackBadge`, `AnswerInput` (incl. gravar → transcrever), `ChatBubble`,
-    `Layout` (menu de conta abre/fecha, itens, logout), `ProtectedRoute`
+    `Layout` (menu de conta abre/fecha, botão "Voltar" só fora de home/login), `ProtectedRoute`,
+    `ErrorBoundary` (renderiza filhos / mostra fallback ao lançar)
   - **Páginas** (render + interação, API/hooks mockados): `LoginPage` (incl. link "esqueci a
     senha"), `RegisterPage` (incl. CPF formatado/ inválido, senhas divergentes),
     `ForgotPasswordPage`, `ResetPasswordPage` (sem token, sucesso, token inválido),
@@ -118,10 +139,12 @@ Publicado e validado ponta a ponta em produção:
 - **App**: https://entrevista-ai-five.vercel.app
 - **Análise de currículo** (tela avulsa, sem entrevista): https://entrevista-ai-five.vercel.app/curriculo
 - **Backend**: Render (`render.yaml` blueprint — web service Docker + Postgres), health em
-  `/v3/api-docs`. Free tier: hiberna após 15 min (cold start ~50s), Postgres expira ~30 dias.
+  `/health`. Free tier: hiberna após 15 min (cold start ~50s).
 - **Frontend**: Vercel (root directory `frontend`, `VITE_API_URL` apontando pro backend).
   Push em `main` dispara build/deploy automático nas duas plataformas.
 - CORS liberado pra origem exata do frontend via `CORS_ALLOWED_ORIGINS` no Render.
+- ⚠️ **Postgres do Render (free) expira ~30 dias após criado** — antes disso, recriar o
+  banco ou migrar pra um free tier mais durável (Neon/Supabase) pra o backend não cair.
 - **Email de recuperação de senha**: setar no Render `MAIL_HOST`, `MAIL_PORT`,
   `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` e `FRONTEND_BASE_URL` (URL da Vercel).
   Sem `MAIL_HOST`, o backend sobe normalmente e só **loga** o link de recuperação no
