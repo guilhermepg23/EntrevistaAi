@@ -46,7 +46,9 @@ spring:
         format_sql: true
 
 jwt:
-  secret: ${JWT_SECRET:troque-este-segredo-em-producao-min-32-caracteres}
+  # Sem default proposital: sem JWT_SECRET definido, o boot falha em vez de
+  # cair silenciosamente num valor previsível em produção.
+  secret: ${JWT_SECRET}
   expiration-ms: 86400000 # 24h
 
 app:

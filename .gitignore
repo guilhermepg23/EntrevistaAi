@@ -15,6 +15,9 @@ frontend/*.tsbuildinfo
 .idea/
 *.iml
 
+# Logs de execução local (mvn spring-boot:run, vite dev)
+*.log
+
 # Config local do Claude Code — pode acumular comandos aprovados que incluem
 # valores literais (ex.: uma chave de API colada num "export" aprovado uma
 # vez). Nunca deve ir pro repositório.
