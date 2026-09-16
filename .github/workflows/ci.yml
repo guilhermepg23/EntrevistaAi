@@ -23,6 +23,8 @@ jobs:
       # Docker está disponível no runner do GitHub Actions, então o teste de
       # integração com Testcontainers (InterviewFlowIntegrationTest) roda também.
       - run: mvn -B test
+        env:
+          JWT_SECRET: ci-test-secret-nao-usar-em-producao-min-32-caracteres
 
   frontend:
     name: Frontend (npm test + build)
