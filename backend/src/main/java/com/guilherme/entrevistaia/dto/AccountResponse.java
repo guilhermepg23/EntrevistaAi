@@ -13,7 +13,10 @@ public record AccountResponse(
     String email,
     String cpfMascarado,
     OffsetDateTime criadoEm,
-    TipoConta tipo
+    TipoConta tipo,
+    // CNPJ da empresa (só dígitos), null se o recrutador não informou. Vai
+    // completo, ao contrário do CPF: é dado público da empresa, não pessoal.
+    String cnpj
 ) {
     public static AccountResponse from(User user) {
         return new AccountResponse(
@@ -21,7 +24,8 @@ public record AccountResponse(
             user.getEmail(),
             mascararCpf(user.getCpf()),
             user.getCriadoEm(),
-            user.getTipo()
+            user.getTipo(),
+            user.getCnpj()
         );
     }
 

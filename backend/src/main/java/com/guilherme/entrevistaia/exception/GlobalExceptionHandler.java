@@ -115,6 +115,13 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
     }
 
+    @ExceptionHandler(CpfRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleCpfRequired(CpfRequiredException ex) {
+        log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    }
+
     @ExceptionHandler(CpfAlreadyInUseException.class)
     public ResponseEntity<ErrorResponse> handleCpfTaken(CpfAlreadyInUseException ex) {
         log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());

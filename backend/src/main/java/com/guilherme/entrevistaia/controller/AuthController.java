@@ -8,6 +8,7 @@ import com.guilherme.entrevistaia.dto.ResetPasswordRequest;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.CpfAlreadyInUseException;
+import com.guilherme.entrevistaia.exception.CpfRequiredException;
 import com.guilherme.entrevistaia.exception.EmailAlreadyInUseException;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
 import com.guilherme.entrevistaia.repository.UserRepository;
@@ -54,26 +55,43 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request) {
+        TipoConta tipo = request.tipo() != null ? request.tipo() : TipoConta.CANDIDATO;
+
+        // Documento depende do tipo: candidato informa CPF (obrigatório);
+        // recrutador não informa CPF, só o CNPJ da empresa, e ainda assim
+        // opcional. O que não se aplica ao tipo é ignorado em vez de salvo.
+        // @Cpf/@Cnpj já garantiram os dígitos verificadores; aqui normalizamos
+        // pra só dígitos (o cliente pode ter mandado com máscara).
+        // A falta do CPF é validação de entrada, como as do @Valid: barrada
+        // antes de qualquer consulta ao banco.
+        String cpf = tipo == TipoConta.CANDIDATO ? CpfValidator.stripToDigits(request.cpf()) : null;
+        if (tipo == TipoConta.CANDIDATO && cpf.isEmpty()) {
+            throw new CpfRequiredException();
+        }
+
         if (userRepository.existsByEmail(request.email())) {
             log.info("[AUTH_EMAIL_TAKEN] Tentativa de registro com email já existente: {}", request.email());
             throw new EmailAlreadyInUseException(request.email());
         }
 
-        // O @Cpf já garantiu que é um CPF válido; aqui normalizamos pra só
-        // dígitos antes de checar duplicidade e salvar (o cliente pode ter
-        // mandado com máscara).
-        String cpf = CpfValidator.stripToDigits(request.cpf());
-        if (userRepository.existsByCpf(cpf)) {
-            log.info("[AUTH_CPF_TAKEN] Tentativa de registro com CPF já existente");
-            throw new CpfAlreadyInUseException();
+        String cnpj = null;
+        if (tipo == TipoConta.CANDIDATO) {
+            if (userRepository.existsByCpf(cpf)) {
+                log.info("[AUTH_CPF_TAKEN] Tentativa de registro com CPF já existente");
+                throw new CpfAlreadyInUseException();
+            }
+        } else {
+            String digitos = CpfValidator.stripToDigits(request.cnpj());
+            cnpj = digitos.isEmpty() ? null : digitos;
         }
 
         User user = new User();
         user.setEmail(request.email());
         user.setNome(request.nome());
         user.setCpf(cpf);
+        user.setCnpj(cnpj);
         user.setCriadoEm(OffsetDateTime.now());
-        user.setTipo(request.tipo() != null ? request.tipo() : TipoConta.CANDIDATO);
+        user.setTipo(tipo);
         // Nunca salvamos request.senha() direto — sempre passa pelo BCrypt antes.
         user.setSenhaHash(passwordEncoder.encode(request.senha()));
         userRepository.save(user);

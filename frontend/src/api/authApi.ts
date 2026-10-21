@@ -1,12 +1,24 @@
 import type { AuthResponse, TipoConta } from '../types/interview';
 import { API_BASE, handleAuthResponse } from './client';
 
+export interface RegisterDados {
+  email: string;
+  senha: string;
+  nome: string;
+  tipo: TipoConta;
+  // Só dígitos.
+  cpf?: string;
+  cnpj?: string;
+}
+
 export const authApi = {
-  register: (email: string, senha: string, nome: string, cpf: string, tipo: TipoConta) =>
+  // Objeto (não argumentos posicionais) porque os documentos variam com o tipo:
+  // candidato manda cpf; recrutador pode mandar cnpj (opcional) e nunca cpf.
+  register: (dados: RegisterDados) =>
     fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha, nome, cpf, tipo }),
+      body: JSON.stringify(dados),
     }).then(res => handleAuthResponse<AuthResponse>(res)),
 
   login: (email: string, senha: string) =>

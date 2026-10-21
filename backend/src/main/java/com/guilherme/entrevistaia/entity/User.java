@@ -37,6 +37,12 @@ public class User {
     @Column(unique = true)
     private String cpf;
 
+    // CNPJ da empresa, informado (opcionalmente) no cadastro de recrutador. Só
+    // dígitos, sem unique: vários recrutadores podem ser da mesma empresa.
+    // Provisório no usuário — quando a entidade de empresa existir (v1.1,
+    // etapa 2), o CNPJ passa a morar nela.
+    private String cnpj;
+
     // Quando a conta foi criada — exibido em "membro desde" na tela de conta.
     // Null pros usuários anteriores a esta coluna.
     private OffsetDateTime criadoEm;
@@ -71,6 +77,9 @@ public class User {
 
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
+
+    public String getCnpj() { return cnpj; }
+    public void setCnpj(String cnpj) { this.cnpj = cnpj; }
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }

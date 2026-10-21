@@ -225,7 +225,7 @@ class InterviewFlowIntegrationTest {
                 .contentType("application/json")
                 .content("""
                     {"email": "%s", "senha": "123456", "nome": "Recrutadora",
-                     "cpf": "39053344705", "tipo": "RECRUTADOR"}
+                     "cnpj": "11.222.333/0001-81", "tipo": "RECRUTADOR"}
                     """.formatted(email)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.tipo").value("RECRUTADOR"))
@@ -237,9 +237,12 @@ class InterviewFlowIntegrationTest {
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED_ACCOUNT_TYPE"));
 
-        // Rotas comuns aos dois tipos continuam abertas pra ele.
+        // Rotas comuns aos dois tipos continuam abertas pra ele. Sem CPF, com o
+        // CNPJ (coluna da V3) salvo só com dígitos.
         mockMvc.perform(get("/account").header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"))
+            .andExpect(jsonPath("$.cpfMascarado").doesNotExist())
+            .andExpect(jsonPath("$.cnpj").value("11222333000181"));
     }
 }

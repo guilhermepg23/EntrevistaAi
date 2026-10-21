@@ -77,10 +77,10 @@ class AuthControllerTest {
         verify(userRepository).save(any(User.class));
     }
 
+    // Recrutador não informa CPF — nem é checada a duplicidade.
     @Test
-    void register_comTipoRecrutadorSalvaEDevolveOTipo() throws Exception {
+    void register_recrutadorSemCpfESemCnpj() throws Exception {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userRepository.existsByCpf(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hash-fake");
         when(jwtService.generateToken(any(User.class))).thenReturn("token-fake");
 
@@ -88,12 +88,60 @@ class AuthControllerTest {
                 .contentType("application/json")
                 .content("""
                     {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
-                     "cpf": "%s", "tipo": "RECRUTADOR"}
-                    """.formatted(CPF_VALIDO)))
+                     "tipo": "RECRUTADOR"}
+                    """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
 
-        verify(userRepository).save(argThat(u -> u.getTipo() == TipoConta.RECRUTADOR));
+        verify(userRepository).save(argThat(u ->
+            u.getTipo() == TipoConta.RECRUTADOR && u.getCpf() == null && u.getCnpj() == null));
+        verify(userRepository, never()).existsByCpf(anyString());
+    }
+
+    @Test
+    void register_recrutadorComCnpjSalvaSoOsDigitos() throws Exception {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hash-fake");
+        when(jwtService.generateToken(any(User.class))).thenReturn("token-fake");
+
+        mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
+                     "cnpj": "11.222.333/0001-81", "tipo": "RECRUTADOR"}
+                    """))
+            .andExpect(status().isCreated());
+
+        verify(userRepository).save(argThat(u -> "11222333000181".equals(u.getCnpj())));
+    }
+
+    @Test
+    void register_recrutadorComCnpjInvalidoRetorna400() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
+                     "cnpj": "11222333000182", "tipo": "RECRUTADOR"}
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void register_candidatoSemCpfRetorna400() throws Exception {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+
+        mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "x@teste.com", "senha": "123456", "nome": "X", "tipo": "CANDIDATO"}
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+
+        verify(userRepository, never()).save(any());
     }
 
     @Test

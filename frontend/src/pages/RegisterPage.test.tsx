@@ -53,7 +53,7 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText('CPF')).toHaveValue('529.982.247-25');
   });
 
-  it('cadastro com sucesso: chama register(email, senha, nome, cpf só dígitos), loga e navega', async () => {
+  it('cadastro com sucesso: chama register com o cpf só dígitos, loga e navega', async () => {
     const user = userEvent.setup();
     vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-novo', nome: 'Bruno', tipo: 'CANDIDATO' });
     renderWithProviders(<RegisterPage />, { route: '/register' });
@@ -62,22 +62,60 @@ describe('RegisterPage', () => {
 
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
     // Sem mexer na escolha, o cadastro é de candidato.
-    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno', '52998224725', 'CANDIDATO');
+    expect(authApi.register).toHaveBeenCalledWith({
+      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'CANDIDATO', cpf: '52998224725',
+    });
     expect(localStorage.getItem('token')).toBe('tok-novo');
   });
 
-  it('escolhendo "Sou recrutador": cadastra como RECRUTADOR e guarda o tipo da sessão', async () => {
+  // Recrutador: sem campo de CPF, com CNPJ opcional no lugar.
+  async function preencherRecrutador(user: ReturnType<typeof userEvent.setup>, cnpj?: string) {
+    await user.click(screen.getByRole('radio', { name: /Sou recrutador/ }));
+    await user.type(screen.getByLabelText('Nome'), 'Bruno');
+    await user.type(screen.getByLabelText('Email'), 'bruno@teste.com');
+    if (cnpj) await user.type(screen.getByLabelText('CNPJ da empresa (opcional)'), cnpj);
+    await user.type(screen.getByLabelText('Senha'), 'segredo123');
+    await user.type(screen.getByLabelText('Confirmar senha'), 'segredo123');
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
+  }
+
+  it('recrutador sem CNPJ: não pede CPF, cadastra como RECRUTADOR e guarda o tipo da sessão', async () => {
     const user = userEvent.setup();
     vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-rh', nome: 'Bruno', tipo: 'RECRUTADOR' });
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
     expect(screen.getByRole('radio', { name: /Sou candidato/ })).toBeChecked();
-    await user.click(screen.getByRole('radio', { name: /Sou recrutador/ }));
-    await preencherEEnviar(user);
+    await preencherRecrutador(user);
 
+    expect(screen.queryByLabelText('CPF')).not.toBeInTheDocument();
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
-    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno', '52998224725', 'RECRUTADOR');
+    expect(authApi.register).toHaveBeenCalledWith({
+      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR',
+    });
     expect(localStorage.getItem('tipo')).toBe('RECRUTADOR');
+  });
+
+  it('recrutador com CNPJ: formata enquanto digita e envia só os dígitos', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-rh', nome: 'Bruno', tipo: 'RECRUTADOR' });
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await preencherRecrutador(user, '11222333000181');
+
+    expect(screen.getByLabelText('CNPJ da empresa (opcional)')).toHaveValue('11.222.333/0001-81');
+    await waitFor(() => expect(authApi.register).toHaveBeenCalledWith({
+      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR', cnpj: '11222333000181',
+    }));
+  });
+
+  it('recrutador com CNPJ inválido: mostra erro e nem chama a API', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await preencherRecrutador(user, '11222333000182');
+
+    expect(await screen.findByText(/CNPJ inválido/)).toBeInTheDocument();
+    expect(authApi.register).not.toHaveBeenCalled();
   });
 
   it('CPF inválido: mostra erro e nem chama a API', async () => {

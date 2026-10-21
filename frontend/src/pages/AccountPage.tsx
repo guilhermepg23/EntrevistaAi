@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import type { AccountDetails } from '../types/interview';
 import { tipoContaLabel } from '../labels';
+import { formatCnpj } from '../lib/cnpj';
 
 type Aba = 'detalhes' | 'config';
 
@@ -144,7 +145,13 @@ export function AccountPage() {
           <dl className="conta-detalhes">
             <div><dt>Nome</dt><dd>{detalhes.nome}</dd></div>
             <div><dt>Email</dt><dd>{detalhes.email}</dd></div>
-            <div><dt>CPF</dt><dd>{detalhes.cpfMascarado ?? 'Não informado'}</dd></div>
+            {/* Documento conforme o tipo: candidato tem CPF, recrutador o CNPJ
+                (opcional) da empresa. */}
+            {detalhes.tipo === 'RECRUTADOR' ? (
+              <div><dt>CNPJ da empresa</dt><dd>{detalhes.cnpj ? formatCnpj(detalhes.cnpj) : 'Não informado'}</dd></div>
+            ) : (
+              <div><dt>CPF</dt><dd>{detalhes.cpfMascarado ?? 'Não informado'}</dd></div>
+            )}
             <div><dt>Tipo de conta</dt><dd>{tipoContaLabel[detalhes.tipo]}</dd></div>
             <div><dt>Membro desde</dt><dd>{formatarData(detalhes.criadoEm)}</dd></div>
           </dl>

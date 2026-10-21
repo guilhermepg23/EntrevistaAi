@@ -131,6 +131,8 @@ export interface AccountDetails {
   cpfMascarado: string | null;
   criadoEm: string | null;
   tipo: TipoConta;
+  // CNPJ da empresa (só dígitos) — só recrutador, e opcional.
+  cnpj: string | null;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API)

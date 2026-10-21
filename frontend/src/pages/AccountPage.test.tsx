@@ -22,6 +22,7 @@ const detalhes: AccountDetails = {
   cpfMascarado: '529.***.***-25',
   criadoEm: '2026-01-05T10:00:00Z',
   tipo: 'CANDIDATO',
+  cnpj: null,
 };
 
 function render() {
@@ -45,6 +46,17 @@ describe('AccountPage', () => {
     expect(screen.getByText('529.***.***-25')).toBeInTheDocument();
     expect(screen.getByText('Candidato')).toBeInTheDocument();
     expect(screen.getByText('05/01/2026')).toBeInTheDocument();
+  });
+
+  it('recrutador: mostra o CNPJ formatado da empresa no lugar do CPF', async () => {
+    vi.mocked(accountApi.get).mockResolvedValue({
+      ...detalhes, tipo: 'RECRUTADOR', cpfMascarado: null, cnpj: '11222333000181',
+    });
+    render();
+
+    expect(await screen.findByText('11.222.333/0001-81')).toBeInTheDocument();
+    expect(screen.getByText('Recrutador')).toBeInTheDocument();
+    expect(screen.queryByText('CPF')).not.toBeInTheDocument();
   });
 
   it('aba Configurações traz editar nome, trocar senha e excluir conta', async () => {

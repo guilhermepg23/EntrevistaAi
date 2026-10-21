@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatCpf, isValidCpf, onlyDigits } from '../lib/cpf';
+import { formatCnpj, isValidCnpj, onlyDigitsCnpj } from '../lib/cnpj';
 import type { TipoConta } from '../types/interview';
 
 const OPCOES_TIPO: { valor: TipoConta; titulo: string; descricao: string }[] = [
@@ -22,6 +23,8 @@ export function RegisterPage() {
   // Fixo depois do cadastro (um tipo por conta) — por isso a escolha vem
   // primeiro no formulário, antes dos dados pessoais.
   const [tipo, setTipo] = useState<TipoConta>('CANDIDATO');
+  const [cnpj, setCnpj] = useState('');
+  const ehCandidato = tipo === 'CANDIDATO';
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const acordandoServidor = useSlowRequestHint(carregando);
@@ -32,10 +35,16 @@ export function RegisterPage() {
     e.preventDefault();
     setErro(null);
 
-    // Checagem de CPF no cliente (mesmo algoritmo do backend, ver lib/cpf) —
-    // barra o erro antes de gastar a chamada. O back revalida de qualquer jeito.
-    if (!isValidCpf(cpf)) {
+    // Checagem do documento no cliente (mesmo algoritmo do backend, ver lib/cpf
+    // e lib/cnpj) — barra o erro antes de gastar a chamada. O back revalida de
+    // qualquer jeito. Candidato: CPF obrigatório. Recrutador: CNPJ opcional,
+    // validado só se preenchido.
+    if (ehCandidato && !isValidCpf(cpf)) {
       setErro('CPF inválido. Confira os números.');
+      return;
+    }
+    if (!ehCandidato && cnpj !== '' && !isValidCnpj(cnpj)) {
+      setErro('CNPJ inválido. Confira os números ou deixe o campo em branco.');
       return;
     }
 
@@ -48,7 +57,17 @@ export function RegisterPage() {
 
     setCarregando(true);
     try {
-      const resposta = await authApi.register(email, senha, nome, onlyDigits(cpf), tipo);
+      const resposta = await authApi.register({
+        email,
+        senha,
+        nome,
+        tipo,
+        // Só o documento do tipo escolhido vai pro backend — se a pessoa
+        // preencheu um e trocou de tipo, o outro não é enviado.
+        ...(ehCandidato
+          ? { cpf: onlyDigits(cpf) }
+          : cnpj !== '' ? { cnpj: onlyDigitsCnpj(cnpj) } : {}),
+      });
       login(resposta.token, resposta.nome, resposta.tipo);
       navigate('/');
     } catch (err) {
@@ -87,18 +106,32 @@ export function RegisterPage() {
           Email
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
         </label>
-        <label>
-          CPF
-          <input
-            type="text"
-            inputMode="numeric"
-            value={cpf}
-            onChange={e => setCpf(formatCpf(e.target.value))}
-            placeholder="000.000.000-00"
-            maxLength={14}
-            required
-          />
-        </label>
+        {ehCandidato ? (
+          <label>
+            CPF
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cpf}
+              onChange={e => setCpf(formatCpf(e.target.value))}
+              placeholder="000.000.000-00"
+              maxLength={14}
+              required
+            />
+          </label>
+        ) : (
+          <label>
+            CNPJ da empresa (opcional)
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cnpj}
+              onChange={e => setCnpj(formatCnpj(e.target.value))}
+              placeholder="00.000.000/0000-00"
+              maxLength={18}
+            />
+          </label>
+        )}
         <label>
           Senha
           <PasswordInput

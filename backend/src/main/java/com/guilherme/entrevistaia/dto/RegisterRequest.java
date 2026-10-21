@@ -1,6 +1,7 @@
 package com.guilherme.entrevistaia.dto;
 
 import com.guilherme.entrevistaia.entity.TipoConta;
+import com.guilherme.entrevistaia.validation.Cnpj;
 import com.guilherme.entrevistaia.validation.Cpf;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -16,10 +17,17 @@ import jakarta.validation.constraints.Size;
 //
 // tipo é opcional: ausente vira CANDIDATO (ver AuthController.register), o que
 // mantém funcionando qualquer cliente anterior à escolha de tipo no cadastro.
+//
+// Os documentos dependem do tipo, por isso nenhum dos dois tem @NotBlank aqui:
+// - cpf: obrigatório pro candidato (cobrado no AuthController) e ignorado pro
+//   recrutador, que não informa CPF.
+// - cnpj: CNPJ da empresa, opcional e só pro recrutador.
+// Quando vêm preenchidos, @Cpf/@Cnpj conferem os dígitos verificadores.
 public record RegisterRequest(
     @NotBlank @Email String email,
     @NotBlank @Size(min = 6) String senha,
     @NotBlank String nome,
-    @NotBlank @Cpf String cpf,
+    @Cpf String cpf,
+    @Cnpj String cnpj,
     TipoConta tipo
 ) {}
