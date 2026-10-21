@@ -138,13 +138,19 @@ Publicado e validado ponta a ponta em produção:
 
 - **App**: https://entrevista-ai-five.vercel.app
 - **Análise de currículo** (tela avulsa, sem entrevista): https://entrevista-ai-five.vercel.app/curriculo
-- **Backend**: Render (`render.yaml` blueprint — web service Docker + Postgres), health em
+- **Backend**: Render (`render.yaml` blueprint — web service Docker), health em
   `/health`. Free tier: hiberna após 15 min (cold start ~50s).
+- **Banco**: Supabase (Postgres free, sem data de validade — o Postgres free do Render
+  expirava em ~30 dias e derrubava o backend). O schema é criado pelo Flyway
+  (`backend/src/main/resources/db/migration`) no boot. No Render, preencher:
+  - `DATABASE_URL`: `jdbc:postgresql://aws-0-<região>.pooler.supabase.com:5432/postgres?sslmode=require`
+    — em **Connect → JDBC → Session pooler**. Não use a conexão direta (só IPv6, o
+    Render não alcança).
+  - `DB_USERNAME`: `postgres.<ref-do-projeto>` (formato do usuário no pooler).
+  - `DB_PASSWORD`: a senha do banco definida ao criar o projeto.
 - **Frontend**: Vercel (root directory `frontend`, `VITE_API_URL` apontando pro backend).
   Push em `main` dispara build/deploy automático nas duas plataformas.
 - CORS liberado pra origem exata do frontend via `CORS_ALLOWED_ORIGINS` no Render.
-- ⚠️ **Postgres do Render (free) expira ~30 dias após criado** — antes disso, recriar o
-  banco ou migrar pra um free tier mais durável (Neon/Supabase) pra o backend não cair.
 - **Email de recuperação de senha**: setar no Render `MAIL_HOST`, `MAIL_PORT`,
   `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` e `FRONTEND_BASE_URL` (URL da Vercel).
   Sem `MAIL_HOST`, o backend sobe normalmente e só **loga** o link de recuperação no
