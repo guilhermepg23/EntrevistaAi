@@ -1,10 +1,12 @@
 package com.guilherme.entrevistaia.controller;
 
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
 import com.guilherme.entrevistaia.repository.UserRepository;
 import com.guilherme.entrevistaia.security.JwtService;
 import com.guilherme.entrevistaia.security.SecurityConfig;
+import com.guilherme.entrevistaia.security.UserAuthorities;
 import com.guilherme.entrevistaia.service.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +18,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -56,7 +57,7 @@ class AccountControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken auth() {
-        return new UsernamePasswordAuthenticationToken(user, null, List.of());
+        return new UsernamePasswordAuthenticationToken(user, null, UserAuthorities.of(user));
     }
 
     @Test
@@ -65,7 +66,19 @@ class AccountControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.nome").value("Ana"))
             .andExpect(jsonPath("$.email").value("ana@teste.com"))
-            .andExpect(jsonPath("$.cpfMascarado").value("529.***.***-25"));
+            .andExpect(jsonPath("$.cpfMascarado").value("529.***.***-25"))
+            .andExpect(jsonPath("$.tipo").value("CANDIDATO"));
+    }
+
+    // /account é comum aos dois tipos de conta — o recrutador também tem
+    // "Minha conta" (cai no anyRequest().authenticated(), sem regra de papel).
+    @Test
+    void me_recrutadorTambemAcessa() throws Exception {
+        user.setTipo(TipoConta.RECRUTADOR);
+
+        mockMvc.perform(get("/account").with(authentication(auth())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
     }
 
     @Test

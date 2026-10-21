@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.dto;
 
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 
 import java.time.OffsetDateTime;
@@ -11,14 +12,16 @@ public record AccountResponse(
     String nome,
     String email,
     String cpfMascarado,
-    OffsetDateTime criadoEm
+    OffsetDateTime criadoEm,
+    TipoConta tipo
 ) {
     public static AccountResponse from(User user) {
         return new AccountResponse(
             user.getNome(),
             user.getEmail(),
             mascararCpf(user.getCpf()),
-            user.getCriadoEm()
+            user.getCriadoEm(),
+            user.getTipo()
         );
     }
 

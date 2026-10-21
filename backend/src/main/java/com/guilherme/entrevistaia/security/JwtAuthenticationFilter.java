@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.UUID;
 
 // Filtro que roda em TODA requisição HTTP (OncePerRequestFilter garante que
@@ -80,8 +79,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // o usuário logado, e é isso que permite os controllers pedirem
         // @AuthenticationPrincipal User user e recebê-lo pronto, sem consultar
         // token/banco de novo.
+        //
+        // A authority (ROLE_CANDIDATO / ROLE_RECRUTADOR) sai do User recém-lido
+        // do banco, não de um claim do token: o banco é a fonte da verdade, e um
+        // token antigo nunca carrega um papel desatualizado.
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+            new UsernamePasswordAuthenticationToken(user, null, UserAuthorities.of(user));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);

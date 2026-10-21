@@ -7,6 +7,7 @@ import com.guilherme.entrevistaia.exception.*;
 import com.guilherme.entrevistaia.repository.UserRepository;
 import com.guilherme.entrevistaia.security.JwtService;
 import com.guilherme.entrevistaia.security.SecurityConfig;
+import com.guilherme.entrevistaia.security.UserAuthorities;
 import com.guilherme.entrevistaia.service.InterviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,7 @@ class InterviewControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken auth() {
-        return new UsernamePasswordAuthenticationToken(user, null, List.of());
+        return new UsernamePasswordAuthenticationToken(user, null, UserAuthorities.of(user));
     }
 
     private Interview novaInterview(UUID id, InterviewStatus status, int totalPerguntas) {
@@ -96,6 +97,17 @@ class InterviewControllerTest {
                     {"stack": "Java", "nivel": "junior", "totalPerguntas": 5}
                     """))
             .andExpect(status().is4xxClientError());
+    }
+
+    // Entrevista é tela de candidato. O 403 precisa vir COM errorCode: sem ele,
+    // o front acharia que a sessão expirou e deslogaria um token válido.
+    @Test
+    void recrutador_naoAcessaEntrevistas() throws Exception {
+        user.setTipo(TipoConta.RECRUTADOR);
+
+        mockMvc.perform(get("/interviews").with(authentication(auth())))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED_ACCOUNT_TYPE"));
     }
 
     @Test

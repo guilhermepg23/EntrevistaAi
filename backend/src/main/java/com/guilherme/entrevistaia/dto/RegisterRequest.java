@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.dto;
 
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.validation.Cpf;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,9 +13,13 @@ import jakarta.validation.constraints.Size;
 // requisição com 400 ANTES de chegar no código do controller se algo não bater
 // (ex.: email sem "@", senha com menos de 6 caracteres, CPF com dígito
 // verificador errado). O CPF pode vir com ou sem máscara — ver Cpf/CpfValidator.
+//
+// tipo é opcional: ausente vira CANDIDATO (ver AuthController.register), o que
+// mantém funcionando qualquer cliente anterior à escolha de tipo no cadastro.
 public record RegisterRequest(
     @NotBlank @Email String email,
     @NotBlank @Size(min = 6) String senha,
     @NotBlank String nome,
-    @NotBlank @Cpf String cpf
+    @NotBlank @Cpf String cpf,
+    TipoConta tipo
 ) {}

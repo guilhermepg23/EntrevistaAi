@@ -36,7 +36,7 @@ describe('useAuth', () => {
   it('login persiste token/nome no localStorage e atualiza o estado', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    act(() => result.current.login('token-novo', 'Ciclana'));
+    act(() => result.current.login('token-novo', 'Ciclana', 'CANDIDATO'));
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.nome).toBe('Ciclana');
@@ -46,7 +46,7 @@ describe('useAuth', () => {
 
   it('logout limpa localStorage e estado', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
-    act(() => result.current.login('token-novo', 'Ciclana'));
+    act(() => result.current.login('token-novo', 'Ciclana', 'CANDIDATO'));
 
     act(() => result.current.logout());
 
@@ -54,11 +54,30 @@ describe('useAuth', () => {
     expect(result.current.nome).toBeNull();
     expect(localStorage.getItem('token')).toBeNull();
     expect(localStorage.getItem('nome')).toBeNull();
+    expect(localStorage.getItem('tipo')).toBeNull();
+  });
+
+  it('login guarda o tipo da conta (estado + localStorage)', () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    act(() => result.current.login('token-rh', 'Recrutadora', 'RECRUTADOR'));
+
+    expect(result.current.tipo).toBe('RECRUTADOR');
+    expect(localStorage.getItem('tipo')).toBe('RECRUTADOR');
+  });
+
+  it('sessão antiga sem "tipo" no localStorage é tratada como candidato', () => {
+    localStorage.setItem('token', 'tok-antigo');
+    localStorage.setItem('nome', 'Fulano');
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.tipo).toBe('CANDIDATO');
   });
 
   it('SESSION_EXPIRED_EVENT (disparado pelo interviewApi em 401/403 sem errorCode) desloga e marca sessionExpired', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
-    act(() => result.current.login('token-novo', 'Ciclana'));
+    act(() => result.current.login('token-novo', 'Ciclana', 'CANDIDATO'));
 
     act(() => window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT)));
 

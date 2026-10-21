@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,11 +67,31 @@ public class SecurityConfig {
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/interviews/public/**").permitAll()
-                // Todo o resto (ex.: /interviews/**) exige um usuário autenticado
+                // Rotas por tipo de conta (ver TipoConta / UserAuthorities). A
+                // ordem importa: o Spring usa a PRIMEIRA regra que casa, por isso
+                // o permitAll de /interviews/public/** fica acima. Entrevista e
+                // análise de currículo são do candidato; /company/** e
+                // /assessments/** (empresa e testes, etapas seguintes da v1.1)
+                // já nascem restritas ao recrutador.
+                .requestMatchers("/interviews/**", "/resume-reviews/**").hasRole("CANDIDATO")
+                .requestMatchers("/company/**", "/assessments/**").hasRole("RECRUTADOR")
+                // Todo o resto (ex.: /account) exige um usuário autenticado
                 // — ou seja, exige que o JwtAuthenticationFilter tenha validado
                 // um token e populado o SecurityContextHolder antes de chegar aqui.
                 .anyRequest().authenticated()
             )
+            // Logado, mas com o tipo de conta errado pra rota. Responde 403 COM
+            // errorCode de propósito: o front trata 401/403 sem errorCode como
+            // sessão expirada e desloga (ver handleResponse em api/client.ts) —
+            // aqui o token está ótimo, só não dá acesso àquela tela.
+            .exceptionHandling(ex -> ex.accessDeniedHandler((request, response, denied) -> {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(
+                    "{\"errorCode\":\"ACCESS_DENIED_ACCOUNT_TYPE\","
+                        + "\"message\":\"Seu tipo de conta não tem acesso a este recurso.\"}");
+            }))
             // Insere nosso filtro ANTES do filtro padrão de autenticação por
             // usuário/senha do Spring Security (que nem usamos, já que é tudo JWT).
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

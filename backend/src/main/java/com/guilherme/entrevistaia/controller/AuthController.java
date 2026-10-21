@@ -5,6 +5,7 @@ import com.guilherme.entrevistaia.dto.ForgotPasswordRequest;
 import com.guilherme.entrevistaia.dto.LoginRequest;
 import com.guilherme.entrevistaia.dto.RegisterRequest;
 import com.guilherme.entrevistaia.dto.ResetPasswordRequest;
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.CpfAlreadyInUseException;
 import com.guilherme.entrevistaia.exception.EmailAlreadyInUseException;
@@ -72,17 +73,18 @@ public class AuthController {
         user.setNome(request.nome());
         user.setCpf(cpf);
         user.setCriadoEm(OffsetDateTime.now());
+        user.setTipo(request.tipo() != null ? request.tipo() : TipoConta.CANDIDATO);
         // Nunca salvamos request.senha() direto — sempre passa pelo BCrypt antes.
         user.setSenhaHash(passwordEncoder.encode(request.senha()));
         userRepository.save(user);
 
-        log.info("[AUTH_REGISTER_SUCCESS] Novo usuário registrado: userId={}", user.getId());
+        log.info("[AUTH_REGISTER_SUCCESS] Novo usuário registrado: userId={} tipo={}", user.getId(), user.getTipo());
 
         // Já loga o usuário automaticamente após o registro, devolvendo um
         // token pronto pra usar — evita ter que registrar e depois logar
         // como duas chamadas separadas.
         String token = jwtService.generateToken(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(token, user.getNome()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(token, user.getNome(), user.getTipo()));
     }
 
     @PostMapping("/login")
@@ -104,7 +106,7 @@ public class AuthController {
         log.info("[AUTH_LOGIN_SUCCESS] Login bem-sucedido: userId={}", user.getId());
 
         String token = jwtService.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token, user.getNome()));
+        return ResponseEntity.ok(new AuthResponse(token, user.getNome(), user.getTipo()));
     }
 
     // POST /auth/forgot-password — dispara o email com o link de recuperação.

@@ -11,6 +11,15 @@ import { AccountPage } from './pages/AccountPage';
 import { InterviewChatPage } from './pages/InterviewChatPage';
 import { InterviewReportPage } from './pages/InterviewReportPage';
 import { PublicReportPage } from './pages/PublicReportPage';
+import { RecruiterHomePage } from './pages/RecruiterHomePage';
+import { useAuth } from './hooks/useAuth';
+
+// "/" é a raiz de quem está logado, e cada tipo de conta tem a sua: o candidato
+// cai no treino de entrevista, o recrutador no painel da empresa.
+function HomePorTipo() {
+  const { tipo } = useAuth();
+  return tipo === 'RECRUTADOR' ? <RecruiterHomePage /> : <HomePage />;
+}
 
 export function App() {
   return (
@@ -21,11 +30,11 @@ export function App() {
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
         <Route path="/relatorio-publico/:token" element={<PublicReportPage />} />
-        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-        <Route path="/curriculo" element={<ProtectedRoute><ResumeReviewPage /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><HomePorTipo /></ProtectedRoute>} />
+        <Route path="/curriculo" element={<ProtectedRoute tipo="CANDIDATO"><ResumeReviewPage /></ProtectedRoute>} />
         <Route path="/conta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-        <Route path="/interview/:id" element={<ProtectedRoute><InterviewChatPage /></ProtectedRoute>} />
-        <Route path="/interview/:id/report" element={<ProtectedRoute><InterviewReportPage /></ProtectedRoute>} />
+        <Route path="/interview/:id" element={<ProtectedRoute tipo="CANDIDATO"><InterviewChatPage /></ProtectedRoute>} />
+        <Route path="/interview/:id/report" element={<ProtectedRoute tipo="CANDIDATO"><InterviewReportPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

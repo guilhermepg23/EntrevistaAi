@@ -41,6 +41,13 @@ describe('Layout', () => {
     expect(screen.getByRole('link', { name: 'Analisar currículo' })).toHaveAttribute('href', '/curriculo');
   });
 
+  it('recrutador: não mostra "Analisar currículo" (é ferramenta de candidato)', () => {
+    renderWithProviders(<Layout><p>página</p></Layout>, { auth: { ...auth, tipo: 'RECRUTADOR' } });
+
+    expect(screen.getByText('Guilherme')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Analisar currículo' })).not.toBeInTheDocument();
+  });
+
   it('o menu de conta abre no clique e traz "Detalhes da conta", "Configurações" e "Sair"', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Layout><p>página</p></Layout>, { auth });

@@ -30,7 +30,7 @@ function BackButton() {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, nome, logout } = useAuth();
+  const { isAuthenticated, nome, tipo, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -68,7 +68,9 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
         {isAuthenticated && (
           <div className="header-user">
-            <Link to="/curriculo" className="header-nav-link">Analisar currículo</Link>
+            {tipo === 'CANDIDATO' && (
+              <Link to="/curriculo" className="header-nav-link">Analisar currículo</Link>
+            )}
             <div className="header-conta" ref={menuRef}>
               <button
                 type="button"

@@ -8,6 +8,9 @@ export type NivelPercebido = 'JUNIOR' | 'PLENO' | 'SENIOR';
 export type Recomendacao = 'APROVADO' | 'APROVADO_COM_RESSALVAS' | 'NAO_APROVADO';
 export type InterviewStatus = 'EM_ANDAMENTO' | 'FINALIZADA' | 'ABANDONADA';
 export type VeredictoCurriculo = 'RUIM' | 'REGULAR' | 'BOM' | 'EXCELENTE';
+// Tipo da conta, escolhido no cadastro (ver TipoConta no backend). Decide o
+// conjunto de telas: candidato treina/faz testes, recrutador cria testes.
+export type TipoConta = 'CANDIDATO' | 'RECRUTADOR';
 
 export interface Question {
   id: string;
@@ -116,6 +119,7 @@ export interface PublicReport {
 export interface AuthResponse {
   token: string;
   nome: string;
+  tipo: TipoConta;
 }
 
 // Devolvido por GET/PATCH /account — dados da conta do usuário logado.
@@ -126,6 +130,7 @@ export interface AccountDetails {
   email: string;
   cpfMascarado: string | null;
   criadoEm: string | null;
+  tipo: TipoConta;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API)

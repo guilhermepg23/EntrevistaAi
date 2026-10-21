@@ -17,6 +17,15 @@ function renderAt(entry: string) {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/so-candidato"
+            element={
+              <ProtectedRoute tipo="CANDIDATO">
+                <p>tela de candidato</p>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<p>home</p>} />
           <Route path="/login" element={<p>tela de login</p>} />
         </Routes>
       </AuthProvider>
@@ -41,5 +50,26 @@ describe('ProtectedRoute', () => {
     renderAt('/protegida');
 
     expect(screen.getByText('conteúdo protegido')).toBeInTheDocument();
+  });
+
+  it('rota de candidato com conta de recrutador: manda pra home', () => {
+    localStorage.setItem('token', 'tok');
+    localStorage.setItem('nome', 'Recrutadora');
+    localStorage.setItem('tipo', 'RECRUTADOR');
+
+    renderAt('/so-candidato');
+
+    expect(screen.getByText('home')).toBeInTheDocument();
+    expect(screen.queryByText('tela de candidato')).not.toBeInTheDocument();
+  });
+
+  it('rota de candidato com conta de candidato: renderiza normalmente', () => {
+    localStorage.setItem('token', 'tok');
+    localStorage.setItem('nome', 'Fulano');
+    localStorage.setItem('tipo', 'CANDIDATO');
+
+    renderAt('/so-candidato');
+
+    expect(screen.getByText('tela de candidato')).toBeInTheDocument();
   });
 });

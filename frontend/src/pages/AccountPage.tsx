@@ -5,6 +5,7 @@ import { accountApi } from '../api/accountApi';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import type { AccountDetails } from '../types/interview';
+import { tipoContaLabel } from '../labels';
 
 type Aba = 'detalhes' | 'config';
 
@@ -144,6 +145,7 @@ export function AccountPage() {
             <div><dt>Nome</dt><dd>{detalhes.nome}</dd></div>
             <div><dt>Email</dt><dd>{detalhes.email}</dd></div>
             <div><dt>CPF</dt><dd>{detalhes.cpfMascarado ?? 'Não informado'}</dd></div>
+            <div><dt>Tipo de conta</dt><dd>{tipoContaLabel[detalhes.tipo]}</dd></div>
             <div><dt>Membro desde</dt><dd>{formatarData(detalhes.criadoEm)}</dd></div>
           </dl>
         </section>

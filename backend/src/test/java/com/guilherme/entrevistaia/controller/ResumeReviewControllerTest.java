@@ -8,6 +8,7 @@ import com.guilherme.entrevistaia.exception.ResumeParseException;
 import com.guilherme.entrevistaia.repository.UserRepository;
 import com.guilherme.entrevistaia.security.JwtService;
 import com.guilherme.entrevistaia.security.SecurityConfig;
+import com.guilherme.entrevistaia.security.UserAuthorities;
 import com.guilherme.entrevistaia.service.ResumeReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ class ResumeReviewControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken auth() {
-        return new UsernamePasswordAuthenticationToken(user, null, List.of());
+        return new UsernamePasswordAuthenticationToken(user, null, UserAuthorities.of(user));
     }
 
     private ResumeReview novaReview() {

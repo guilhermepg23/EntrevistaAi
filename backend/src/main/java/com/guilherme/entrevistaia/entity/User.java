@@ -41,6 +41,13 @@ public class User {
     // Null pros usuários anteriores a esta coluna.
     private OffsetDateTime criadoEm;
 
+    // Candidato ou recrutador — define as telas e as rotas que a conta acessa.
+    // Default CANDIDATO: é o que todas as contas anteriores a esta coluna eram
+    // (a migration V2 preenche o mesmo valor no banco).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoConta tipo = TipoConta.CANDIDATO;
+
     // Lado "inverso" do relacionamento: cada Interview tem um campo "user" (dono
     // do relacionamento, com @JoinColumn). mappedBy = "user" diz ao JPA "não crie
     // uma coluna nova aqui, só reflita o relacionamento que já existe do outro lado".
@@ -67,6 +74,9 @@ public class User {
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }
+
+    public TipoConta getTipo() { return tipo; }
+    public void setTipo(TipoConta tipo) { this.tipo = tipo; }
 
     public List<Interview> getInterviews() { return interviews; }
     public void setInterviews(List<Interview> interviews) { this.interviews = interviews; }

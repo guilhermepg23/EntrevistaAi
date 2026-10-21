@@ -21,6 +21,7 @@ const detalhes: AccountDetails = {
   email: 'ana@teste.com',
   cpfMascarado: '529.***.***-25',
   criadoEm: '2026-01-05T10:00:00Z',
+  tipo: 'CANDIDATO',
 };
 
 function render() {
@@ -42,6 +43,7 @@ describe('AccountPage', () => {
 
     expect(await screen.findByText('ana@teste.com')).toBeInTheDocument();
     expect(screen.getByText('529.***.***-25')).toBeInTheDocument();
+    expect(screen.getByText('Candidato')).toBeInTheDocument();
     expect(screen.getByText('05/01/2026')).toBeInTheDocument();
   });
 

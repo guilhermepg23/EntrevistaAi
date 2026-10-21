@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -139,6 +140,16 @@ public class GlobalExceptionHandler {
         log.info("[VALIDATION_ERROR] {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(new ErrorResponse("VALIDATION_ERROR", message));
+    }
+
+    // JSON malformado ou com valor fora do esperado (ex.: "tipo": "ADMIN" no
+    // cadastro, que não existe em TipoConta). Sem esse handler, o Jackson falha
+    // antes do @Valid e o erro cai no catch-all abaixo como 500.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex) {
+        log.info("[INVALID_REQUEST_BODY] {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse("INVALID_REQUEST_BODY", "Corpo da requisição inválido."));
     }
 
     // Rede de segurança: qualquer exceção NÃO mapeada acima (bug, NullPointerException,

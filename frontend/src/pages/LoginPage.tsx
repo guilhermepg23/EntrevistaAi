@@ -21,8 +21,8 @@ export function LoginPage() {
     clearSessionExpired();
     setCarregando(true);
     try {
-      const { token, nome } = await authApi.login(email, senha);
-      login(token, nome);
+      const { token, nome, tipo } = await authApi.login(email, senha);
+      login(token, nome, tipo);
       navigate('/');
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao entrar');

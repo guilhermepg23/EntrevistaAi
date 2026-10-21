@@ -213,4 +213,33 @@ class InterviewFlowIntegrationTest {
 
         verify(reportGenerator, times(1)).generate(any());
     }
+
+    // Caminho real ponta a ponta: tipo escolhido no cadastro -> coluna users.tipo
+    // (migration V2) -> JwtAuthenticationFilter relê o User e monta a authority
+    // -> SecurityConfig barra a rota de candidato com 403 + errorCode.
+    @Test
+    void recrutador_cadastradoComoTalNaoAcessaEntrevistas() throws Exception {
+        String email = "integracao-rh-" + UUID.randomUUID() + "@teste.com";
+
+        MvcResult registerResult = mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "%s", "senha": "123456", "nome": "Recrutadora",
+                     "cpf": "39053344705", "tipo": "RECRUTADOR"}
+                    """.formatted(email)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"))
+            .andReturn();
+        String token = objectMapper.readTree(registerResult.getResponse().getContentAsString())
+            .get("token").asText();
+
+        mockMvc.perform(get("/interviews").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED_ACCOUNT_TYPE"));
+
+        // Rotas comuns aos dois tipos continuam abertas pra ele.
+        mockMvc.perform(get("/account").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
+    }
 }

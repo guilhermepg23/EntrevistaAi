@@ -1,6 +1,7 @@
 package com.guilherme.entrevistaia.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.EmailAlreadyInUseException;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -68,9 +70,44 @@ class AuthControllerTest {
                     """.formatted(CPF_VALIDO)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.token").value("token-fake"))
-            .andExpect(jsonPath("$.nome").value("Fulano"));
+            .andExpect(jsonPath("$.nome").value("Fulano"))
+            // Sem "tipo" no corpo -> CANDIDATO (compatível com clientes antigos).
+            .andExpect(jsonPath("$.tipo").value("CANDIDATO"));
 
         verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void register_comTipoRecrutadorSalvaEDevolveOTipo() throws Exception {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByCpf(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hash-fake");
+        when(jwtService.generateToken(any(User.class))).thenReturn("token-fake");
+
+        mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
+                     "cpf": "%s", "tipo": "RECRUTADOR"}
+                    """.formatted(CPF_VALIDO)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
+
+        verify(userRepository).save(argThat(u -> u.getTipo() == TipoConta.RECRUTADOR));
+    }
+
+    @Test
+    void register_comTipoInexistenteRetorna400() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "x@teste.com", "senha": "123456", "nome": "X",
+                     "cpf": "%s", "tipo": "ADMIN"}
+                    """.formatted(CPF_VALIDO)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST_BODY"));
+
+        verify(userRepository, never()).save(any());
     }
 
     @Test

@@ -55,14 +55,29 @@ describe('RegisterPage', () => {
 
   it('cadastro com sucesso: chama register(email, senha, nome, cpf só dígitos), loga e navega', async () => {
     const user = userEvent.setup();
-    vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-novo', nome: 'Bruno' });
+    vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-novo', nome: 'Bruno', tipo: 'CANDIDATO' });
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
     await preencherEEnviar(user);
 
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
-    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno', '52998224725');
+    // Sem mexer na escolha, o cadastro é de candidato.
+    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno', '52998224725', 'CANDIDATO');
     expect(localStorage.getItem('token')).toBe('tok-novo');
+  });
+
+  it('escolhendo "Sou recrutador": cadastra como RECRUTADOR e guarda o tipo da sessão', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-rh', nome: 'Bruno', tipo: 'RECRUTADOR' });
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    expect(screen.getByRole('radio', { name: /Sou candidato/ })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: /Sou recrutador/ }));
+    await preencherEEnviar(user);
+
+    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
+    expect(authApi.register).toHaveBeenCalledWith('bruno@teste.com', 'segredo123', 'Bruno', '52998224725', 'RECRUTADOR');
+    expect(localStorage.getItem('tipo')).toBe('RECRUTADOR');
   });
 
   it('CPF inválido: mostra erro e nem chama a API', async () => {

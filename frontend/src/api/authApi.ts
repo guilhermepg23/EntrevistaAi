@@ -1,12 +1,12 @@
-import type { AuthResponse } from '../types/interview';
+import type { AuthResponse, TipoConta } from '../types/interview';
 import { API_BASE, handleAuthResponse } from './client';
 
 export const authApi = {
-  register: (email: string, senha: string, nome: string, cpf: string) =>
+  register: (email: string, senha: string, nome: string, cpf: string, tipo: TipoConta) =>
     fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha, nome, cpf }),
+      body: JSON.stringify({ email, senha, nome, cpf, tipo }),
     }).then(res => handleAuthResponse<AuthResponse>(res)),
 
   login: (email: string, senha: string) =>

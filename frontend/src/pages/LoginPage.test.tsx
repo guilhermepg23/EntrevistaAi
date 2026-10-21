@@ -6,6 +6,7 @@ import { renderWithProviders } from '../test-utils';
 import { authApi } from '../api/authApi';
 import { SESSION_EXPIRED_EVENT } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
+import type { AuthResponse } from '../types/interview';
 
 const navigateSpy = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -37,7 +38,7 @@ describe('LoginPage', () => {
 
   it('login com sucesso: chama authApi.login, persiste sessão e navega pra "/"', async () => {
     const user = userEvent.setup();
-    vi.mocked(authApi.login).mockResolvedValue({ token: 'tok-123', nome: 'Ana' });
+    vi.mocked(authApi.login).mockResolvedValue({ token: 'tok-123', nome: 'Ana', tipo: 'CANDIDATO' });
     renderWithProviders(<LoginPage />, { route: '/login' });
 
     await preencherEEnviar(user);
@@ -68,14 +69,14 @@ describe('LoginPage', () => {
 
   it('durante o envio o botão fica desabilitado e vira "Entrando..."', async () => {
     const user = userEvent.setup();
-    let resolver: (v: { token: string; nome: string }) => void = () => {};
+    let resolver: (v: AuthResponse) => void = () => {};
     vi.mocked(authApi.login).mockReturnValue(new Promise((res) => { resolver = res; }));
     renderWithProviders(<LoginPage />, { route: '/login' });
 
     await preencherEEnviar(user);
 
     expect(screen.getByRole('button', { name: 'Entrando...' })).toBeDisabled();
-    resolver({ token: 't', nome: 'n' });
+    resolver({ token: 't', nome: 'n', tipo: 'CANDIDATO' });
     await waitFor(() => expect(navigateSpy).toHaveBeenCalled());
   });
 

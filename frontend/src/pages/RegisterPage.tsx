@@ -6,6 +6,12 @@ import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatCpf, isValidCpf, onlyDigits } from '../lib/cpf';
+import type { TipoConta } from '../types/interview';
+
+const OPCOES_TIPO: { valor: TipoConta; titulo: string; descricao: string }[] = [
+  { valor: 'CANDIDATO', titulo: 'Sou candidato', descricao: 'Treinar entrevistas e fazer testes de empresas' },
+  { valor: 'RECRUTADOR', titulo: 'Sou recrutador', descricao: 'Criar testes e avaliar candidatos' },
+];
 
 export function RegisterPage() {
   const [nome, setNome] = useState('');
@@ -13,6 +19,9 @@ export function RegisterPage() {
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  // Fixo depois do cadastro (um tipo por conta) — por isso a escolha vem
+  // primeiro no formulário, antes dos dados pessoais.
+  const [tipo, setTipo] = useState<TipoConta>('CANDIDATO');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const acordandoServidor = useSlowRequestHint(carregando);
@@ -39,8 +48,8 @@ export function RegisterPage() {
 
     setCarregando(true);
     try {
-      const { token, nome: nomeResposta } = await authApi.register(email, senha, nome, onlyDigits(cpf));
-      login(token, nomeResposta);
+      const resposta = await authApi.register(email, senha, nome, onlyDigits(cpf), tipo);
+      login(resposta.token, resposta.nome, resposta.tipo);
       navigate('/');
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao cadastrar');
@@ -54,6 +63,22 @@ export function RegisterPage() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <h1>Criar conta</h1>
         {erro && <p className="erro">{erro}</p>}
+        <fieldset className="tipo-conta">
+          <legend>Como você vai usar a plataforma?</legend>
+          {OPCOES_TIPO.map(opcao => (
+            <label key={opcao.valor} className="tipo-conta-opcao">
+              <input
+                type="radio"
+                name="tipo"
+                value={opcao.valor}
+                checked={tipo === opcao.valor}
+                onChange={() => setTipo(opcao.valor)}
+              />
+              <span className="tipo-conta-titulo">{opcao.titulo}</span>
+              <span className="tipo-conta-descricao">{opcao.descricao}</span>
+            </label>
+          ))}
+        </fieldset>
         <label>
           Nome
           <input type="text" value={nome} onChange={e => setNome(e.target.value)} required />

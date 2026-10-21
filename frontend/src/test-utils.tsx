@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
+import type { TipoConta } from './types/interview';
 
 // Renderiza um componente dentro dos providers que o app inteiro assume
 // existir: um router (todo componente de página usa hooks de rota) e o
@@ -11,16 +12,22 @@ import { AuthProvider } from './hooks/useAuth';
 // - `path`       : quando passado, o `ui` é montado sob um <Route path=...>, o que
 //                  faz useParams() enxergar os parâmetros da URL. Sem isso o `ui`
 //                  é renderizado direto (suficiente pra telas sem parâmetro).
-// - `auth`       : grava token/nome no localStorage ANTES do render, então o
-//                  AuthProvider já inicializa autenticado (ele lê o storage no
-//                  initializer do useState).
+// - `auth`       : grava token/nome (e o tipo da conta, se passado) no
+//                  localStorage ANTES do render, então o AuthProvider já
+//                  inicializa autenticado (ele lê o storage no initializer do
+//                  useState). Sem `tipo`, a sessão é de candidato.
 export function renderWithProviders(
   ui: ReactElement,
-  { route = '/', path, auth }: { route?: string; path?: string; auth?: { token: string; nome: string } } = {},
+  { route = '/', path, auth }: {
+    route?: string;
+    path?: string;
+    auth?: { token: string; nome: string; tipo?: TipoConta };
+  } = {},
 ) {
   if (auth) {
     localStorage.setItem('token', auth.token);
     localStorage.setItem('nome', auth.nome);
+    if (auth.tipo) localStorage.setItem('tipo', auth.tipo);
   }
 
   return render(
