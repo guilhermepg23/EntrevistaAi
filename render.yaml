@@ -1,19 +1,18 @@
-# Blueprint do Render: cria o backend (a partir do Dockerfile em backend/) e o
-# Postgres juntos, já conectados. Pra usar: no dashboard do Render, "New +" ->
-# "Blueprint" -> aponte pro repositório no GitHub. As credenciais do banco
-# (host/porta/usuário/senha) são injetadas automaticamente via fromDatabase —
-# ninguém precisa copiar isso manualmente.
+# Blueprint do Render: cria o backend a partir do Dockerfile em backend/.
+# Pra usar: no dashboard do Render, "New +" -> "Blueprint" -> aponte pro
+# repositório no GitHub.
 #
-# OPENAI_API_KEY e CORS_ALLOWED_ORIGINS têm "sync: false" de propósito: o
-# Render vai pedir esses valores no dashboard na hora de criar o Blueprint,
-# em vez de vir preenchido do repositório (são segredos / dependem da URL do
-# frontend, que só existe depois do deploy do Vercel).
-databases:
-  - name: entrevista-ia-db
-    plan: free
-    databaseName: entrevista_ia
-    user: entrevista_ia_user
-
+# O BANCO NÃO MORA MAIS AQUI. Antes este arquivo também declarava um Postgres
+# do Render (bloco "databases:") e injetava host/porta/usuário/senha via
+# fromDatabase. O plano free do Postgres do Render expira ~30 dias depois de
+# criado e derruba a aplicação junto, então o banco foi movido pro Supabase,
+# cujo free tier não tem data de validade. A contrapartida é que as credenciais
+# deixam de ser automáticas: DATABASE_URL, DB_USERNAME e DB_PASSWORD agora são
+# "sync: false" e precisam ser coladas no dashboard (ver README).
+#
+# Todo "sync: false" significa a mesma coisa: o Render pede o valor no
+# dashboard em vez de lê-lo do repositório — ou porque é segredo, ou porque
+# depende de algo que só existe depois do deploy (a URL do Vercel, por exemplo).
 services:
   - type: web
     name: entrevista-ia-backend
@@ -26,22 +25,24 @@ services:
     # Spring Boot Actuator de propósito (dependência a mais só pra isso).
     healthCheckPath: /health
     envVars:
-      - key: DB_HOST
-        fromDatabase:
-          name: entrevista-ia-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: entrevista-ia-db
-          property: port
+      # Conexão com o Supabase. Pegue os três valores em Project Settings ->
+      # Database -> Connection string -> JDBC, aba "Session pooler".
+      #
+      # Use o SESSION POOLER (porta 5432, host *.pooler.supabase.com), não a
+      # conexão direta: o host direto (db.<ref>.supabase.co) só resolve em
+      # IPv6, e o Render não alcança IPv6 sem o add-on pago de IPv4. O pooler
+      # de transação (porta 6543) também serve, mas desabilita prepared
+      # statements e exigiria "?prepareThreshold=0" na URL — o de sessão
+      # conversa melhor com o HikariCP/Hibernate.
+      #
+      # Formato: jdbc:postgresql://aws-0-<região>.pooler.supabase.com:5432/postgres?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      # No pooler o usuário tem o formato "postgres.<ref-do-projeto>".
       - key: DB_USERNAME
-        fromDatabase:
-          name: entrevista-ia-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: entrevista-ia-db
-          property: password
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: OPENAI_API_KEY

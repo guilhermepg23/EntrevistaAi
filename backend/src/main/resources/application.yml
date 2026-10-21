@@ -2,10 +2,22 @@ spring:
   application:
     name: entrevista-ia
   datasource:
-    # DB_HOST default "localhost" cobre o dia a dia (Postgres local / IntelliJ).
-    # No Docker Compose isso é sobrescrito para "postgres" (nome do serviço na
-    # rede interna do compose) via variável de ambiente do container backend.
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/entrevista_ia
+    # Duas formas de apontar o banco, nesta ordem de precedência:
+    #
+    # 1. DATABASE_URL — a URL JDBC inteira, de uma vez. É o que usamos em
+    #    produção (Supabase), onde o banco não se chama "entrevista_ia" (é
+    #    "postgres"), a porta é a do pooler e o SSL é obrigatório:
+    #    jdbc:postgresql://aws-0-<região>.pooler.supabase.com:5432/postgres?sslmode=require
+    #
+    # 2. DB_HOST / DB_PORT / DB_NAME em separado — o caminho do dia a dia.
+    #    Os defaults cobrem o Postgres local / IntelliJ sem configurar nada. No
+    #    Docker Compose, DB_HOST é sobrescrito para "postgres" (nome do serviço
+    #    na rede interna do compose) via variável de ambiente do container.
+    #
+    # Usuário e senha ficam fora da URL de propósito: no Supabase o usuário do
+    # pooler tem o formato "postgres.<ref-do-projeto>", e deixá-lo numa
+    # variável própria evita ter que montar query string com credencial.
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:entrevista_ia}}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD}
   servlet:
@@ -28,9 +40,31 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+  # O Flyway é o dono do schema desde a v1 (ver db/migration/V1__baseline.sql).
+  # Roda as migrations pendentes no boot, antes de o Hibernate validar.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # O Supabase entrega um banco "postgres" com vários schemas próprios dele
+    # (auth, storage, realtime...). Apontar explicitamente pro "public" evita
+    # que o Flyway crie o flyway_schema_history no lugar errado.
+    schemas: public
+    # Rede de segurança pra um banco que JÁ tenha as tabelas mas nenhum
+    # histórico do Flyway — o caso de quem subiu a aplicação na época do
+    # ddl-auto=update, ou de um dump restaurado. Em vez de quebrar com
+    # "table already exists", o Flyway marca a V1 como aplicada e segue da V2
+    # em diante. Num banco vazio (Supabase novo) a flag não muda nada: a V1
+    # roda normalmente. Se o schema pré-existente não bater com as entidades,
+    # quem reclama em seguida é o ddl-auto=validate logo abaixo.
+    baseline-on-migrate: true
   jpa:
     hibernate:
-      ddl-auto: update
+      # validate, não update: o Hibernate deixou de alterar o schema sozinho e
+      # passou a só conferir se o banco bate com as entidades, falhando o boot
+      # quando não bate. É o que torna as migrations obrigatórias — esquecer de
+      # escrever a migration vira erro na hora de subir, não bug silencioso em
+      # produção. Mudou entidade? Escreva um V<n>__descricao.sql junto.
+      ddl-auto: validate
     show-sql: false
     # Explicitamente true (era o default implícito antes, gerando warning no
     # boot): entidades como Interview.questions/report são acessadas fora da

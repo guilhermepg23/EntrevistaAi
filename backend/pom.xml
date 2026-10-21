@@ -13,7 +13,7 @@
 
     <groupId>com.guilherme</groupId>
     <artifactId>entrevista-ia</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <name>entrevista-ia</name>
     <description>Simulador de Entrevista Tecnica com IA</description>
 
@@ -23,7 +23,7 @@
              meados de 2024) — versões mais novas do Testcontainers lidam
              melhor com releases recentes do Docker Desktop no Windows
              (named pipe). -->
-        <testcontainers.version>1.20.4</testcontainers.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -55,6 +55,21 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Migrations versionadas do schema (src/main/resources/db/migration).
+             O Spring Boot detecta o flyway-core no classpath e roda as migrations
+             pendentes no boot, ANTES do Hibernate validar o schema.
+             A partir do Flyway 10 o suporte a cada banco mora num módulo próprio:
+             sem o flyway-database-postgresql, o boot falha com "Unsupported
+             Database: PostgreSQL". As versões vêm do spring-boot-starter-parent. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
         <dependency>
