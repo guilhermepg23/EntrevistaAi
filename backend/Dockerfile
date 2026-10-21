@@ -11,11 +11,14 @@ COPY pom.xml .
 RUN mvn -B dependency:go-offline
 
 COPY src ./src
-RUN mvn -B clean package -DskipTests
+# O nome do jar inclui a versão do pom (entrevista-ia-<versão>.jar). Renomear
+# aqui evita que todo bump de versão quebre o COPY da etapa seguinte. O glob
+# não pega o .jar.original que o spring-boot-maven-plugin deixa ao lado.
+RUN mvn -B clean package -DskipTests && cp target/entrevista-ia-*.jar target/app.jar
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/entrevista-ia-0.1.0.jar app.jar
+COPY --from=build /app/target/app.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
