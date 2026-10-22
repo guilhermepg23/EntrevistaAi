@@ -9,6 +9,8 @@ import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.CompanyRuleException;
 import com.guilherme.entrevistaia.exception.EmailAlreadyInUseException;
 import com.guilherme.entrevistaia.mail.TeamInviteMailer;
+import com.guilherme.entrevistaia.repository.AssessmentInviteRepository;
+import com.guilherme.entrevistaia.repository.AssessmentRepository;
 import com.guilherme.entrevistaia.repository.CompanyInviteRepository;
 import com.guilherme.entrevistaia.repository.CompanyRepository;
 import com.guilherme.entrevistaia.repository.UserRepository;
@@ -44,6 +46,8 @@ class CompanyServiceTest {
 
     @Mock private CompanyRepository companyRepository;
     @Mock private CompanyInviteRepository inviteRepository;
+    @Mock private AssessmentRepository assessmentRepository;
+    @Mock private AssessmentInviteRepository assessmentInviteRepository;
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private TeamInviteMailer mailer;
@@ -54,7 +58,8 @@ class CompanyServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CompanyService(companyRepository, inviteRepository, userRepository,
+        service = new CompanyService(companyRepository, inviteRepository, assessmentRepository,
+            assessmentInviteRepository, userRepository,
             passwordEncoder, mailer, "https://app.exemplo.com/");
         acme = new Company();
         acme.setId(UUID.randomUUID());

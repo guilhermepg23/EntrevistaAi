@@ -96,6 +96,10 @@ app:
   password-reset:
     # Validade do token de recuperação, em minutos.
     ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}
+  assessments:
+    # Validade dos testes de empresa, em meses, contada da criação. Vencido, o
+    # teste não aceita convites nem entrevistas novas (ver AssessmentService).
+    validade-meses: ${ASSESSMENT_VALIDITY_MONTHS:3}
   rate-limit:
     # Limite por IP, por minuto (janela fixa). auth cobre /auth/**; ai cobre os
     # endpoints que chamam a OpenAI (criar entrevista, próxima pergunta,

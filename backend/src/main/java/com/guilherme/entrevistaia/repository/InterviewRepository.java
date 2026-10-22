@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.repository;
 
+import com.guilherme.entrevistaia.entity.Assessment;
 import com.guilherme.entrevistaia.entity.Interview;
 import com.guilherme.entrevistaia.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,7 @@ public interface InterviewRepository extends JpaRepository<Interview, UUID> {
     // — sem ownership check de propósito, é isso que torna o link compartilhável
     // sem exigir login de quem recebe o link.
     Optional<Interview> findByShareToken(String shareToken);
+
+    // Regra "teste de empresa não se refaz" (ver AssessmentService.aceitar).
+    boolean existsByUserAndAssessment(User user, Assessment assessment);
 }

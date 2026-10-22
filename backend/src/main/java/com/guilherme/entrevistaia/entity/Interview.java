@@ -59,6 +59,18 @@ public class Interview {
 
     private Integer totalPerguntas;
 
+    // TREINO (iniciada pelo candidato) ou CONVITE (teste de empresa). No
+    // CONVITE o candidato não vê o feedback (ver InterviewService.exigirFeedbackVisivel).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrigemEntrevista origem = OrigemEntrevista.TREINO;
+
+    // O teste de empresa de onde a entrevista veio. null no TREINO — e também
+    // num CONVITE cuja empresa foi excluída depois (ver a FK na V5).
+    @ManyToOne
+    @JoinColumn(name = "assessment_id")
+    private Assessment assessment;
+
     private OffsetDateTime criadoEm;
     private OffsetDateTime finalizadoEm;
 
@@ -108,6 +120,15 @@ public class Interview {
 
     public Integer getTotalPerguntas() { return totalPerguntas; }
     public void setTotalPerguntas(Integer totalPerguntas) { this.totalPerguntas = totalPerguntas; }
+
+    public OrigemEntrevista getOrigem() { return origem; }
+    public void setOrigem(OrigemEntrevista origem) { this.origem = origem; }
+
+    // Atalho usado nas regras de feedback: entrevista de teste de empresa.
+    public boolean deConvite() { return origem == OrigemEntrevista.CONVITE; }
+
+    public Assessment getAssessment() { return assessment; }
+    public void setAssessment(Assessment assessment) { this.assessment = assessment; }
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }

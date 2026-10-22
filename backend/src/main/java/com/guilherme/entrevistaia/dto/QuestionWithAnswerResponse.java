@@ -39,4 +39,16 @@ public record QuestionWithAnswerResponse(
             answer != null ? answer.getRespostaModelo() : null
         );
     }
+
+    // Entrevista de teste de empresa: o candidato revê as perguntas e o que
+    // respondeu, mas sem nota nem avaliação (ficam só pra empresa).
+    public static QuestionWithAnswerResponse semAvaliacao(Question question) {
+        Answer answer = question.getAnswer();
+        return new QuestionWithAnswerResponse(
+            question.getId(), question.getInterview().getId(), question.getOrdem(),
+            question.getPergunta(), question.getTopico(), question.getDificuldade().name(),
+            answer != null ? answer.getRespostaTexto() : null,
+            null, null, List.of(), List.of(), null, null
+        );
+    }
 }

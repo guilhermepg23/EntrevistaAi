@@ -115,6 +115,12 @@ public class InterviewService {
             throw new InvalidInterviewStateException(interviewId, "PERGUNTAS_ESGOTADAS", "getNextQuestion");
         }
 
+        // Teste de empresa: as perguntas fixas do recrutador vêm primeiro, sem IA.
+        String perguntaFixa = perguntaFixa(interview, proximaOrdem);
+        if (perguntaFixa != null) {
+            return salvarPerguntaFixa(interview, proximaOrdem, perguntaFixa);
+        }
+
         log.info("[AI_QUESTION_REQUEST] interviewId={} ordem={}/{}",
             interviewId, proximaOrdem, interview.getTotalPerguntas());
 
@@ -142,7 +148,9 @@ public class InterviewService {
     // propósito: é passado pra fora da transação, potencialmente pra uma
     // thread diferente (ver InterviewController.nextQuestionStream), e
     // entidades JPA não sobrevivem a isso (sessão do Hibernate fecha).
-    public record NextQuestionPromptContext(int numeroAtual, String userPrompt) {}
+    // perguntaFixa: preenchida (e já salva) quando a próxima é uma pergunta fixa
+    // de teste de empresa — aí não há IA a chamar e userPrompt vem null.
+    public record NextQuestionPromptContext(int numeroAtual, String userPrompt, Question perguntaFixa) {}
 
     // Chamado por GET /interviews/{id}/next-question/stream — ETAPA 1 de 2.
     // Faz toda a leitura no banco (valida estado, monta o prompt com o
@@ -167,8 +175,14 @@ public class InterviewService {
             throw new InvalidInterviewStateException(interviewId, "PERGUNTAS_ESGOTADAS", "getNextQuestion");
         }
 
+        String perguntaFixa = perguntaFixa(interview, proximaOrdem);
+        if (perguntaFixa != null) {
+            return new NextQuestionPromptContext(proximaOrdem, null,
+                salvarPerguntaFixa(interview, proximaOrdem, perguntaFixa));
+        }
+
         String userPrompt = questionPromptBuilder.build(interview, proximaOrdem);
-        return new NextQuestionPromptContext(proximaOrdem, userPrompt);
+        return new NextQuestionPromptContext(proximaOrdem, userPrompt, null);
     }
 
     // Chamado por GET /interviews/{id}/next-question/stream — ETAPA 2 de 2,
@@ -280,6 +294,7 @@ public class InterviewService {
     @Transactional
     public FeedbackReport getOrGenerateReport(UUID interviewId, User user) {
         Interview interview = loadOwnedInterview(interviewId, user);
+        exigirFeedbackVisivel(interview);
 
         if (interview.getReport() != null) {
             return interview.getReport();
@@ -362,7 +377,9 @@ public class InterviewService {
     // enviou currículo pra essa entrevista (upload é opcional) — o controller
     // traduz isso pra 404.
     public ResumeAnalysis getResumeAnalysis(UUID interviewId, User user) {
-        return loadOwnedInterview(interviewId, user).getResumeAnalysis();
+        Interview interview = loadOwnedInterview(interviewId, user);
+        exigirFeedbackVisivel(interview);
+        return interview.getResumeAnalysis();
     }
 
     // Chamado por GET /interviews (histórico do usuário logado).
@@ -385,6 +402,7 @@ public class InterviewService {
     @Transactional
     public String getOrCreateShareToken(UUID interviewId, User user) {
         Interview interview = loadOwnedInterview(interviewId, user);
+        exigirFeedbackVisivel(interview);
 
         if (interview.getStatus() != InterviewStatus.FINALIZADA) {
             throw new InvalidInterviewStateException(interviewId, interview.getStatus().name(), "getOrCreateShareToken");
@@ -431,6 +449,45 @@ public class InterviewService {
     public List<Question> getTranscript(UUID interviewId, User user) {
         Interview interview = loadOwnedInterview(interviewId, user);
         return interview.getQuestions();
+    }
+
+    // Pergunta fixa do teste de empresa para esta posição, ou null (treino, ou
+    // as fixas já acabaram e a vez é da IA).
+    private String perguntaFixa(Interview interview, int ordem) {
+        if (interview.getAssessment() == null) {
+            return null;
+        }
+        return interview.getAssessment().getPerguntasFixas().stream()
+            .filter(p -> p.getOrdem() == ordem)
+            .map(AssessmentQuestion::getPergunta)
+            .findFirst()
+            .orElse(null);
+    }
+
+    // Pergunta fixa não passa pela IA, então não tem tópico nem dificuldade
+    // escolhidos por ela: vai como "Pergunta da empresa", intermediária.
+    private Question salvarPerguntaFixa(Interview interview, int ordem, String texto) {
+        Question question = new Question();
+        question.setInterview(interview);
+        question.setOrdem(ordem);
+        question.setPergunta(texto);
+        question.setTopico("Pergunta da empresa");
+        question.setDificuldade(Dificuldade.INTERMEDIARIO);
+        questionRepository.save(question);
+        interview.getQuestions().add(question);
+
+        log.info("[FIXED_QUESTION_ASKED] interviewId={} questionId={} ordem={}",
+            interview.getId(), question.getId(), ordem);
+        return question;
+    }
+
+    // Teste de empresa (origem CONVITE): o candidato faz a entrevista, mas o
+    // resultado — relatório, leitura do currículo, link público — é só da empresa.
+    private void exigirFeedbackVisivel(Interview interview) {
+        if (interview.deConvite()) {
+            log.info("[INTERVIEW_FEEDBACK_HIDDEN] interviewId={}", interview.getId());
+            throw AssessmentRuleException.feedbackOculto();
+        }
     }
 
     // Helper usado por getNextQuestion/getOrGenerateReport: busca a entrevista

@@ -566,4 +566,101 @@ class InterviewServiceTest {
 
         assertThat(resultado).containsExactly(interview);
     }
+
+    // ---- teste de empresa (origem CONVITE) ----
+
+    private Interview interviewDeConvite(int totalPerguntas, String... perguntasFixas) {
+        Assessment assessment = new Assessment();
+        assessment.setId(UUID.randomUUID());
+        for (int i = 0; i < perguntasFixas.length; i++) {
+            AssessmentQuestion q = new AssessmentQuestion();
+            q.setAssessment(assessment);
+            q.setOrdem(i + 1);
+            q.setPergunta(perguntasFixas[i]);
+            assessment.getPerguntasFixas().add(q);
+        }
+        Interview interview = novaInterview(InterviewStatus.EM_ANDAMENTO, totalPerguntas);
+        interview.setOrigem(OrigemEntrevista.CONVITE);
+        interview.setAssessment(assessment);
+        return interview;
+    }
+
+    @Test
+    void getNextQuestion_deveUsarPerguntaFixaDoTesteSemChamarIa() {
+        Interview interview = interviewDeConvite(5, "Conte sobre um deploy que deu errado.");
+        when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+
+        Question question = service.getNextQuestion(interview.getId(), owner);
+
+        assertThat(question.getOrdem()).isEqualTo(1);
+        assertThat(question.getPergunta()).isEqualTo("Conte sobre um deploy que deu errado.");
+        assertThat(question.getTopico()).isEqualTo("Pergunta da empresa");
+        assertThat(question.getDificuldade()).isEqualTo(Dificuldade.INTERMEDIARIO);
+        verify(questionRepository).save(question);
+        verifyNoInteractions(questionGenerator);
+    }
+
+    @Test
+    void getNextQuestion_deveChamarIaQuandoAsPerguntasFixasAcabaram() {
+        Interview interview = interviewDeConvite(5, "Fixa 1");
+        Question primeira = new Question();
+        primeira.setOrdem(1);
+        interview.getQuestions().add(primeira);
+        when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+        when(questionGenerator.generate(interview, 2))
+            .thenReturn(new AiQuestionResult("Pergunta da IA", "JPA", Dificuldade.AVANCADO, "motivo"));
+
+        Question question = service.getNextQuestion(interview.getId(), owner);
+
+        assertThat(question.getOrdem()).isEqualTo(2);
+        assertThat(question.getPergunta()).isEqualTo("Pergunta da IA");
+    }
+
+    @Test
+    void prepareNextQuestionPrompt_deveDevolverPerguntaFixaJaSalvaSemMontarPrompt() {
+        Interview interview = interviewDeConvite(5, "Fixa 1");
+        when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+
+        InterviewService.NextQuestionPromptContext ctx = service.prepareNextQuestionPrompt(interview.getId(), owner);
+
+        assertThat(ctx.perguntaFixa()).isNotNull();
+        assertThat(ctx.perguntaFixa().getPergunta()).isEqualTo("Fixa 1");
+        assertThat(ctx.userPrompt()).isNull();
+        verify(questionRepository).save(ctx.perguntaFixa());
+        verifyNoInteractions(questionPromptBuilder);
+    }
+
+    @Test
+    void getOrGenerateReport_deveBloquearCandidatoEmTesteDeEmpresa() {
+        Interview interview = interviewDeConvite(5);
+        interview.setStatus(InterviewStatus.FINALIZADA);
+        when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+
+        assertThatThrownBy(() -> service.getOrGenerateReport(interview.getId(), owner))
+            .isInstanceOf(AssessmentRuleException.class)
+            .extracting("errorCode").isEqualTo("INTERVIEW_FEEDBACK_HIDDEN");
+        verifyNoInteractions(reportGenerator);
+    }
+
+    @Test
+    void getOrCreateShareToken_deveBloquearTesteDeEmpresa() {
+        Interview interview = interviewDeConvite(5);
+        interview.setStatus(InterviewStatus.FINALIZADA);
+        when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+
+        assertThatThrownBy(() -> service.getOrCreateShareToken(interview.getId(), owner))
+            .isInstanceOf(AssessmentRuleException.class)
+            .extracting("errorCode").isEqualTo("INTERVIEW_FEEDBACK_HIDDEN");
+        assertThat(interview.getShareToken()).isNull();
+    }
+
+    @Test
+    void getResumeAnalysis_deveBloquearTesteDeEmpresa() {
+        Interview interview = interviewDeConvite(5);
+        when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+
+        assertThatThrownBy(() -> service.getResumeAnalysis(interview.getId(), owner))
+            .isInstanceOf(AssessmentRuleException.class)
+            .extracting("errorCode").isEqualTo("INTERVIEW_FEEDBACK_HIDDEN");
+    }
 }

@@ -105,6 +105,15 @@ public class InterviewController {
             try {
                 InterviewService.NextQuestionPromptContext ctx = interviewService.prepareNextQuestionPrompt(id, user);
 
+                // Pergunta fixa de teste de empresa: já está salva e não passa
+                // pela IA — vai inteira num "delta" só, seguida do "done".
+                if (ctx.perguntaFixa() != null) {
+                    emitter.send(SseEmitter.event().name("delta").data(ctx.perguntaFixa().getPergunta()));
+                    emitter.send(SseEmitter.event().name("done").data(QuestionResponse.from(ctx.perguntaFixa())));
+                    emitter.complete();
+                    return;
+                }
+
                 AiQuestionResult result = questionStreamGenerator.generateStreaming(ctx.userPrompt(), token -> {
                     try {
                         emitter.send(SseEmitter.event().name("delta").data(token));
@@ -137,8 +146,12 @@ public class InterviewController {
                                                          @RequestBody @Valid SubmitAnswerRequest request,
                                                          @AuthenticationPrincipal User user) {
         Answer answer = interviewService.submitAnswer(questionId, user, request.resposta());
-        boolean finalizada = answer.getQuestion().getInterview().getStatus() == InterviewStatus.FINALIZADA;
-        return ResponseEntity.ok(AnswerResponse.from(answer, finalizada));
+        Interview interview = answer.getQuestion().getInterview();
+        boolean finalizada = interview.getStatus() == InterviewStatus.FINALIZADA;
+        // Teste de empresa: a avaliação foi salva, mas não volta pro candidato.
+        return ResponseEntity.ok(interview.deConvite()
+            ? AnswerResponse.semFeedback(answer, finalizada)
+            : AnswerResponse.from(answer, finalizada));
     }
 
     // POST /interviews/transcribe — recebe o áudio da resposta falada
@@ -190,7 +203,9 @@ public class InterviewController {
     public ResponseEntity<List<QuestionWithAnswerResponse>> transcript(@PathVariable UUID id,
                                                                          @AuthenticationPrincipal User user) {
         List<QuestionWithAnswerResponse> transcript = interviewService.getTranscript(id, user).stream()
-            .map(QuestionWithAnswerResponse::from)
+            .map(q -> q.getInterview().deConvite()
+                ? QuestionWithAnswerResponse.semAvaliacao(q)
+                : QuestionWithAnswerResponse.from(q))
             .toList();
         return ResponseEntity.ok(transcript);
     }
@@ -205,6 +220,11 @@ public class InterviewController {
                                                                  @RequestParam("arquivo") MultipartFile arquivo,
                                                                  @AuthenticationPrincipal User user) throws IOException {
         ResumeAnalysis analysis = interviewService.analyzeResume(id, user, arquivo.getBytes());
+        // Teste de empresa: o currículo é lido e usado nas perguntas, mas a
+        // leitura fica só com a empresa.
+        if (analysis.getInterview().deConvite()) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(ResumeAnalysisResponse.from(analysis));
     }
 

@@ -24,8 +24,8 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 | 0 | v1.0.0 / v1.0.1: banco no Supabase, Flyway, correção do Dockerfile | ✅ no ar |
 | 1 | Tipo de conta no cadastro, papel no Spring Security, rotas e menu por tipo | ✅ no ar |
 | 1b | Recrutador sem CPF, CNPJ opcional | ✅ no ar |
-| 2 | Empresa e equipe: papéis, convites, modo empresa | ✅ no ar (conferido via API; **telas ainda não vistas no navegador**) |
-| 3 | Testes de entrevista da empresa e convite de candidatos | ⏳ próxima |
+| 2 | Empresa e equipe: papéis, convites, modo empresa | ✅ no ar (telas conferidas no navegador em 2026-10-22) |
+| 3 | Testes de entrevista da empresa e convite de candidatos | 🔧 backend pronto (sem commit); falta o front |
 | 4 | Painel de resultados do recrutador | ⏳ |
 | 5 | Fechamento da v1.1.0 (revisão visual, README, tag) | ⏳ |
 
@@ -55,7 +55,8 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
   - `status` (`ATIVO` / `ARQUIVADO`);
   - `criado_em`.
 - `assessment_questions`: perguntas fixas do recrutador (`ordem`, `pergunta`). As que faltarem, a IA gera.
-- `assessment_links`: link de convite para candidatos, com token salvo só como hash e validade opcional. Decidir se é um link genérico do teste ou um convite por email do candidato.
+- `assessments.expira_em`: criação + 3 meses.
+- `assessment_invites`: um convite por candidato (`email`), com token salvo só como hash, que vence junto com o teste. Um único uso: o aceite liga o convite à `Interview` criada.
 - `interviews`: ganha `origem` (`TREINO` / `CONVITE`) e `assessment_id`, que fica nulo no treino.
 
 **Backend**
@@ -81,10 +82,19 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
   - seção "Testes de empresas" na home.
 - O chat de entrevista no modo convite esconde o feedback, mostrando só "Resposta enviada".
 
-**Perguntas para decidir no início da etapa 3**
-- Link do teste genérico (qualquer candidato com o link) ou convite por email (um por candidato, como o da equipe)?
-- O candidato pode refazer o mesmo teste?
-- O teste tem prazo (data limite) além da validade do link?
+**Decisões da etapa 3** (2026-10-22)
+- O convite do teste é **por email, um por candidato**, como o da equipe. Sem SMTP, o recrutador copia o link.
+- O candidato **não pode refazer** um teste de empresa: um convite gera uma única entrevista.
+- O teste tem **validade de 3 meses** a partir da criação (por enquanto, fixa). Depois disso, não aceita novos convites nem novas entrevistas, e o convite vence junto com o teste.
+- Só a conta de candidato **com o email do convite** pode aceitar (senão, 403 `ASSESSMENT_INVITE_WRONG_ACCOUNT`).
+- O teste não pode ser editado depois que um candidato começou (409 `ASSESSMENT_LOCKED`).
+
+**Backend implementado** (2026-10-22, ainda sem commit; V5 não testada contra um Postgres real)
+- Migration `V5__testes_e_convites.sql`: `assessments`, `assessment_questions`, `assessment_invites`, e `interviews.origem` / `interviews.assessment_id`. A validade é configurável em `app.assessments.validade-meses` (env `ASSESSMENT_VALIDITY_MONTHS`, padrão 3).
+- Recrutador: `GET/POST /assessments`, `GET/PUT /assessments/{id}`, `POST /assessments/{id}/archive`, `GET/POST /assessments/{id}/invites`, `DELETE /assessments/{id}/invites/{inviteId}`.
+- Candidato: `GET /auth/assessment-invites/{token}` (público), `GET /interviews/invites` e `POST /interviews/invites/{inviteId}/accept`.
+- Entrevista CONVITE: as perguntas fixas vêm antes das da IA (no streaming, chegam num único `delta`). A resposta volta com `feedbackOculto: true` e sem nota. A transcrição vem sem avaliação. `/report`, `GET /resume` e `/share` dão 403 `INTERVIEW_FEEDBACK_HIDDEN`, e o upload do currículo responde 204.
+- `InterviewResponse` ganhou `origem`, `nomeEmpresa` e `tituloTeste`.
 
 ## Etapa 4 — painel de resultados
 

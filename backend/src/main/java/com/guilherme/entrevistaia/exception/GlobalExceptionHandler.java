@@ -122,6 +122,13 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
     }
 
+    @ExceptionHandler(AssessmentRuleException.class)
+    public ResponseEntity<ErrorResponse> handleAssessmentRule(AssessmentRuleException ex) {
+        log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(ex.getStatus())
+            .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    }
+
     @ExceptionHandler(CpfRequiredException.class)
     public ResponseEntity<ErrorResponse> handleCpfRequired(CpfRequiredException ex) {
         log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());

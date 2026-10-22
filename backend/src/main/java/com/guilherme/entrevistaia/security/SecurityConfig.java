@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -66,15 +67,18 @@ public class SecurityConfig {
                     "/auth/forgot-password", "/auth/reset-password").permitAll()
                 // Convite de equipe: quem foi convidado ainda não tem conta.
                 .requestMatchers("/auth/team-invites/**").permitAll()
+                // Convite de teste: quem abre o link pode ainda não ter conta. Só
+                // a leitura é pública; o aceite fica em /interviews/invites/**.
+                .requestMatchers(HttpMethod.GET, "/auth/assessment-invites/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/interviews/public/**").permitAll()
                 // Rotas por tipo de conta (ver TipoConta / UserAuthorities). A
                 // ordem importa: o Spring usa a PRIMEIRA regra que casa, por isso
                 // o permitAll de /interviews/public/** fica acima. Entrevista e
-                // análise de currículo são do candidato; /company/** e
-                // /assessments/** (empresa e testes, etapas seguintes da v1.1)
-                // já nascem restritas ao recrutador.
+                // análise de currículo (e os convites de teste, em
+                // /interviews/invites/**) são do candidato; /company/** e
+                // /assessments/** (empresa e testes) são do recrutador.
                 .requestMatchers("/interviews/**", "/resume-reviews/**").hasRole("CANDIDATO")
                 .requestMatchers("/company/**", "/assessments/**").hasRole("RECRUTADOR")
                 // Todo o resto (ex.: /account) exige um usuário autenticado

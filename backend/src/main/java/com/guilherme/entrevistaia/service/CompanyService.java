@@ -11,6 +11,8 @@ import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.CompanyRuleException;
 import com.guilherme.entrevistaia.exception.EmailAlreadyInUseException;
 import com.guilherme.entrevistaia.mail.TeamInviteMailer;
+import com.guilherme.entrevistaia.repository.AssessmentInviteRepository;
+import com.guilherme.entrevistaia.repository.AssessmentRepository;
 import com.guilherme.entrevistaia.repository.CompanyInviteRepository;
 import com.guilherme.entrevistaia.repository.CompanyRepository;
 import com.guilherme.entrevistaia.repository.UserRepository;
@@ -46,6 +48,8 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final CompanyInviteRepository inviteRepository;
+    private final AssessmentRepository assessmentRepository;
+    private final AssessmentInviteRepository assessmentInviteRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TeamInviteMailer mailer;
@@ -53,12 +57,16 @@ public class CompanyService {
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanyInviteRepository inviteRepository,
+                          AssessmentRepository assessmentRepository,
+                          AssessmentInviteRepository assessmentInviteRepository,
                           UserRepository userRepository,
                           PasswordEncoder passwordEncoder,
                           TeamInviteMailer mailer,
                           @Value("${app.frontend-base-url}") String frontendBaseUrl) {
         this.companyRepository = companyRepository;
         this.inviteRepository = inviteRepository;
+        this.assessmentRepository = assessmentRepository;
+        this.assessmentInviteRepository = assessmentInviteRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailer = mailer;
@@ -170,11 +178,13 @@ public class CompanyService {
 
     // Chamado pelo AccountService antes de excluir uma conta de recrutador.
     // - último ADMIN com outros membros: barra (alguém precisa ser promovido antes);
-    // - único membro: a empresa (e os convites dela) vai junto;
-    // - em qualquer caso, convites criados por ele perdem a referência ao criador.
+    // - único membro: a empresa (com convites e testes) vai junto;
+    // - em qualquer caso, convites e testes criados por ele perdem a referência ao criador.
     @Transactional
     public void antesDeExcluirConta(User user) {
         inviteRepository.desvincularCriador(user);
+        assessmentRepository.desvincularCriador(user);
+        assessmentInviteRepository.desvincularCriador(user);
 
         Company company = user.getCompany();
         if (company == null) {
@@ -185,6 +195,7 @@ public class CompanyService {
             user.setCompany(null);
             userRepository.save(user);
             inviteRepository.deleteByCompany(company);
+            assessmentRepository.deleteByCompany(company);
             companyRepository.delete(company);
             log.info("[COMPANY_DELETED_WITH_LAST_MEMBER] companyId={}", company.getId());
             return;
