@@ -1,6 +1,7 @@
 package com.guilherme.entrevistaia.service;
 
 import com.guilherme.entrevistaia.entity.User;
+import com.guilherme.entrevistaia.exception.CompanyRuleException;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
 import com.guilherme.entrevistaia.repository.PasswordResetTokenRepository;
 import com.guilherme.entrevistaia.repository.ResumeReviewRepository;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,6 +32,7 @@ class AccountServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private ResumeReviewRepository resumeReviewRepository;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock private CompanyService companyService;
 
     private AccountService service;
     private User user;
@@ -37,7 +40,7 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         service = new AccountService(userRepository, passwordEncoder,
-            resumeReviewRepository, passwordResetTokenRepository);
+            resumeReviewRepository, passwordResetTokenRepository, companyService);
         user = new User();
         user.setId(UUID.randomUUID());
         user.setEmail("ana@teste.com");
@@ -79,9 +82,23 @@ class AccountServiceTest {
     void deleteAccount_apagaDependenciasSemCascadeAntesDoUsuario() {
         service.deleteAccount(user);
 
-        InOrder ordem = inOrder(resumeReviewRepository, passwordResetTokenRepository, userRepository);
+        InOrder ordem = inOrder(companyService, resumeReviewRepository, passwordResetTokenRepository, userRepository);
+        ordem.verify(companyService).antesDeExcluirConta(user);
         ordem.verify(resumeReviewRepository).deleteByUser(user);
         ordem.verify(passwordResetTokenRepository).deleteByUser(user);
         ordem.verify(userRepository).delete(user);
+    }
+
+    // Último ADMIN de uma equipe com outros membros: a regra de empresa barra
+    // ANTES de qualquer exclusão — nada fica apagado pela metade.
+    @Test
+    void deleteAccount_ultimoAdminNaoApagaNada() {
+        doThrow(CompanyRuleException.ultimoAdmin()).when(companyService).antesDeExcluirConta(user);
+
+        assertThatThrownBy(() -> service.deleteAccount(user))
+            .isInstanceOf(CompanyRuleException.class);
+
+        verify(resumeReviewRepository, never()).deleteByUser(user);
+        verify(userRepository, never()).delete(user);
     }
 }

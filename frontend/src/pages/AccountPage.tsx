@@ -5,16 +5,10 @@ import { accountApi } from '../api/accountApi';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import type { AccountDetails } from '../types/interview';
-import { tipoContaLabel } from '../labels';
-import { formatCnpj } from '../lib/cnpj';
+import { papelEmpresaLabel, tipoContaLabel } from '../labels';
+import { formatarData } from '../lib/datas';
 
 type Aba = 'detalhes' | 'config';
-
-function formatarData(iso: string | null) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('pt-BR');
-}
 
 export function AccountPage() {
   const { updateNome, logout } = useAuth();
@@ -145,10 +139,15 @@ export function AccountPage() {
           <dl className="conta-detalhes">
             <div><dt>Nome</dt><dd>{detalhes.nome}</dd></div>
             <div><dt>Email</dt><dd>{detalhes.email}</dd></div>
-            {/* Documento conforme o tipo: candidato tem CPF, recrutador o CNPJ
-                (opcional) da empresa. */}
+            {/* Candidato tem CPF; recrutador não, e em vez disso vê a empresa e
+                o papel nela (os dados da empresa ficam em "Configurações da empresa"). */}
             {detalhes.tipo === 'RECRUTADOR' ? (
-              <div><dt>CNPJ da empresa</dt><dd>{detalhes.cnpj ? formatCnpj(detalhes.cnpj) : 'Não informado'}</dd></div>
+              <>
+                <div><dt>Empresa</dt><dd>{detalhes.nomeEmpresa ?? 'Sem empresa'}</dd></div>
+                {detalhes.papelEmpresa && (
+                  <div><dt>Papel na empresa</dt><dd>{papelEmpresaLabel[detalhes.papelEmpresa]}</dd></div>
+                )}
+              </>
             ) : (
               <div><dt>CPF</dt><dd>{detalhes.cpfMascarado ?? 'Não informado'}</dd></div>
             )}

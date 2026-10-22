@@ -37,11 +37,16 @@ public class User {
     @Column(unique = true)
     private String cpf;
 
-    // CNPJ da empresa, informado (opcionalmente) no cadastro de recrutador. Só
-    // dígitos, sem unique: vários recrutadores podem ser da mesma empresa.
-    // Provisório no usuário — quando a entidade de empresa existir (v1.1,
-    // etapa 2), o CNPJ passa a morar nela.
-    private String cnpj;
+    // Empresa do recrutador e o papel dele nela (null pra candidato, e pra um
+    // recrutador que foi removido da equipe até ele criar outra empresa).
+    // EAGER (o default do @ManyToOne) de propósito: o header do modo empresa e
+    // quase toda regra de equipe precisam da empresa junto com o usuário.
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @Enumerated(EnumType.STRING)
+    private PapelEmpresa papelEmpresa;
 
     // Quando a conta foi criada — exibido em "membro desde" na tela de conta.
     // Null pros usuários anteriores a esta coluna.
@@ -78,8 +83,11 @@ public class User {
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
 
-    public String getCnpj() { return cnpj; }
-    public void setCnpj(String cnpj) { this.cnpj = cnpj; }
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
+
+    public PapelEmpresa getPapelEmpresa() { return papelEmpresa; }
+    public void setPapelEmpresa(PapelEmpresa papelEmpresa) { this.papelEmpresa = papelEmpresa; }
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }

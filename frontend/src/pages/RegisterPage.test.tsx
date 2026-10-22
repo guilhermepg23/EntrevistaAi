@@ -16,6 +16,12 @@ vi.mock('../api/authApi', () => ({
   authApi: { login: vi.fn(), register: vi.fn() },
 }));
 
+// Depois de cadastrar um recrutador, a sessão vira de recrutador e o
+// CompanyProvider busca a empresa — não deve sair pra rede no teste.
+vi.mock('../api/companyApi', () => ({
+  companyApi: { get: vi.fn().mockReturnValue(new Promise(() => {})), invites: vi.fn() },
+}));
+
 // Gatilho por tempo coberto em useSlowRequestHint.test.ts.
 vi.mock('../hooks/useSlowRequestHint', () => ({ useSlowRequestHint: vi.fn() }));
 
@@ -67,11 +73,11 @@ describe('RegisterPage', () => {
     });
     expect(localStorage.getItem('token')).toBe('tok-novo');
   });
-
-  // Recrutador: sem campo de CPF, com CNPJ opcional no lugar.
+  // Recrutador: sem campo de CPF; funda a empresa (nome obrigatório, CNPJ opcional).
   async function preencherRecrutador(user: ReturnType<typeof userEvent.setup>, cnpj?: string) {
     await user.click(screen.getByRole('radio', { name: /Sou recrutador/ }));
     await user.type(screen.getByLabelText('Nome'), 'Bruno');
+    await user.type(screen.getByLabelText('Nome da empresa'), 'Acme');
     await user.type(screen.getByLabelText('Email'), 'bruno@teste.com');
     if (cnpj) await user.type(screen.getByLabelText('CNPJ da empresa (opcional)'), cnpj);
     await user.type(screen.getByLabelText('Senha'), 'segredo123');
@@ -90,7 +96,7 @@ describe('RegisterPage', () => {
     expect(screen.queryByLabelText('CPF')).not.toBeInTheDocument();
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
     expect(authApi.register).toHaveBeenCalledWith({
-      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR',
+      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR', nomeEmpresa: 'Acme',
     });
     expect(localStorage.getItem('tipo')).toBe('RECRUTADOR');
   });
@@ -104,7 +110,7 @@ describe('RegisterPage', () => {
 
     expect(screen.getByLabelText('CNPJ da empresa (opcional)')).toHaveValue('11.222.333/0001-81');
     await waitFor(() => expect(authApi.register).toHaveBeenCalledWith({
-      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR', cnpj: '11222333000181',
+      email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR', nomeEmpresa: 'Acme', cnpj: '11222333000181',
     }));
   });
 

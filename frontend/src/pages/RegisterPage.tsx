@@ -23,6 +23,7 @@ export function RegisterPage() {
   // Fixo depois do cadastro (um tipo por conta) — por isso a escolha vem
   // primeiro no formulário, antes dos dados pessoais.
   const [tipo, setTipo] = useState<TipoConta>('CANDIDATO');
+  const [nomeEmpresa, setNomeEmpresa] = useState('');
   const [cnpj, setCnpj] = useState('');
   const ehCandidato = tipo === 'CANDIDATO';
   const [erro, setErro] = useState<string | null>(null);
@@ -62,11 +63,15 @@ export function RegisterPage() {
         senha,
         nome,
         tipo,
-        // Só o documento do tipo escolhido vai pro backend — se a pessoa
-        // preencheu um e trocou de tipo, o outro não é enviado.
+        // Só os campos do tipo escolhido vão pro backend — se a pessoa
+        // preencheu um e trocou de tipo, o outro não é enviado. O recrutador
+        // funda a empresa aqui (vira administrador dela).
         ...(ehCandidato
           ? { cpf: onlyDigits(cpf) }
-          : cnpj !== '' ? { cnpj: onlyDigitsCnpj(cnpj) } : {}),
+          : {
+              nomeEmpresa: nomeEmpresa.trim(),
+              ...(cnpj !== '' ? { cnpj: onlyDigitsCnpj(cnpj) } : {}),
+            }),
       });
       login(resposta.token, resposta.nome, resposta.tipo);
       navigate('/');
@@ -120,17 +125,28 @@ export function RegisterPage() {
             />
           </label>
         ) : (
-          <label>
-            CNPJ da empresa (opcional)
-            <input
-              type="text"
-              inputMode="numeric"
-              value={cnpj}
-              onChange={e => setCnpj(formatCnpj(e.target.value))}
-              placeholder="00.000.000/0000-00"
-              maxLength={18}
-            />
-          </label>
+          <>
+            <label>
+              Nome da empresa
+              <input type="text" value={nomeEmpresa} onChange={e => setNomeEmpresa(e.target.value)} required />
+            </label>
+            <p className="hint-campo">
+              Você cria a empresa e vira o administrador dela. Para entrar na equipe
+              de uma empresa que já existe, use o link de convite que um administrador
+              mandar para você.
+            </p>
+            <label>
+              CNPJ da empresa (opcional)
+              <input
+                type="text"
+                inputMode="numeric"
+                value={cnpj}
+                onChange={e => setCnpj(formatCnpj(e.target.value))}
+                placeholder="00.000.000/0000-00"
+                maxLength={18}
+              />
+            </label>
+          </>
         )}
         <label>
           Senha

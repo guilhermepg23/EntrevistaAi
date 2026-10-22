@@ -1,4 +1,4 @@
-import type { AuthResponse, TipoConta } from '../types/interview';
+import type { AuthResponse, PublicTeamInvite, TipoConta } from '../types/interview';
 import { API_BASE, handleAuthResponse } from './client';
 
 export interface RegisterDados {
@@ -8,6 +8,8 @@ export interface RegisterDados {
   tipo: TipoConta;
   // Só dígitos.
   cpf?: string;
+  // Recrutador: funda a empresa no cadastro (nome obrigatório, CNPJ opcional).
+  nomeEmpresa?: string;
   cnpj?: string;
 }
 
@@ -19,6 +21,19 @@ export const authApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dados),
+    }).then(res => handleAuthResponse<AuthResponse>(res)),
+
+  // Convite de equipe (públicas: o convidado ainda não tem conta). Convite
+  // inválido/expirado/usado -> 404 COMPANY_INVITE_INVALID.
+  getTeamInvite: (token: string) =>
+    fetch(`${API_BASE}/auth/team-invites/${encodeURIComponent(token)}`)
+      .then(res => handleAuthResponse<PublicTeamInvite>(res)),
+
+  acceptTeamInvite: (token: string, nome: string, senha: string) =>
+    fetch(`${API_BASE}/auth/team-invites/${encodeURIComponent(token)}/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, senha }),
     }).then(res => handleAuthResponse<AuthResponse>(res)),
 
   login: (email: string, senha: string) =>

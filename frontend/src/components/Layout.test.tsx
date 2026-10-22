@@ -1,8 +1,17 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Layout } from './Layout';
 import { renderWithProviders } from '../test-utils';
+
+// Sessão de recrutador: o CompanyProvider busca a empresa pro selo do header.
+vi.mock('../api/companyApi', () => ({
+  companyApi: {
+    get: vi.fn().mockResolvedValue({
+      id: 'c1', nome: 'Acme', cnpj: null, criadoEm: null, meuPapel: 'ADMIN', totalMembros: 1,
+    }),
+  },
+}));
 
 const auth = { token: 'tok', nome: 'Guilherme' };
 
@@ -41,11 +50,35 @@ describe('Layout', () => {
     expect(screen.getByRole('link', { name: 'Analisar currículo' })).toHaveAttribute('href', '/curriculo');
   });
 
-  it('recrutador: não mostra "Analisar currículo" (é ferramenta de candidato)', () => {
+  it('recrutador: modo empresa com selo, nome da empresa e menu próprio, sem "Analisar currículo"', async () => {
+    const { container } = renderWithProviders(<Layout><p>página</p></Layout>, { auth: { ...auth, tipo: 'RECRUTADOR' } });
+
+    expect(container.querySelector('.app-shell')).toHaveClass('modo-empresa');
+    expect(screen.getByText('Modo empresa')).toBeInTheDocument();
+    expect(await screen.findByText('Acme')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Painel' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Equipe' })).toHaveAttribute('href', '/empresa/equipe');
+    expect(screen.getByRole('link', { name: 'Empresa' })).toHaveAttribute('href', '/empresa/configuracoes');
+    expect(screen.queryByRole('link', { name: 'Analisar currículo' })).not.toBeInTheDocument();
+  });
+
+  it('candidato: sem modo empresa', () => {
+    const { container } = renderWithProviders(<Layout><p>página</p></Layout>, { auth });
+
+    expect(container.querySelector('.app-shell')).not.toHaveClass('modo-empresa');
+    expect(screen.queryByText('Modo empresa')).not.toBeInTheDocument();
+  });
+
+  it('recrutador: o menu de conta separa as configurações pessoais das da empresa', async () => {
+    const user = userEvent.setup();
     renderWithProviders(<Layout><p>página</p></Layout>, { auth: { ...auth, tipo: 'RECRUTADOR' } });
 
-    expect(screen.getByText('Guilherme')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Analisar currículo' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Guilherme/ }));
+
+    expect(screen.getByRole('menuitem', { name: 'Minha conta' })).toHaveAttribute('href', '/conta');
+    expect(screen.getByRole('menuitem', { name: 'Configurações pessoais' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Configurações da empresa' }))
+      .toHaveAttribute('href', '/empresa/configuracoes');
   });
 
   it('o menu de conta abre no clique e traz "Detalhes da conta", "Configurações" e "Sair"', async () => {

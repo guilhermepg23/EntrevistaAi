@@ -64,6 +64,8 @@ public class SecurityConfig {
                 // login, é isso que torna o link enviável pra quem não usa a aplicação.
                 .requestMatchers("/auth/register", "/auth/login",
                     "/auth/forgot-password", "/auth/reset-password").permitAll()
+                // Convite de equipe: quem foi convidado ainda não tem conta.
+                .requestMatchers("/auth/team-invites/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/interviews/public/**").permitAll()

@@ -22,7 +22,8 @@ const detalhes: AccountDetails = {
   cpfMascarado: '529.***.***-25',
   criadoEm: '2026-01-05T10:00:00Z',
   tipo: 'CANDIDATO',
-  cnpj: null,
+  nomeEmpresa: null,
+  papelEmpresa: null,
 };
 
 function render() {
@@ -48,13 +49,14 @@ describe('AccountPage', () => {
     expect(screen.getByText('05/01/2026')).toBeInTheDocument();
   });
 
-  it('recrutador: mostra o CNPJ formatado da empresa no lugar do CPF', async () => {
+  it('recrutador: mostra a empresa e o papel nela no lugar do CPF', async () => {
     vi.mocked(accountApi.get).mockResolvedValue({
-      ...detalhes, tipo: 'RECRUTADOR', cpfMascarado: null, cnpj: '11222333000181',
+      ...detalhes, tipo: 'RECRUTADOR', cpfMascarado: null, nomeEmpresa: 'Acme', papelEmpresa: 'ADMIN',
     });
     render();
 
-    expect(await screen.findByText('11.222.333/0001-81')).toBeInTheDocument();
+    expect(await screen.findByText('Acme')).toBeInTheDocument();
+    expect(screen.getByText('Administrador')).toBeInTheDocument();
     expect(screen.getByText('Recrutador')).toBeInTheDocument();
     expect(screen.queryByText('CPF')).not.toBeInTheDocument();
   });

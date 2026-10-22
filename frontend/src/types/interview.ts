@@ -131,8 +131,61 @@ export interface AccountDetails {
   cpfMascarado: string | null;
   criadoEm: string | null;
   tipo: TipoConta;
-  // CNPJ da empresa (só dígitos) — só recrutador, e opcional.
+  // Só recrutador: a empresa e o papel nela (null se candidato ou sem empresa).
+  // Os dados da empresa (CNPJ etc.) vêm de GET /company.
+  nomeEmpresa: string | null;
+  papelEmpresa: PapelEmpresa | null;
+}
+
+// ---------------------------------------------------------- modo empresa
+
+// Papel do recrutador na empresa (ver PapelEmpresa no backend). ADMIN gerencia
+// a equipe e os dados da empresa; pode haver vários.
+export type PapelEmpresa = 'ADMIN' | 'RECRUTADOR';
+
+// GET /company
+export interface Company {
+  id: string;
+  nome: string;
   cnpj: string | null;
+  criadoEm: string | null;
+  meuPapel: PapelEmpresa;
+  totalMembros: number;
+}
+
+// GET /company/members — `voce` marca a linha do próprio usuário logado.
+export interface TeamMember {
+  id: string;
+  nome: string;
+  email: string;
+  papel: PapelEmpresa;
+  criadoEm: string | null;
+  voce: boolean;
+}
+
+// Convite pendente (GET /company/invites). Sem o link: só existe na criação.
+export interface TeamInvite {
+  id: string;
+  email: string;
+  criadoEm: string;
+  expiraEm: string;
+  convidadoPor: string | null;
+}
+
+// POST /company/invites — o link aparece só aqui. emailEnviado=false quando o
+// servidor não tem SMTP: aí o link precisa ser copiado e mandado à mão.
+export interface CreatedTeamInvite {
+  convite: TeamInvite;
+  link: string;
+  emailEnviado: boolean;
+}
+
+// GET /auth/team-invites/{token} — público, pra tela de aceitar o convite.
+export interface PublicTeamInvite {
+  email: string;
+  nomeEmpresa: string;
+  convidadoPor: string | null;
+  expiraEm: string;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API)

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useCompany } from '../hooks/useCompany';
 
 // Rotas onde "Voltar" não faz sentido: a home é a raiz de quem está logado, e
 // o login é pra onde o ProtectedRoute manda quem não está — voltar dali só
@@ -31,6 +32,7 @@ function BackButton() {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, nome, tipo, logout } = useAuth();
+  const { company } = useCompany();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -56,8 +58,13 @@ export function Layout({ children }: { children: ReactNode }) {
     navigate('/login');
   }
 
+  // Modo empresa: o recrutador vê outra paleta (verde-petróleo, ver
+  // .modo-empresa no CSS), o selo com o nome da empresa e um menu próprio —
+  // de propósito bem diferente do candidato, pra ninguém confundir os dois.
+  const modoEmpresa = isAuthenticated && tipo === 'RECRUTADOR';
+
   return (
-    <div className="app-shell">
+    <div className={modoEmpresa ? 'app-shell modo-empresa' : 'app-shell'}>
       <header className="app-header">
         <div className="header-left">
           {mostrarVoltar && <BackButton />}
@@ -65,11 +72,24 @@ export function Layout({ children }: { children: ReactNode }) {
             <span className="brand-mark" aria-hidden="true">IA</span>
             Entrevista IA
           </Link>
+          {modoEmpresa && (
+            <span className="selo-empresa">
+              Modo empresa
+              {company && <span className="selo-empresa-nome">{company.nome}</span>}
+            </span>
+          )}
         </div>
         {isAuthenticated && (
           <div className="header-user">
             {tipo === 'CANDIDATO' && (
               <Link to="/curriculo" className="header-nav-link">Analisar currículo</Link>
+            )}
+            {modoEmpresa && (
+              <nav className="nav-empresa" aria-label="Modo empresa">
+                <NavLink to="/" end className="header-nav-link">Painel</NavLink>
+                <NavLink to="/empresa/equipe" className="header-nav-link">Equipe</NavLink>
+                <NavLink to="/empresa/configuracoes" className="header-nav-link">Empresa</NavLink>
+              </nav>
             )}
             <div className="header-conta" ref={menuRef}>
               <button
@@ -88,11 +108,16 @@ export function Layout({ children }: { children: ReactNode }) {
               {menuAberto && (
                 <div className="header-conta-menu" role="menu">
                   <Link to="/conta" role="menuitem" onClick={() => setMenuAberto(false)}>
-                    Detalhes da conta
+                    {modoEmpresa ? 'Minha conta' : 'Detalhes da conta'}
                   </Link>
                   <Link to="/conta?tab=config" role="menuitem" onClick={() => setMenuAberto(false)}>
-                    Configurações
+                    {modoEmpresa ? 'Configurações pessoais' : 'Configurações'}
                   </Link>
+                  {modoEmpresa && (
+                    <Link to="/empresa/configuracoes" role="menuitem" onClick={() => setMenuAberto(false)}>
+                      Configurações da empresa
+                    </Link>
+                  )}
                   <button type="button" role="menuitem" onClick={handleLogout}>Sair</button>
                 </div>
               )}

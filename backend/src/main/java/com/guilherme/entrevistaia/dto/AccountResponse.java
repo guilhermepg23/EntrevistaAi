@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.dto;
 
+import com.guilherme.entrevistaia.entity.PapelEmpresa;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 
@@ -14,9 +15,11 @@ public record AccountResponse(
     String cpfMascarado,
     OffsetDateTime criadoEm,
     TipoConta tipo,
-    // CNPJ da empresa (só dígitos), null se o recrutador não informou. Vai
-    // completo, ao contrário do CPF: é dado público da empresa, não pessoal.
-    String cnpj
+    // Só recrutador: a empresa e o papel dele nela (null se candidato ou se
+    // ficou sem empresa). Os dados da empresa em si (CNPJ etc.) ficam em
+    // GET /company — "Minha conta" é sobre a pessoa.
+    String nomeEmpresa,
+    PapelEmpresa papelEmpresa
 ) {
     public static AccountResponse from(User user) {
         return new AccountResponse(
@@ -25,7 +28,8 @@ public record AccountResponse(
             mascararCpf(user.getCpf()),
             user.getCriadoEm(),
             user.getTipo(),
-            user.getCnpj()
+            user.getCompany() != null ? user.getCompany().getNome() : null,
+            user.getPapelEmpresa()
         );
     }
 

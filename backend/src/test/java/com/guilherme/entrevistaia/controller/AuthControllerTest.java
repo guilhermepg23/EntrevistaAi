@@ -1,14 +1,17 @@
 package com.guilherme.entrevistaia.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.guilherme.entrevistaia.dto.PublicTeamInviteResponse;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
+import com.guilherme.entrevistaia.exception.CompanyRuleException;
 import com.guilherme.entrevistaia.exception.EmailAlreadyInUseException;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
 import com.guilherme.entrevistaia.exception.InvalidResetTokenException;
 import com.guilherme.entrevistaia.repository.UserRepository;
 import com.guilherme.entrevistaia.security.JwtService;
 import com.guilherme.entrevistaia.security.SecurityConfig;
+import com.guilherme.entrevistaia.service.CompanyService;
 import com.guilherme.entrevistaia.service.PasswordResetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +30,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -52,6 +57,8 @@ class AuthControllerTest {
     // Dependência do AuthController pros endpoints /auth/forgot-password e
     // /auth/reset-password.
     @MockBean private PasswordResetService passwordResetService;
+    // Cadastro de recrutador (funda a empresa) e convite de equipe.
+    @MockBean private CompanyService companyService;
 
     // CPF válido (dígitos verificadores conferem) usado nos cadastros de sucesso.
     private static final String CPF_VALIDO = "52998224725";
@@ -77,42 +84,86 @@ class AuthControllerTest {
         verify(userRepository).save(any(User.class));
     }
 
-    // Recrutador não informa CPF — nem é checada a duplicidade.
+    // Recrutador não informa CPF (nem é checada a duplicidade) e funda a
+    // empresa: quem cria a empresa e salva o usuário é o CompanyService.
     @Test
-    void register_recrutadorSemCpfESemCnpj() throws Exception {
+    void register_recrutadorFundaAEmpresaSemCpf() throws Exception {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hash-fake");
         when(jwtService.generateToken(any(User.class))).thenReturn("token-fake");
 
+        mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
+                     "nomeEmpresa": "Acme", "cnpj": "11.222.333/0001-81", "tipo": "RECRUTADOR"}
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
+
+        verify(companyService).fundarEmpresa(
+            argThat(u -> u.getTipo() == TipoConta.RECRUTADOR && u.getCpf() == null),
+            eq("Acme"), eq("11.222.333/0001-81"));
+        verify(userRepository, never()).existsByCpf(anyString());
+    }
+
+    @Test
+    void register_recrutadorSemNomeDaEmpresaRetorna400() throws Exception {
         mockMvc.perform(post("/auth/register")
                 .contentType("application/json")
                 .content("""
                     {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
                      "tipo": "RECRUTADOR"}
                     """))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
 
-        verify(userRepository).save(argThat(u ->
-            u.getTipo() == TipoConta.RECRUTADOR && u.getCpf() == null && u.getCnpj() == null));
-        verify(userRepository, never()).existsByCpf(anyString());
+        verifyNoInteractions(companyService);
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void register_recrutadorComCnpjSalvaSoOsDigitos() throws Exception {
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("hash-fake");
-        when(jwtService.generateToken(any(User.class))).thenReturn("token-fake");
+    void teamInvite_ehPublicoEMostraAEmpresa() throws Exception {
+        when(companyService.conviteParaAceitar("tok")).thenReturn(new PublicTeamInviteResponse(
+            "novo@empresa.com", "Acme", "Ana", OffsetDateTime.now().plusDays(3)));
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(get("/auth/team-invites/tok"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nomeEmpresa").value("Acme"))
+            .andExpect(jsonPath("$.email").value("novo@empresa.com"));
+    }
+
+    @Test
+    void acceptTeamInvite_criaAContaEJaLoga() throws Exception {
+        User novo = new User();
+        novo.setId(UUID.randomUUID());
+        novo.setNome("Bia");
+        novo.setTipo(TipoConta.RECRUTADOR);
+        when(companyService.aceitarConvite("tok", "Bia", "segredo1")).thenReturn(novo);
+        when(jwtService.generateToken(novo)).thenReturn("token-fake");
+
+        mockMvc.perform(post("/auth/team-invites/tok/accept")
                 .contentType("application/json")
                 .content("""
-                    {"email": "rh@empresa.com", "senha": "123456", "nome": "Recrutadora",
-                     "cnpj": "11.222.333/0001-81", "tipo": "RECRUTADOR"}
+                    {"nome": "Bia", "senha": "segredo1"}
                     """))
-            .andExpect(status().isCreated());
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.token").value("token-fake"))
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"));
+    }
 
-        verify(userRepository).save(argThat(u -> "11222333000181".equals(u.getCnpj())));
+    @Test
+    void acceptTeamInvite_conviteInvalidoRetorna404() throws Exception {
+        when(companyService.aceitarConvite(anyString(), anyString(), anyString()))
+            .thenThrow(CompanyRuleException.conviteInvalido());
+
+        mockMvc.perform(post("/auth/team-invites/velho/accept")
+                .contentType("application/json")
+                .content("""
+                    {"nome": "Bia", "senha": "segredo1"}
+                    """))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.errorCode").value("COMPANY_INVITE_INVALID"));
     }
 
     @Test

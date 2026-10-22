@@ -16,6 +16,16 @@ export function authHeadersMultipart(): HeadersInit {
   return { Authorization: `Bearer ${token}` };
 }
 
+// Erro de negócio da API: a mensagem pra mostrar + o errorCode estável, pra
+// tela que precisa reagir a um caso específico (ex.: COMPANY_NOT_FOUND vira o
+// formulário de criar empresa) sem depender do texto da mensagem.
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number, readonly errorCode?: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function parseBody(res: Response): Promise<unknown> {
   return res.json().catch(() => null);
 }
@@ -35,7 +45,7 @@ export async function handleResponse<T>(res: Response): Promise<T> {
       throw new Error('Sessão expirada. Faça login novamente.');
     }
 
-    throw new Error(body?.message ?? `Erro ${res.status}`);
+    throw new ApiError(body?.message ?? `Erro ${res.status}`, res.status, body?.errorCode);
   }
   if (res.status === 204) {
     return undefined as T;
@@ -48,8 +58,8 @@ export async function handleResponse<T>(res: Response): Promise<T> {
 // evento global. Aceita resposta sem corpo (forgot/reset respondem 200 vazio).
 export async function handleAuthResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    const body = (await parseBody(res)) as { message?: string } | null;
-    throw new Error(body?.message ?? `Erro ${res.status}`);
+    const body = (await parseBody(res)) as { errorCode?: string; message?: string } | null;
+    throw new ApiError(body?.message ?? `Erro ${res.status}`, res.status, body?.errorCode);
   }
   return res.json().catch(() => undefined as T);
 }

@@ -12,6 +12,9 @@ import { InterviewChatPage } from './pages/InterviewChatPage';
 import { InterviewReportPage } from './pages/InterviewReportPage';
 import { PublicReportPage } from './pages/PublicReportPage';
 import { RecruiterHomePage } from './pages/RecruiterHomePage';
+import { TeamPage } from './pages/TeamPage';
+import { CompanySettingsPage } from './pages/CompanySettingsPage';
+import { TeamInviteAcceptPage } from './pages/TeamInviteAcceptPage';
 import { useAuth } from './hooks/useAuth';
 
 // "/" é a raiz de quem está logado, e cada tipo de conta tem a sua: o candidato
@@ -30,6 +33,9 @@ export function App() {
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
         <Route path="/relatorio-publico/:token" element={<PublicReportPage />} />
+        <Route path="/convite-equipe/:token" element={<TeamInviteAcceptPage />} />
+        <Route path="/empresa/equipe" element={<ProtectedRoute tipo="RECRUTADOR"><TeamPage /></ProtectedRoute>} />
+        <Route path="/empresa/configuracoes" element={<ProtectedRoute tipo="RECRUTADOR"><CompanySettingsPage /></ProtectedRoute>} />
         <Route path="/" element={<ProtectedRoute><HomePorTipo /></ProtectedRoute>} />
         <Route path="/curriculo" element={<ProtectedRoute tipo="CANDIDATO"><ResumeReviewPage /></ProtectedRoute>} />
         <Route path="/conta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />

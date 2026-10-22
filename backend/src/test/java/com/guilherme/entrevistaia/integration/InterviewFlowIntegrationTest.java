@@ -28,7 +28,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -225,7 +227,7 @@ class InterviewFlowIntegrationTest {
                 .contentType("application/json")
                 .content("""
                     {"email": "%s", "senha": "123456", "nome": "Recrutadora",
-                     "cnpj": "11.222.333/0001-81", "tipo": "RECRUTADOR"}
+                     "nomeEmpresa": "Acme", "cnpj": "11.222.333/0001-81", "tipo": "RECRUTADOR"}
                     """.formatted(email)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.tipo").value("RECRUTADOR"))
@@ -237,12 +239,132 @@ class InterviewFlowIntegrationTest {
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED_ACCOUNT_TYPE"));
 
-        // Rotas comuns aos dois tipos continuam abertas pra ele. Sem CPF, com o
-        // CNPJ (coluna da V3) salvo só com dígitos.
+        // Rotas comuns aos dois tipos continuam abertas pra ele. Sem CPF; a
+        // empresa fundada no cadastro aparece na conta, com ele de ADMIN.
         mockMvc.perform(get("/account").header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tipo").value("RECRUTADOR"))
             .andExpect(jsonPath("$.cpfMascarado").doesNotExist())
-            .andExpect(jsonPath("$.cnpj").value("11222333000181"));
+            .andExpect(jsonPath("$.nomeEmpresa").value("Acme"))
+            .andExpect(jsonPath("$.papelEmpresa").value("ADMIN"));
+
+        // O CNPJ mora na empresa (tabela da V4), só com dígitos.
+        mockMvc.perform(get("/company").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.cnpj").value("11222333000181"))
+            .andExpect(jsonPath("$.totalMembros").value(1));
+    }
+
+    // Equipe de ponta a ponta no Postgres de verdade: ADMIN convida -> convidado
+    // vê o convite (público) e cria a conta por ele -> entra como RECRUTADOR ->
+    // ADMIN promove, e a regra do último ADMIN segura o rebaixamento quando
+    // sobraria nenhum -> ADMIN remove o membro, que fica sem empresa.
+    @Test
+    void equipe_conviteAceitePromocaoERemocao() throws Exception {
+        String tokenAdmin = registrarRecrutador("integracao-admin-" + UUID.randomUUID() + "@teste.com", "Equipe SA");
+
+        String emailConvidado = "integracao-convidado-" + UUID.randomUUID() + "@teste.com";
+        MvcResult conviteResult = mockMvc.perform(post("/company/invites")
+                .header("Authorization", "Bearer " + tokenAdmin)
+                .contentType("application/json")
+                .content("""
+                    {"email": "%s", "validadeDias": 2}
+                    """.formatted(emailConvidado)))
+            .andExpect(status().isCreated())
+            // Sem MAIL_HOST no teste: o email não sai, o link é o caminho.
+            .andExpect(jsonPath("$.emailEnviado").value(false))
+            .andReturn();
+        String link = objectMapper.readTree(conviteResult.getResponse().getContentAsString()).get("link").asText();
+        String tokenConvite = link.substring(link.lastIndexOf('/') + 1);
+
+        mockMvc.perform(get("/company/invites").header("Authorization", "Bearer " + tokenAdmin))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].email").value(emailConvidado));
+
+        mockMvc.perform(get("/auth/team-invites/{token}", tokenConvite))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nomeEmpresa").value("Equipe SA"))
+            .andExpect(jsonPath("$.email").value(emailConvidado));
+
+        MvcResult aceiteResult = mockMvc.perform(post("/auth/team-invites/{token}/accept", tokenConvite)
+                .contentType("application/json")
+                .content("""
+                    {"nome": "Convidada", "senha": "123456"}
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tipo").value("RECRUTADOR"))
+            .andReturn();
+        String tokenConvidada = objectMapper.readTree(aceiteResult.getResponse().getContentAsString())
+            .get("token").asText();
+
+        // Convite usado não vale de novo, e sai da lista de pendentes.
+        mockMvc.perform(get("/auth/team-invites/{token}", tokenConvite))
+            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/company/invites").header("Authorization", "Bearer " + tokenAdmin))
+            .andExpect(jsonPath("$.length()").value(0));
+
+        // A convidada está na mesma empresa, como RECRUTADOR, e não pode convidar.
+        mockMvc.perform(get("/company").header("Authorization", "Bearer " + tokenConvidada))
+            .andExpect(jsonPath("$.nome").value("Equipe SA"))
+            .andExpect(jsonPath("$.meuPapel").value("RECRUTADOR"))
+            .andExpect(jsonPath("$.totalMembros").value(2));
+        mockMvc.perform(post("/company/invites")
+                .header("Authorization", "Bearer " + tokenConvidada)
+                .contentType("application/json")
+                .content("""
+                    {"email": "outro@teste.com", "validadeDias": 3}
+                    """))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.errorCode").value("COMPANY_ADMIN_REQUIRED"));
+
+        JsonNode membros = objectMapper.readTree(mockMvc.perform(get("/company/members")
+                .header("Authorization", "Bearer " + tokenAdmin))
+            .andReturn().getResponse().getContentAsString());
+        String idAdmin = null;
+        String idConvidada = null;
+        for (JsonNode m : membros) {
+            if (m.get("voce").asBoolean()) idAdmin = m.get("id").asText();
+            else idConvidada = m.get("id").asText();
+        }
+
+        // Único ADMIN não pode se rebaixar...
+        mockMvc.perform(patch("/company/members/{id}/role", idAdmin)
+                .header("Authorization", "Bearer " + tokenAdmin)
+                .contentType("application/json")
+                .content("""
+                    {"papel": "RECRUTADOR"}
+                    """))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.errorCode").value("COMPANY_LAST_ADMIN"));
+
+        // ...mas promover a convidada funciona (vários ADMINs).
+        mockMvc.perform(patch("/company/members/{id}/role", idConvidada)
+                .header("Authorization", "Bearer " + tokenAdmin)
+                .contentType("application/json")
+                .content("""
+                    {"papel": "ADMIN"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.papel").value("ADMIN"));
+
+        // Remover: a conta continua, só fica sem empresa.
+        mockMvc.perform(delete("/company/members/{id}", idConvidada)
+                .header("Authorization", "Bearer " + tokenAdmin))
+            .andExpect(status().isNoContent());
+        mockMvc.perform(get("/company").header("Authorization", "Bearer " + tokenConvidada))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.errorCode").value("COMPANY_NOT_FOUND"));
+    }
+
+    private String registrarRecrutador(String email, String nomeEmpresa) throws Exception {
+        MvcResult result = mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "%s", "senha": "123456", "nome": "Admin",
+                     "nomeEmpresa": "%s", "tipo": "RECRUTADOR"}
+                    """.formatted(email, nomeEmpresa)))
+            .andExpect(status().isCreated())
+            .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
     }
 }

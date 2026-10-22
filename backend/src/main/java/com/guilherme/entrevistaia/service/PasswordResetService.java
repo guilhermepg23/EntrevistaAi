@@ -6,6 +6,7 @@ import com.guilherme.entrevistaia.exception.InvalidResetTokenException;
 import com.guilherme.entrevistaia.mail.PasswordResetMailer;
 import com.guilherme.entrevistaia.repository.PasswordResetTokenRepository;
 import com.guilherme.entrevistaia.repository.UserRepository;
+import com.guilherme.entrevistaia.security.SecureTokens;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,12 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.time.OffsetDateTime;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.Optional;
 
 // Fluxo de recuperação de senha (POST /auth/forgot-password -> /auth/reset-password).
@@ -34,7 +30,6 @@ import java.util.Optional;
 public class PasswordResetService {
 
     private static final Logger log = LoggerFactory.getLogger(PasswordResetService.class);
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
@@ -71,10 +66,10 @@ public class PasswordResetService {
 
         tokenRepository.deleteByUser(user);
 
-        String rawToken = gerarTokenAleatorio();
+        String rawToken = SecureTokens.gerar();
         PasswordResetToken token = new PasswordResetToken();
         token.setUser(user);
-        token.setTokenHash(hash(rawToken));
+        token.setTokenHash(SecureTokens.hash(rawToken));
         token.setExpiraEm(OffsetDateTime.now().plusMinutes(ttlMinutes));
         token.setUsado(false);
         token.setCriadoEm(OffsetDateTime.now());
@@ -89,7 +84,7 @@ public class PasswordResetService {
     // não expirado) e troca a senha. Qualquer problema -> InvalidResetTokenException (400).
     @Transactional
     public void resetPassword(String rawToken, String novaSenha) {
-        PasswordResetToken token = tokenRepository.findByTokenHash(hash(rawToken))
+        PasswordResetToken token = tokenRepository.findByTokenHash(SecureTokens.hash(rawToken))
             .orElseThrow(InvalidResetTokenException::new);
 
         if (!token.utilizavel()) {
@@ -106,21 +101,5 @@ public class PasswordResetService {
         tokenRepository.save(token);
 
         log.info("[PASSWORD_RESET_COMPLETE] userId={}", user.getId());
-    }
-
-    private static String gerarTokenAleatorio() {
-        byte[] bytes = new byte[32];
-        RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private static String hash(String value) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(md.digest(value.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception e) {
-            // SHA-256 é garantido pela plataforma; se faltar, é erro de ambiente.
-            throw new IllegalStateException("SHA-256 indisponível", e);
-        }
     }
 }

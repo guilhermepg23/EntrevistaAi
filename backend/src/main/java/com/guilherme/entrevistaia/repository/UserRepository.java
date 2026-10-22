@@ -1,8 +1,11 @@
 package com.guilherme.entrevistaia.repository;
 
+import com.guilherme.entrevistaia.entity.Company;
+import com.guilherme.entrevistaia.entity.PapelEmpresa;
 import com.guilherme.entrevistaia.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,4 +25,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Idem, pra duplicidade de CPF no cadastro (o CPF é normalizado pra só
     // dígitos antes desta checagem — ver AuthController.register).
     boolean existsByCpf(String cpf);
+
+    // Membros da equipe de uma empresa (tela "Equipe"), em ordem alfabética.
+    List<User> findByCompanyOrderByNomeAsc(Company company);
+
+    // Regra do "nunca uma empresa sem ADMIN" (ver CompanyService).
+    long countByCompanyAndPapelEmpresa(Company company, PapelEmpresa papel);
+
+    long countByCompany(Company company);
 }

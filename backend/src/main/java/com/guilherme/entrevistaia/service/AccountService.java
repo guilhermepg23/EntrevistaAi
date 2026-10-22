@@ -27,15 +27,18 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final ResumeReviewRepository resumeReviewRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final CompanyService companyService;
 
     public AccountService(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            ResumeReviewRepository resumeReviewRepository,
-                           PasswordResetTokenRepository passwordResetTokenRepository) {
+                           PasswordResetTokenRepository passwordResetTokenRepository,
+                           CompanyService companyService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.resumeReviewRepository = resumeReviewRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.companyService = companyService;
     }
 
     // PATCH /account — por ora só o nome. Devolve o User já atualizado pro
@@ -70,6 +73,11 @@ public class AccountService {
     @Transactional
     public void deleteAccount(User principal) {
         User user = carregar(principal.getId());
+        // Recrutador: barra se for o último ADMIN de uma equipe com outros
+        // membros (COMPANY_LAST_ADMIN, 409); se for o único membro, a empresa
+        // vai junto. Roda antes de apagar qualquer coisa, pra o bloqueio não
+        // deixar a exclusão pela metade.
+        companyService.antesDeExcluirConta(user);
         resumeReviewRepository.deleteByUser(user);
         passwordResetTokenRepository.deleteByUser(user);
         userRepository.delete(user);

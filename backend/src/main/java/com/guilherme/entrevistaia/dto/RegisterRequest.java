@@ -21,6 +21,9 @@ import jakarta.validation.constraints.Size;
 // Os documentos dependem do tipo, por isso nenhum dos dois tem @NotBlank aqui:
 // - cpf: obrigatório pro candidato (cobrado no AuthController) e ignorado pro
 //   recrutador, que não informa CPF.
+// - nomeEmpresa: obrigatório pro recrutador, que funda a empresa no cadastro
+//   e vira ADMIN dela (quem entra numa empresa existente usa o convite, ver
+//   AuthController.acceptTeamInvite).
 // - cnpj: CNPJ da empresa, opcional e só pro recrutador.
 // Quando vêm preenchidos, @Cpf/@Cnpj conferem os dígitos verificadores.
 public record RegisterRequest(
@@ -28,6 +31,7 @@ public record RegisterRequest(
     @NotBlank @Size(min = 6) String senha,
     @NotBlank String nome,
     @Cpf String cpf,
+    String nomeEmpresa,
     @Cnpj String cnpj,
     TipoConta tipo
 ) {}
