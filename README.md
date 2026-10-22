@@ -158,6 +158,10 @@ Publicado e validado ponta a ponta em produção:
 
 ## Próximos passos
 
+A v1.1 (modo empresa: recrutadores, equipe, testes para candidatos) está em
+andamento. Status, decisões e as próximas etapas ficam em
+[docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md).
+
 1. Conferir os breakpoints mobile num device/DevTools real — o resto do polimento visual
    está feito (breakpoint mobile no CSS, `prefers-reduced-motion`, `:focus-visible`,
    auto-scroll do chat, range slider e `input[type=file]` estilizados, aviso de cold start

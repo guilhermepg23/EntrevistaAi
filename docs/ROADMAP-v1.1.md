@@ -1,0 +1,105 @@
+# Roadmap da v1.1.0 — modo empresa
+
+Objetivo da v1.1: dois tipos de conta. O **candidato** treina entrevistas (o que
+a v1.0 já fazia) e faz os testes para os quais foi convidado. O **recrutador**
+trabalha em nome de uma empresa: cria testes, convida candidatos e vê os
+resultados. Mais adiante, o treino vira parte de um plano de assinatura.
+
+## Decisões já fechadas
+
+- O tipo de conta é escolhido no cadastro e não muda depois. Quem quiser os dois papéis usa emails diferentes.
+- Recrutador não informa CPF. O CNPJ da empresa é opcional.
+- Uma empresa tem vários recrutadores, com papel **ADMIN** ou **RECRUTADOR**, e pode ter vários ADMINs. A empresa nunca fica sem ADMIN.
+- Convite de equipe: validade de **2 a 7 dias**, escolhida por quem convida. Vai por email (quando houver SMTP) **e** como link para copiar.
+- O modo empresa tem identidade visual e telas próprias (paleta verde-petróleo, header escuro, selo "Modo empresa").
+- Perguntas dos testes: a IA gera a partir de stack, nível e descrição da vaga, e o recrutador pode fixar perguntas próprias.
+- Para fazer um teste de empresa, o candidato **precisa ter conta**.
+- No teste de empresa, o candidato **não vê** o feedback (nota e resposta modelo); só o recrutador vê.
+- Assinatura: na v1.1 entra só o preparo do modelo de dados (`origem` da entrevista); não há cobrança.
+
+## Status
+
+| Etapa | O quê | Status |
+|---|---|---|
+| 0 | v1.0.0 / v1.0.1: banco no Supabase, Flyway, correção do Dockerfile | ✅ no ar |
+| 1 | Tipo de conta no cadastro, papel no Spring Security, rotas e menu por tipo | ✅ no ar |
+| 1b | Recrutador sem CPF, CNPJ opcional | ✅ no ar |
+| 2 | Empresa e equipe: papéis, convites, modo empresa | ✅ no ar (conferido via API; **telas ainda não vistas no navegador**) |
+| 3 | Testes de entrevista da empresa e convite de candidatos | ⏳ próxima |
+| 4 | Painel de resultados do recrutador | ⏳ |
+| 5 | Fechamento da v1.1.0 (revisão visual, README, tag) | ⏳ |
+
+## Antes de começar a etapa 3
+
+1. **Conferir o modo empresa no navegador**, no desktop e no celular (≤600px):
+   - cadastro de recrutador;
+   - painel;
+   - Equipe: convidar, copiar o link, promover, remover;
+   - Configurações da empresa;
+   - aceite do convite em `/convite-equipe/:token`.
+2. **Limpar as contas de teste em produção (Supabase)**, os emails `@teste.local` e `a@b.c`. Os recrutadores de teste agora têm empresa e convites ligados a eles, então a ordem importa:
+   1. `company_invites`;
+   2. desvincular `users.company_id`;
+   3. `companies` sem membros;
+   4. `users`.
+
+   Pedir ao Claude para montar o SQL.
+3. (Opcional) **SMTP no Render** (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`). Sem ele, convite de equipe e recuperação de senha funcionam só por link.
+
+## Etapa 3 — testes de entrevista e convite de candidatos
+
+**Banco (migration V5)**
+- `assessments` (o teste):
+  - `company_id` e `criado_por_id`;
+  - `titulo`, `stack`, `nivel`, `total_perguntas`, `descricao_vaga`, `foco_pratica`;
+  - `status` (`ATIVO` / `ARQUIVADO`);
+  - `criado_em`.
+- `assessment_questions`: perguntas fixas do recrutador (`ordem`, `pergunta`). As que faltarem, a IA gera.
+- `assessment_links`: link de convite para candidatos, com token salvo só como hash e validade opcional. Decidir se é um link genérico do teste ou um convite por email do candidato.
+- `interviews`: ganha `origem` (`TREINO` / `CONVITE`) e `assessment_id`, que fica nulo no treino.
+
+**Backend**
+- `/assessments/**`, só para recrutador (a regra no `SecurityConfig` já existe):
+  - criar, editar, arquivar e listar os testes da empresa;
+  - gerar e cancelar o link.
+- Rota pública para ler o convite do teste: nome da empresa, título e quantidade de perguntas.
+- Candidato logado aceita o convite. Isso cria a `Interview` com `origem=CONVITE`, ligada ao teste, e as perguntas usam as fixas do teste antes das geradas pela IA.
+- Interview de convite **não devolve feedback** ao candidato:
+  - `AnswerResponse` sem nota, gaps e resposta modelo;
+  - o relatório também fica fechado para o candidato.
+
+  Atenção ao `/interviews/{id}/report` e ao link público de compartilhamento: decidir se o candidato pode compartilhar o resultado de um teste de empresa (sugestão: não).
+- O histórico do candidato separa "Treinos" de "Testes de empresas".
+
+**Front**
+- Modo empresa:
+  - tela "Testes", com lista e botão "Novo teste";
+  - formulário do teste, com as perguntas fixas opcionais;
+  - detalhe do teste, com link para copiar e lista de candidatos.
+- Candidato:
+  - página do convite do teste (`/teste/:token`), que leva ao login ou cadastro quando necessário e depois começa o teste;
+  - seção "Testes de empresas" na home.
+- O chat de entrevista no modo convite esconde o feedback, mostrando só "Resposta enviada".
+
+**Perguntas para decidir no início da etapa 3**
+- Link do teste genérico (qualquer candidato com o link) ou convite por email (um por candidato, como o da equipe)?
+- O candidato pode refazer o mesmo teste?
+- O teste tem prazo (data limite) além da validade do link?
+
+## Etapa 4 — painel de resultados
+
+- Detalhe do teste com a lista de candidatos que fizeram: status, nota geral, recomendação e data.
+- Relatório completo de cada candidato para o recrutador: transcrição, notas por pergunta e currículo × desempenho. Reaproveita a tela de relatório da v1.0.
+- Permissão: qualquer membro da empresa vê os resultados dos testes da empresa.
+- Ordenar e filtrar por nota e recomendação.
+
+## Etapa 5 — fechar a v1.1.0
+
+- Revisão visual completa (desktop e celular) e capturas em `docs/`.
+- README: seção do modo empresa e novas variáveis, se houver.
+- Subir a versão para `1.1.0` no `pom.xml`, no `package.json` e no `package-lock.json`, e criar a tag `v1.1.0`.
+
+## Depois da v1.1 (assinatura)
+
+- Limitar ou exigir plano para entrevistas com `origem=TREINO` (é só uma checagem no início da entrevista).
+- Escolher o provedor de pagamento e cuidar do vínculo com a empresa (CNPJ passa a ser útil).
