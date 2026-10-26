@@ -1,4 +1,7 @@
-import type { Dificuldade, NivelDominio, NivelPercebido, PapelEmpresa, Recomendacao, TipoConta, VeredictoCurriculo } from './types/interview';
+import type {
+  AssessmentInviteStatus, Dificuldade, InterviewStatus, NivelDominio, NivelPercebido, PapelEmpresa,
+  Recomendacao, TipoConta, VeredictoCurriculo,
+} from './types/interview';
 
 // Traduz os valores de enum que vêm crus da API (sempre em maiúsculas, ver
 // types/interview.ts) para o rótulo exibido na tela — mantém os componentes
@@ -43,4 +46,25 @@ export const tipoContaLabel: Record<TipoConta, string> = {
 export const papelEmpresaLabel: Record<PapelEmpresa, string> = {
   ADMIN: 'Administrador',
   RECRUTADOR: 'Recrutador',
+};
+
+// Nível do teste/treino: o formulário grava em minúsculas (junior/pleno/senior).
+export const nivelLabel: Record<string, string> = {
+  junior: 'Júnior',
+  pleno: 'Pleno',
+  senior: 'Sênior',
+};
+
+export const conviteTesteStatusLabel: Record<AssessmentInviteStatus, string> = {
+  PENDENTE: 'Aguardando o candidato',
+  ACEITO: 'Começou',
+  CANCELADO: 'Cancelado',
+  EXPIRADO: 'Vencido',
+};
+
+// Andamento do candidato no teste, do ponto de vista da empresa.
+export const andamentoTesteLabel: Record<InterviewStatus, string> = {
+  EM_ANDAMENTO: 'Fazendo o teste',
+  FINALIZADA: 'Concluiu',
+  ABANDONADA: 'Desistiu',
 };

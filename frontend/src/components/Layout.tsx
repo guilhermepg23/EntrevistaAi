@@ -70,7 +70,7 @@ export function Layout({ children }: { children: ReactNode }) {
           {mostrarVoltar && <BackButton />}
           <Link to="/" className="brand">
             <span className="brand-mark" aria-hidden="true">IA</span>
-            Entrevista IA
+            <span className="brand-nome">Entrevista IA</span>
           </Link>
           {modoEmpresa && (
             <span className="selo-empresa">
@@ -87,6 +87,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {modoEmpresa && (
               <nav className="nav-empresa" aria-label="Modo empresa">
                 <NavLink to="/" end className="header-nav-link">Painel</NavLink>
+                <NavLink to="/empresa/testes" className="header-nav-link">Testes</NavLink>
                 <NavLink to="/empresa/equipe" className="header-nav-link">Equipe</NavLink>
                 <NavLink to="/empresa/configuracoes" className="header-nav-link">Empresa</NavLink>
               </nav>

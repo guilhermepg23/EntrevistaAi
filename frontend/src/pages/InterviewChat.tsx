@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInterview } from '../hooks/useInterview';
 import { interviewApi } from '../api/interviewApi';
-import type { ResumeAnalysis } from '../types/interview';
+import type { Interview, ResumeAnalysis } from '../types/interview';
 import { nivelPercebidoLabel } from '../labels';
 import { ChatBubble, IaAvatar } from '../components/ChatBubble';
 import { AnswerInput } from '../components/AnswerInput';
@@ -19,6 +19,7 @@ export function InterviewChat({
   const {
     chatItems, status, errorMessage, streamingQuestionText, initialize, submitAnswer, retry,
   } = useInterview(interviewId);
+  const [interview, setInterview] = useState<Interview | null>(null);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [saindo, setSaindo] = useState(false);
@@ -46,10 +47,24 @@ export function InterviewChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interviewId]);
 
+  // A origem decide o modo do chat: num teste de empresa (CONVITE) não há
+  // avaliação nem leitura do currículo pro candidato — o backend responderia
+  // 403 INTERVIEW_FEEDBACK_HIDDEN, então nem pede o currículo.
   useEffect(() => {
-    // null quando o candidato não enviou currículo — não é erro, só não tem o que mostrar.
-    interviewApi.getResume(interviewId).then(setResumeAnalysis).catch(() => {});
+    let ativo = true;
+    interviewApi.get(interviewId)
+      .then(dados => {
+        if (!ativo) return;
+        setInterview(dados);
+        if (dados.origem === 'CONVITE') return;
+        // null quando o candidato não enviou currículo — não é erro, só não tem o que mostrar.
+        interviewApi.getResume(interviewId).then(r => { if (ativo) setResumeAnalysis(r); }).catch(() => {});
+      })
+      .catch(() => {});
+    return () => { ativo = false; };
   }, [interviewId]);
+
+  const testeEmpresa = interview?.origem === 'CONVITE';
 
   // Não navega pro relatório sozinho quando a última pergunta termina de ser
   // avaliada — o candidato só via o feedback por uma fração de segundo antes
@@ -75,8 +90,9 @@ export function InterviewChat({
           {confirmandoSaida ? (
             <div className="confirmar-saida">
               <span>
-                Sair agora abandona a entrevista: seu progresso não entra em nenhum relatório e não dá
-                pra retomar depois. Se começar de novo, as perguntas serão outras.
+                {testeEmpresa
+                  ? 'Sair agora encerra o teste: a empresa recebe só o que você já respondeu, e testes de empresa não podem ser retomados nem refeitos.'
+                  : 'Sair agora abandona a entrevista: seu progresso não entra em nenhum relatório e não dá pra retomar depois. Se começar de novo, as perguntas serão outras.'}
               </span>
               <div className="confirmar-saida-botoes">
                 <button
@@ -88,15 +104,26 @@ export function InterviewChat({
                   Cancelar
                 </button>
                 <button type="button" className="botao-perigo" onClick={confirmarSaida} disabled={saindo}>
-                  {saindo ? 'Saindo...' : 'Sim, sair da entrevista'}
+                  {saindo ? 'Saindo...' : testeEmpresa ? 'Sim, encerrar o teste' : 'Sim, sair da entrevista'}
                 </button>
               </div>
             </div>
           ) : (
             <button type="button" className="botao-secundario sair-entrevista" onClick={() => setConfirmandoSaida(true)}>
-              Sair da entrevista
+              {testeEmpresa ? 'Sair do teste' : 'Sair da entrevista'}
             </button>
           )}
+        </div>
+      )}
+
+      {testeEmpresa && (
+        <div className="teste-empresa-banner">
+          <span className="teste-empresa-banner-rotulo">Teste de {interview?.nomeEmpresa ?? 'empresa'}</span>
+          {interview?.tituloTeste && <strong>{interview.tituloTeste}</strong>}
+          <p>
+            Suas respostas vão direto para a empresa. Neste teste você não vê nota nem
+            avaliação, e ele não pode ser refeito.
+          </p>
         </div>
       )}
 
@@ -145,7 +172,15 @@ export function InterviewChat({
         <div ref={fimDaConversa} aria-hidden="true" />
       </div>
 
-      {status === 'finished' ? (
+      {status === 'finished' && testeEmpresa ? (
+        <div className="teste-concluido" role="status">
+          <p>
+            <strong>Teste concluído.</strong> Suas respostas foram enviadas
+            para {interview?.nomeEmpresa ?? 'a empresa'}, que vai entrar em contato com o resultado.
+          </p>
+          <button className="ver-relatorio" onClick={onExit}>Voltar ao início</button>
+        </div>
+      ) : status === 'finished' ? (
         <button className="ver-relatorio" onClick={onFinished}>
           Ver relatório completo
         </button>

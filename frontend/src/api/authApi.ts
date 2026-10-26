@@ -1,4 +1,4 @@
-import type { AuthResponse, PublicTeamInvite, TipoConta } from '../types/interview';
+import type { AuthResponse, CandidateAssessmentInvite, PublicTeamInvite, TipoConta } from '../types/interview';
 import { API_BASE, handleAuthResponse } from './client';
 
 export interface RegisterDados {
@@ -35,6 +35,12 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, senha }),
     }).then(res => handleAuthResponse<AuthResponse>(res)),
+
+  // Convite de teste de empresa (pública: quem abre o link pode não ter
+  // conta). Vencido, cancelado ou já usado -> 404 ASSESSMENT_INVITE_INVALID.
+  getAssessmentInvite: (token: string) =>
+    fetch(`${API_BASE}/auth/assessment-invites/${encodeURIComponent(token)}`)
+      .then(res => handleAuthResponse<CandidateAssessmentInvite>(res)),
 
   login: (email: string, senha: string) =>
     fetch(`${API_BASE}/auth/login`, {

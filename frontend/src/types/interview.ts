@@ -33,6 +33,19 @@ export interface AnswerFeedback {
   interviewFinalizada: boolean;
 }
 
+// O que POST /interviews/questions/{id}/answer devolve. Num teste de empresa
+// (feedbackOculto) a avaliação fica só com a empresa: nota e o resto vêm null,
+// e o chat mostra só "Resposta enviada" (ver useInterview/ChatBubble).
+export type AnswerSubmission =
+  | (AnswerFeedback & { feedbackOculto?: false })
+  | {
+      id: string;
+      questionId: string;
+      nota: null;
+      interviewFinalizada: boolean;
+      feedbackOculto: true;
+    };
+
 export interface FeedbackReport {
   notaGeral: number;
   resumoExecutivo: string;
@@ -51,7 +64,15 @@ export interface Interview {
   totalPerguntas: number;
   perguntasRespondidas: number;
   criadoEm: string;
+  // TREINO = o candidato criou; CONVITE = teste de empresa (feedback oculto).
+  // Respostas antigas (antes da v1.1) não trazem o campo: são treino.
+  origem?: OrigemEntrevista;
+  // Só num CONVITE.
+  nomeEmpresa?: string | null;
+  tituloTeste?: string | null;
 }
+
+export type OrigemEntrevista = 'TREINO' | 'CONVITE';
 
 // Item de GET /interviews/{id}/transcript — pergunta + resposta (se já
 // respondida) num só objeto, usado pra revisar a entrevista inteira na tela
@@ -188,7 +209,82 @@ export interface PublicTeamInvite {
   expiraEm: string;
 }
 
-// Item do histórico exibido no chat (view model, não vem direto da API)
+// ------------------------------------------- testes de empresa (etapa 3)
+
+export type AssessmentStatus = 'ATIVO' | 'ARQUIVADO';
+// EXPIRADO = o teste venceu ou foi arquivado antes do aceite.
+export type AssessmentInviteStatus = 'PENDENTE' | 'ACEITO' | 'CANCELADO' | 'EXPIRADO';
+
+// GET /assessments e GET /assessments/{id}. aberto = ativo e dentro da
+// validade; editavel = aberto e nenhum candidato começou (senão 409
+// ASSESSMENT_LOCKED). Os contadores vêm dos convites.
+export interface Assessment {
+  id: string;
+  titulo: string;
+  stack: string;
+  nivel: string;
+  totalPerguntas: number;
+  descricaoVaga: string | null;
+  perguntasFixas: string[];
+  status: AssessmentStatus;
+  aberto: boolean;
+  editavel: boolean;
+  criadoEm: string;
+  expiraEm: string;
+  criadoPor: string | null;
+  convitesPendentes: number;
+  iniciados: number;
+  finalizados: number;
+}
+
+// Corpo de POST /assessments e PUT /assessments/{id}.
+export interface AssessmentInput {
+  titulo: string;
+  stack: string;
+  nivel: string;
+  totalPerguntas: number;
+  descricaoVaga: string | null;
+  perguntasFixas: string[];
+}
+
+// Convite de candidato, como o recrutador vê (GET /assessments/{id}/invites).
+// interviewId/interviewStatus aparecem depois do aceite.
+export interface AssessmentInvite {
+  id: string;
+  email: string;
+  status: AssessmentInviteStatus;
+  criadoEm: string;
+  aceitoEm: string | null;
+  convidadoPor: string | null;
+  interviewId: string | null;
+  interviewStatus: InterviewStatus | null;
+}
+
+// POST /assessments/{id}/invites — o link só existe nesta resposta.
+export interface CreatedAssessmentInvite {
+  convite: AssessmentInvite;
+  link: string;
+  emailEnviado: boolean;
+}
+
+// Convite do lado do candidato: a página pública do link
+// (GET /auth/assessment-invites/{token}) e a lista da home (GET /interviews/invites).
+export interface CandidateAssessmentInvite {
+  inviteId: string;
+  email: string;
+  nomeEmpresa: string;
+  titulo: string;
+  stack: string;
+  nivel: string;
+  totalPerguntas: number;
+  expiraEm: string;
+  status: AssessmentInviteStatus;
+  interviewId: string | null;
+  interviewStatus: InterviewStatus | null;
+}
+
+// Item do histórico exibido no chat (view model, não vem direto da API).
+// `enviada` sem feedback = resposta de teste de empresa (avaliação oculta).
 export type ChatItem =
   | { tipo: 'pergunta'; question: Question }
-  | { tipo: 'resposta'; texto: string; feedback?: AnswerFeedback };
+  | { tipo: 'resposta'; texto: string; feedback?: AnswerFeedback; enviada?: boolean };

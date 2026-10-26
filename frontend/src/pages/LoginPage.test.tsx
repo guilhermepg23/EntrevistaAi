@@ -36,6 +36,17 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
   }
 
+  it('com ?voltar= (link de teste), volta pra ele depois de entrar', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authApi.login).mockResolvedValue({ token: 't', nome: 'Ana', tipo: 'CANDIDATO' });
+    renderWithProviders(<LoginPage />, { route: '/login?voltar=%2Fteste%2Ftok' });
+
+    await preencherEEnviar(user);
+
+    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/teste/tok'));
+    expect(screen.getByRole('link', { name: 'Cadastre-se' })).toHaveAttribute('href', '/register?voltar=%2Fteste%2Ftok');
+  });
+
   it('login com sucesso: chama authApi.login, persiste sessão e navega pra "/"', async () => {
     const user = userEvent.setup();
     vi.mocked(authApi.login).mockResolvedValue({ token: 'tok-123', nome: 'Ana', tipo: 'CANDIDATO' });

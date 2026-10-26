@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 import { PasswordInput } from '../components/PasswordInput';
+import { destinoSeguro } from '../lib/redirect';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,9 @@ export function LoginPage() {
   const acordandoServidor = useSlowRequestHint(carregando);
   const { login, sessionExpired, clearSessionExpired } = useAuth();
   const navigate = useNavigate();
+  // ?voltar= : quem veio do link de um teste volta pra ele depois de entrar.
+  const [searchParams] = useSearchParams();
+  const voltar = destinoSeguro(searchParams.get('voltar'));
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -23,7 +27,7 @@ export function LoginPage() {
     try {
       const { token, nome, tipo } = await authApi.login(email, senha);
       login(token, nome, tipo);
-      navigate('/');
+      navigate(voltar ?? '/');
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao entrar');
     } finally {
@@ -65,7 +69,7 @@ export function LoginPage() {
           </p>
         )}
         <p className="auth-switch">
-          Não tem conta? <Link to="/register">Cadastre-se</Link>
+          Não tem conta? <Link to={voltar ? `/register?voltar=${encodeURIComponent(voltar)}` : '/register'}>Cadastre-se</Link>
         </p>
       </form>
     </div>

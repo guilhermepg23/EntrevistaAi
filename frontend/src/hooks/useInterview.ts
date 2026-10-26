@@ -53,10 +53,11 @@ export function useInterview(interviewId: string) {
       const feedback = await interviewApi.submitAnswer(questionId, texto);
       setPendingAnswer(null);
 
+      // Teste de empresa: não há avaliação pra mostrar, só que a resposta foi.
       setChatItems(prev =>
         prev.map((item, idx) =>
           idx === prev.length - 1 && item.tipo === 'resposta'
-            ? { ...item, feedback }
+            ? (feedback.feedbackOculto ? { ...item, enviada: true } : { ...item, feedback })
             : item
         )
       );

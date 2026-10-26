@@ -71,6 +71,37 @@ describe('useInterview.initialize', () => {
   });
 });
 
+describe('useInterview em teste de empresa (feedback oculto)', () => {
+  it('marca a resposta como enviada, sem feedback', async () => {
+    mockedApi.getTranscript.mockResolvedValue([]);
+    mockedApi.streamNextQuestion.mockResolvedValue(question());
+    mockedApi.submitAnswer.mockResolvedValue({
+      id: 'a1', questionId: 'q1', nota: null, interviewFinalizada: true, feedbackOculto: true,
+    });
+
+    const { result } = renderHook(() => useInterview('i1'));
+    await act(async () => result.current.initialize());
+    await act(async () => result.current.submitAnswer('minha resposta'));
+
+    expect(result.current.status).toBe('finished');
+    expect(result.current.chatItems[1]).toEqual({ tipo: 'resposta', texto: 'minha resposta', enviada: true });
+  });
+
+  it('ao retomar, as respostas sem avaliação do transcript voltam como enviadas', async () => {
+    const respondida: TranscriptItem = {
+      id: 'q1', interviewId: 'i1', ordem: 1, pergunta: 'P1', topico: 'T', dificuldade: 'BASICO',
+      respostaTexto: 'R1', nota: null, resumo: null, pontosFortes: [], gaps: [], nivelDominio: null, respostaModelo: null,
+    };
+    mockedApi.getTranscript.mockResolvedValue([respondida]);
+    mockedApi.streamNextQuestion.mockResolvedValue(question({ id: 'q2', ordem: 2 }));
+
+    const { result } = renderHook(() => useInterview('i1'));
+    await act(async () => result.current.initialize());
+
+    expect(result.current.chatItems[1]).toEqual({ tipo: 'resposta', texto: 'R1', enviada: true });
+  });
+});
+
 describe('useInterview.submitAnswer', () => {
   it('mostra a resposta otimisticamente e, se não for a última pergunta, busca a próxima em background', async () => {
     mockedApi.getTranscript.mockResolvedValue([]);

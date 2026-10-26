@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InterviewChat } from './InterviewChat';
 import { useInterview } from '../hooks/useInterview';
 import { interviewApi } from '../api/interviewApi';
-import type { ChatItem } from '../types/interview';
+import type { ChatItem, Interview } from '../types/interview';
 
 vi.mock('../hooks/useInterview', () => ({ useInterview: vi.fn() }));
 vi.mock('../api/interviewApi', () => ({
-  interviewApi: { getResume: vi.fn(), abandon: vi.fn(), transcribe: vi.fn() },
+  interviewApi: { get: vi.fn(), getResume: vi.fn(), abandon: vi.fn(), transcribe: vi.fn() },
 }));
 
 type HookReturn = ReturnType<typeof useInterview>;
@@ -26,6 +26,13 @@ function stubHook(over: Partial<HookReturn> = {}) {
   } as HookReturn);
 }
 
+function makeInterview(o: Partial<Interview> = {}): Interview {
+  return {
+    id: 'int-1', stack: 'Java', nivel: 'pleno', status: 'EM_ANDAMENTO', totalPerguntas: 8,
+    perguntasRespondidas: 0, criadoEm: '2026-10-01T10:00:00Z', origem: 'TREINO', ...o,
+  };
+}
+
 const onFinished = vi.fn();
 const onExit = vi.fn();
 
@@ -37,6 +44,7 @@ describe('InterviewChat', () => {
   beforeEach(() => {
     onFinished.mockReset();
     onExit.mockReset();
+    vi.mocked(interviewApi.get).mockReset().mockResolvedValue(makeInterview());
     vi.mocked(interviewApi.getResume).mockReset().mockResolvedValue(null);
     vi.mocked(interviewApi.abandon).mockReset().mockResolvedValue(undefined as never);
     stubHook();
@@ -142,5 +150,59 @@ describe('InterviewChat', () => {
     expect(await screen.findByText('Currículo consistente com pleno.')).toBeInTheDocument();
     expect(screen.getByText('Leitura do currículo')).toBeInTheDocument();
     expect(screen.getByText(/Aderência à vaga:/)).toBeInTheDocument();
+  });
+});
+
+describe('InterviewChat em teste de empresa (origem CONVITE)', () => {
+  const convite = makeInterview({ origem: 'CONVITE', nomeEmpresa: 'Acme', tituloTeste: 'Back-end Java' });
+
+  beforeEach(() => {
+    onFinished.mockReset();
+    onExit.mockReset();
+    vi.mocked(interviewApi.get).mockReset().mockResolvedValue(convite);
+    vi.mocked(interviewApi.getResume).mockReset().mockResolvedValue(null);
+    vi.mocked(interviewApi.abandon).mockReset().mockResolvedValue(undefined as never);
+    stubHook();
+  });
+  afterEach(() => vi.clearAllMocks());
+
+  it('mostra o aviso do teste e não pede a leitura do currículo', async () => {
+    renderChat();
+
+    expect(await screen.findByText('Teste de Acme')).toBeInTheDocument();
+    expect(screen.getByText('Back-end Java')).toBeInTheDocument();
+    expect(interviewApi.getResume).not.toHaveBeenCalled();
+  });
+
+  it('ao terminar, não oferece relatório: avisa que foi para a empresa e volta ao início', async () => {
+    const user = userEvent.setup();
+    stubHook({ status: 'finished' });
+    renderChat();
+
+    expect(await screen.findByText(/Teste concluído/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ver relatório completo' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Voltar ao início' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onFinished).not.toHaveBeenCalled();
+  });
+
+  it('a saída avisa que o teste não pode ser refeito', async () => {
+    const user = userEvent.setup();
+    renderChat();
+
+    await user.click(await screen.findByRole('button', { name: 'Sair do teste' }));
+    expect(screen.getByText(/não podem ser retomados nem refeitos/)).toBeInTheDocument();
+  });
+
+  it('resposta enviada sem feedback mostra só "Resposta enviada"', () => {
+    stubHook({
+      chatItems: [
+        { tipo: 'pergunta', question: { id: 'q1', interviewId: 'int-1', ordem: 1, pergunta: 'P1', topico: 'T', dificuldade: 'BASICO' } },
+        { tipo: 'resposta', texto: 'Minha resposta', enviada: true },
+      ],
+    });
+    renderChat();
+
+    expect(screen.getByText('✓ Resposta enviada')).toBeInTheDocument();
   });
 });

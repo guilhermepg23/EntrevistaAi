@@ -15,6 +15,10 @@ import { RecruiterHomePage } from './pages/RecruiterHomePage';
 import { TeamPage } from './pages/TeamPage';
 import { CompanySettingsPage } from './pages/CompanySettingsPage';
 import { TeamInviteAcceptPage } from './pages/TeamInviteAcceptPage';
+import { AssessmentsPage } from './pages/AssessmentsPage';
+import { AssessmentFormPage } from './pages/AssessmentFormPage';
+import { AssessmentDetailPage } from './pages/AssessmentDetailPage';
+import { AssessmentInvitePage } from './pages/AssessmentInvitePage';
 import { useAuth } from './hooks/useAuth';
 
 // "/" é a raiz de quem está logado, e cada tipo de conta tem a sua: o candidato
@@ -34,6 +38,12 @@ export function App() {
         <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
         <Route path="/relatorio-publico/:token" element={<PublicReportPage />} />
         <Route path="/convite-equipe/:token" element={<TeamInviteAcceptPage />} />
+        {/* Pública: quem abre o link do teste pode não estar logado (a página manda pro login/cadastro). */}
+        <Route path="/teste/:token" element={<AssessmentInvitePage />} />
+        <Route path="/empresa/testes" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentsPage /></ProtectedRoute>} />
+        <Route path="/empresa/testes/novo" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentFormPage /></ProtectedRoute>} />
+        <Route path="/empresa/testes/:id" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentDetailPage /></ProtectedRoute>} />
+        <Route path="/empresa/testes/:id/editar" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentFormPage /></ProtectedRoute>} />
         <Route path="/empresa/equipe" element={<ProtectedRoute tipo="RECRUTADOR"><TeamPage /></ProtectedRoute>} />
         <Route path="/empresa/configuracoes" element={<ProtectedRoute tipo="RECRUTADOR"><CompanySettingsPage /></ProtectedRoute>} />
         <Route path="/" element={<ProtectedRoute><HomePorTipo /></ProtectedRoute>} />

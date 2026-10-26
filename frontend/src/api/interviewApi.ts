@@ -1,4 +1,4 @@
-import type { AnswerFeedback, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
+import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
 import { API_BASE, authHeaders, authHeadersMultipart, handleResponse } from './client';
 
 // Faz o parse manual de UM evento SSE já isolado (texto entre duas quebras de
@@ -87,7 +87,21 @@ export const interviewApi = {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ resposta }),
-    }).then(res => handleResponse<AnswerFeedback>(res)),
+    }).then(res => handleResponse<AnswerSubmission>(res)),
+
+  // Testes de empresas do candidato logado: pendentes e já aceitos.
+  assessmentInvites: () =>
+    fetch(`${API_BASE}/interviews/invites`, {
+      headers: authHeaders(),
+    }).then(res => handleResponse<CandidateAssessmentInvite[]>(res)),
+
+  // Cria a entrevista do teste (ou devolve a mesma, se já tinha aceitado).
+  // Outra conta que não a do email convidado -> 403 ASSESSMENT_INVITE_WRONG_ACCOUNT.
+  acceptAssessmentInvite: (inviteId: string) =>
+    fetch(`${API_BASE}/interviews/invites/${inviteId}/accept`, {
+      method: 'POST',
+      headers: authHeaders(),
+    }).then(res => handleResponse<Interview>(res)),
 
   getReport: (interviewId: string) =>
     fetch(`${API_BASE}/interviews/${interviewId}/report`, {

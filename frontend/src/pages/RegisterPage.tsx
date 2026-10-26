@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatCpf, isValidCpf, onlyDigits } from '../lib/cpf';
 import { formatCnpj, isValidCnpj, onlyDigitsCnpj } from '../lib/cnpj';
+import { destinoSeguro } from '../lib/redirect';
 import type { TipoConta } from '../types/interview';
 
 const OPCOES_TIPO: { valor: TipoConta; titulo: string; descricao: string }[] = [
@@ -15,8 +16,12 @@ const OPCOES_TIPO: { valor: TipoConta; titulo: string; descricao: string }[] = [
 ];
 
 export function RegisterPage() {
+  // Vindo do link de um teste: ?voltar= traz a pessoa de volta pro convite
+  // depois do cadastro, e ?email= já preenche o email convidado.
+  const [searchParams] = useSearchParams();
+  const voltar = destinoSeguro(searchParams.get('voltar'));
   const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => searchParams.get('email') ?? '');
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -74,7 +79,7 @@ export function RegisterPage() {
             }),
       });
       login(resposta.token, resposta.nome, resposta.tipo);
-      navigate('/');
+      navigate(voltar ?? '/');
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao cadastrar');
     } finally {
@@ -178,7 +183,7 @@ export function RegisterPage() {
           </p>
         )}
         <p className="auth-switch">
-          Já tem conta? <Link to="/login">Entrar</Link>
+          Já tem conta? <Link to={voltar ? `/login?voltar=${encodeURIComponent(voltar)}` : '/login'}>Entrar</Link>
         </p>
       </form>
     </div>

@@ -26,6 +26,9 @@ export function transcriptToChatItems(transcript: TranscriptItem[]): ChatItem[] 
           interviewFinalizada: true,
         },
       });
+    } else if (t.respostaTexto !== null) {
+      // Teste de empresa: o transcript traz a resposta, mas sem avaliação.
+      items.push({ tipo: 'resposta', texto: t.respostaTexto, enviada: true });
     }
   }
   return items;

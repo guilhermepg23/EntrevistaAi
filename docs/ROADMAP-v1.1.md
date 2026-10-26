@@ -25,7 +25,7 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 | 1 | Tipo de conta no cadastro, papel no Spring Security, rotas e menu por tipo | ✅ no ar |
 | 1b | Recrutador sem CPF, CNPJ opcional | ✅ no ar |
 | 2 | Empresa e equipe: papéis, convites, modo empresa | ✅ no ar (telas conferidas no navegador em 2026-10-22) |
-| 3 | Testes de entrevista da empresa e convite de candidatos | 🔧 backend pronto (sem commit); falta o front |
+| 3 | Testes de entrevista da empresa e convite de candidatos | 🔧 backend commitado (9eab61b, sem push); front pronto e conferido no navegador em 2026-10-26 (sem commit); V5 validada no Postgres local e no Testcontainers |
 | 4 | Painel de resultados do recrutador | ⏳ |
 | 5 | Fechamento da v1.1.0 (revisão visual, README, tag) | ⏳ |
 
@@ -89,12 +89,18 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 - Só a conta de candidato **com o email do convite** pode aceitar (senão, 403 `ASSESSMENT_INVITE_WRONG_ACCOUNT`).
 - O teste não pode ser editado depois que um candidato começou (409 `ASSESSMENT_LOCKED`).
 
-**Backend implementado** (2026-10-22, ainda sem commit; V5 não testada contra um Postgres real)
+**Backend implementado** (2026-10-22, commit 9eab61b; V5 não testada contra um Postgres real)
 - Migration `V5__testes_e_convites.sql`: `assessments`, `assessment_questions`, `assessment_invites`, e `interviews.origem` / `interviews.assessment_id`. A validade é configurável em `app.assessments.validade-meses` (env `ASSESSMENT_VALIDITY_MONTHS`, padrão 3).
 - Recrutador: `GET/POST /assessments`, `GET/PUT /assessments/{id}`, `POST /assessments/{id}/archive`, `GET/POST /assessments/{id}/invites`, `DELETE /assessments/{id}/invites/{inviteId}`.
 - Candidato: `GET /auth/assessment-invites/{token}` (público), `GET /interviews/invites` e `POST /interviews/invites/{inviteId}/accept`.
 - Entrevista CONVITE: as perguntas fixas vêm antes das da IA (no streaming, chegam num único `delta`). A resposta volta com `feedbackOculto: true` e sem nota. A transcrição vem sem avaliação. `/report`, `GET /resume` e `/share` dão 403 `INTERVIEW_FEEDBACK_HIDDEN`, e o upload do currículo responde 204.
 - `InterviewResponse` ganhou `origem`, `nomeEmpresa` e `tituloTeste`.
+
+**Front implementado** (2026-10-26, sem commit; testes e build passam; fluxo completo conferido no navegador, no desktop e no celular)
+- Modo empresa: item "Testes" no menu; `/empresa/testes` (lista), `/empresa/testes/novo` e `/:id/editar` (formulário com perguntas fixas), `/empresa/testes/:id` (detalhe, convite com link para copiar, candidatos e cancelamento, arquivar). O painel resume os testes abertos e os candidatos que concluíram.
+- Candidato: `/teste/:token` (público). Sem login, leva ao login ou cadastro com `?voltar=` (e o email já preenchido no cadastro). Logado, "Começar o teste". Também trata conta com outro email e conta de recrutador.
+- Home do candidato: seção "Testes de empresas" (começar, continuar ou "Enviado à empresa"). O histórico mostra só os treinos.
+- Chat em modo convite: aviso do teste no topo, "✓ Resposta enviada" no lugar do feedback, sem leitura do currículo e, no fim, "Teste concluído" em vez do relatório.
 
 ## Etapa 4 — painel de resultados
 

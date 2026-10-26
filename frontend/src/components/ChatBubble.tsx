@@ -52,6 +52,7 @@ export function ChatBubble({ item }: { item: ChatItem }) {
       <div className="bubble-content">
         <p>{item.texto}</p>
         {item.feedback && <FeedbackBadge feedback={item.feedback} />}
+        {!item.feedback && item.enviada && <p className="resposta-enviada">✓ Resposta enviada</p>}
       </div>
     </div>
   );

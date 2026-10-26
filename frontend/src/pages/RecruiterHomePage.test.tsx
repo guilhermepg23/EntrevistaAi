@@ -4,12 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RecruiterHomePage } from './RecruiterHomePage';
 import { renderWithProviders } from '../test-utils';
 import { companyApi } from '../api/companyApi';
+import { assessmentApi } from '../api/assessmentApi';
 import { ApiError } from '../api/client';
-import type { Company } from '../types/interview';
+import type { Assessment, Company } from '../types/interview';
 
 vi.mock('../api/companyApi', () => ({
   companyApi: { get: vi.fn(), create: vi.fn(), invites: vi.fn() },
 }));
+
+vi.mock('../api/assessmentApi', () => ({ assessmentApi: { list: vi.fn() } }));
 
 const acme: Company = {
   id: 'c1', nome: 'Acme', cnpj: null, criadoEm: '2026-10-01T10:00:00Z', meuPapel: 'ADMIN', totalMembros: 3,
@@ -26,6 +29,19 @@ describe('RecruiterHomePage', () => {
     vi.mocked(companyApi.get).mockReset().mockResolvedValue(acme);
     vi.mocked(companyApi.invites).mockReset().mockResolvedValue([]);
     vi.mocked(companyApi.create).mockReset();
+    vi.mocked(assessmentApi.list).mockReset().mockResolvedValue([]);
+  });
+
+  it('resume os testes: abertos e candidatos que concluíram', async () => {
+    const base = { finalizados: 0, aberto: true } as Assessment;
+    vi.mocked(assessmentApi.list).mockResolvedValue([
+      { ...base, id: 'a', finalizados: 2 },
+      { ...base, id: 'b', finalizados: 1, aberto: false },
+    ]);
+    render();
+
+    expect(await screen.findByText('1 teste aberto · 3 candidatos concluíram')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Novo teste' })).toHaveAttribute('href', '/empresa/testes/novo');
   });
   afterEach(() => localStorage.clear());
 

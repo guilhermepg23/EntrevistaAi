@@ -1,24 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { companyApi } from '../api/companyApi';
+import { assessmentApi } from '../api/assessmentApi';
+import type { Assessment } from '../types/interview';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
 import { papelEmpresaLabel } from '../labels';
 
-// Painel do modo empresa ("/" do recrutador). Resumo da empresa e atalhos pra
-// equipe e configurações; os testes de entrevista entram aqui na etapa 3.
+// Painel do modo empresa ("/" do recrutador). Resumo dos testes, da empresa e
+// atalhos pra equipe e configurações.
 // Recrutador sem empresa (foi removido da equipe) cai no formulário de criar uma.
 export function RecruiterHomePage() {
   const { nome } = useAuth();
   const { company, carregando, semEmpresa, erro, setCompany } = useCompany();
   const [convitesPendentes, setConvitesPendentes] = useState<number | null>(null);
+  const [testes, setTestes] = useState<Assessment[] | null>(null);
 
   useEffect(() => {
     if (!company) return;
     companyApi.invites()
       .then(lista => setConvitesPendentes(lista.length))
       .catch(() => setConvitesPendentes(null));
+    assessmentApi.list()
+      .then(setTestes)
+      .catch(() => setTestes(null));
   }, [company]);
 
   if (carregando) return <div className="painel-empresa"><p>Carregando sua empresa...</p></div>;
@@ -44,6 +50,8 @@ export function RecruiterHomePage() {
   }
 
   const ehAdmin = company.meuPapel === 'ADMIN';
+  const testesAbertos = testes?.filter(t => t.aberto) ?? [];
+  const concluidos = testes?.reduce((soma, t) => soma + t.finalizados, 0) ?? 0;
 
   return (
     <div className="painel-empresa">
@@ -75,12 +83,23 @@ export function RecruiterHomePage() {
         </Link>
       </div>
 
-      <section className="painel-card painel-em-breve">
-        <h2>Testes de entrevista</h2>
-        <p className="painel-texto">
-          Em breve: crie testes com perguntas geradas pela IA (e as suas, se quiser),
-          envie o link para candidatos e acompanhe o relatório de cada um aqui.
-        </p>
+      <section className="painel-card">
+        <div className="testes-cabecalho">
+          <div>
+            <h2>Testes de entrevista</h2>
+            <p className="painel-texto">
+              {testes === null
+                ? 'Crie testes com perguntas geradas pela IA (e as suas, se quiser) e convide candidatos.'
+                : testes.length === 0
+                  ? 'Nenhum teste ainda. Crie o primeiro e convide candidatos por email ou link.'
+                  : `${testesAbertos.length} ${testesAbertos.length === 1 ? 'teste aberto' : 'testes abertos'} · ${concluidos} ${concluidos === 1 ? 'candidato concluiu' : 'candidatos concluíram'}`}
+            </p>
+          </div>
+          <div className="item-equipe-acoes">
+            <Link to="/empresa/testes" className="botao-link botao-link-secundario">Ver testes</Link>
+            <Link to="/empresa/testes/novo" className="botao-link">Novo teste</Link>
+          </div>
+        </div>
       </section>
     </div>
   );
