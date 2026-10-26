@@ -121,13 +121,14 @@ public class CompanyService {
         return userRepository.countByCompany(company);
     }
 
-    // PATCH /company — só ADMIN. cnpj vazio/null apaga o salvo.
+    // PATCH /company — só ADMIN. cnpj ou descricao vazios/null apagam o salvo.
     @Transactional
-    public Company atualizarEmpresa(User principal, String nome, String cnpj) {
+    public Company atualizarEmpresa(User principal, String nome, String cnpj, String descricao) {
         User admin = exigirAdmin(principal);
         Company company = admin.getCompany();
         company.setNome(nome.trim());
         company.setCnpj(normalizarCnpj(cnpj));
+        company.setDescricao(descricao == null || descricao.isBlank() ? null : descricao.trim());
         companyRepository.save(company);
         log.info("[COMPANY_UPDATED] companyId={} por={}", company.getId(), admin.getId());
         return company;

@@ -20,8 +20,8 @@ vi.mock('../api/interviewApi', () => ({ interviewApi: { acceptAssessmentInvite: 
 vi.mock('../api/companyApi', () => ({ companyApi: { get: vi.fn().mockRejectedValue(new Error('x')) } }));
 
 const convite: CandidateAssessmentInvite = {
-  inviteId: 'inv-1', email: 'ana@x.com', nomeEmpresa: 'Acme', titulo: 'Back-end Java', stack: 'Java',
-  nivel: 'pleno', totalPerguntas: 8, expiraEm: '2027-01-01T00:00:00Z', status: 'PENDENTE',
+  inviteId: 'inv-1', email: 'ana@x.com', nomeEmpresa: 'Acme', descricaoEmpresa: 'Fintech de pagamentos.',
+  titulo: 'Back-end Java', stack: 'Java', nivel: 'pleno', totalPerguntas: 8, descricaoVaga: 'API de pagamentos.', expiraEm: '2027-01-01T00:00:00Z', status: 'PENDENTE',
   interviewId: null, interviewStatus: null,
 };
 
@@ -46,6 +46,8 @@ describe('AssessmentInvitePage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Back-end Java' })).toBeInTheDocument();
     expect(authApi.getAssessmentInvite).toHaveBeenCalledWith('tok123');
+    expect(screen.getByText('Fintech de pagamentos.')).toBeInTheDocument();
+    expect(screen.getByText('API de pagamentos.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /entrar/ })).toHaveAttribute('href', '/login?voltar=%2Fteste%2Ftok123');
     expect(screen.getByRole('link', { name: 'Criar conta de candidato' }))
       .toHaveAttribute('href', '/register?voltar=%2Fteste%2Ftok123&email=ana%40x.com');

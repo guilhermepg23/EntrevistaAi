@@ -99,13 +99,15 @@ class AssessmentControllerTest {
     void convitePublico_abreSemLogin() throws Exception {
         UUID inviteId = UUID.randomUUID();
         when(assessmentService.conviteParaAceitar("abc")).thenReturn(new CandidateAssessmentInviteResponse(
-            inviteId, "cand@x.com", "Acme", "Backend Java", "Java", "pleno", 5,
-            OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null));
+            inviteId, "cand@x.com", "Acme", "Fintech de pagamentos.", "Backend Java", "Java", "pleno", 5,
+            "API de pagamentos em Java.", OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null));
 
         mockMvc.perform(get("/auth/assessment-invites/abc"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.inviteId").value(inviteId.toString()))
-            .andExpect(jsonPath("$.nomeEmpresa").value("Acme"));
+            .andExpect(jsonPath("$.nomeEmpresa").value("Acme"))
+            .andExpect(jsonPath("$.descricaoEmpresa").value("Fintech de pagamentos."))
+            .andExpect(jsonPath("$.descricaoVaga").value("API de pagamentos em Java."));
     }
 
     @Test

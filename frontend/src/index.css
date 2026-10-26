@@ -853,6 +853,35 @@ a {
   white-space: nowrap;
 }
 
+.nav-candidato {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+/* Candidato no celular: marca + 2 links + menu de conta não cabem numa linha;
+   os links descem pra uma segunda linha (mesmo esquema do modo empresa). */
+@media (max-width: 600px) {
+  .app-shell:not(.modo-empresa) .app-header {
+    flex-wrap: wrap;
+    row-gap: 0.55rem;
+  }
+
+  .app-shell:not(.modo-empresa) .header-user {
+    display: contents;
+  }
+
+  .brand {
+    white-space: nowrap;
+  }
+
+  .nav-candidato {
+    order: 3;
+    flex-basis: 100%;
+    gap: 0.4rem;
+  }
+}
+
 /* Com 4 links (Painel, Testes, Equipe, Empresa) a navegação não cabe ao lado
    da marca e do selo abaixo de ~1080px: desce pra uma segunda linha, de
    largura toda. O display: contents solta a nav e o menu de conta de dentro
@@ -1209,45 +1238,104 @@ a {
 
 /* Home page */
 
-/* Testes de empresas na home do candidato: ocupa a largura toda, acima do
-   formulário de treino. */
-.testes-empresas {
+/* Aviso na home do candidato quando há convite de empresa em aberto: ocupa a
+   largura toda, acima do formulário de treino, e leva à aba Convites. */
+.aviso-convites {
   grid-column: 1 / -1;
-  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 1rem 1.25rem;
   border: 1px solid var(--color-border);
   border-left: 4px solid var(--color-primary);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem 1.75rem;
+  border-radius: var(--radius);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  color: var(--color-text);
+  font-weight: 400;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.testes-empresas h2 {
+.aviso-convites:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.aviso-convites-acao {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Aba Convites do candidato */
+.convites-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.convites-secao h2 {
   margin: 0;
   font-size: 1.05rem;
 }
 
-.testes-empresas-lista {
+.lista-convites {
   list-style: none;
-  margin: 0.4rem 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.9rem;
+}
+
+.convite-card {
   gap: 0.6rem;
 }
 
-.teste-empresa-item {
+.convite-card-topo {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.6rem 1rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-alt);
+}
+
+.convite-card-titulo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+/* "Sobre a empresa" e "Descrição da vaga" (aba Convites e página do link). */
+.convite-descricoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.convite-descricoes details {
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.5rem;
+}
+
+.convite-descricoes summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.convite-descricoes p {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
 }
 
 .teste-empresa-info {

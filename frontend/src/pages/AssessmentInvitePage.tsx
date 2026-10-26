@@ -5,6 +5,7 @@ import { interviewApi } from '../api/interviewApi';
 import { ApiError } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { formatarData } from '../lib/datas';
+import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { nivelLabel } from '../labels';
 import type { CandidateAssessmentInvite } from '../types/interview';
 
@@ -82,6 +83,7 @@ export function AssessmentInvitePage() {
           <div><dt>Perguntas</dt><dd>{convite.totalPerguntas}</dd></div>
           <div><dt>Vale até</dt><dd>{formatarData(convite.expiraEm)}</dd></div>
         </dl>
+        <ConviteDescricoes convite={convite} abertos />
         <p className="auth-intro">
           É uma entrevista com a IA, como um treino, mas as respostas vão para a empresa:
           você não vê nota nem avaliação. O teste só pode ser feito uma vez, então

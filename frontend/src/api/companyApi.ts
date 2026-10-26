@@ -16,11 +16,12 @@ export const companyApi = {
       body: JSON.stringify({ nome, cnpj }),
     }).then(res => handleResponse<Company>(res)),
 
-  update: (nome: string, cnpj?: string) =>
+  // descricao vazia apaga a salva.
+  update: (nome: string, cnpj?: string, descricao?: string) =>
     fetch(`${API_BASE}/company`, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ nome, cnpj }),
+      body: JSON.stringify({ nome, cnpj, descricao }),
     }).then(res => handleResponse<Company>(res)),
 
   members: () =>

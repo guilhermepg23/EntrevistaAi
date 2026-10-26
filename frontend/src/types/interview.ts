@@ -169,6 +169,8 @@ export interface Company {
   id: string;
   nome: string;
   cnpj: string | null;
+  // Texto sobre a empresa que o candidato vê no convite do teste.
+  descricao: string | null;
   criadoEm: string | null;
   meuPapel: PapelEmpresa;
   totalMembros: number;
@@ -273,10 +275,12 @@ export interface CandidateAssessmentInvite {
   inviteId: string;
   email: string;
   nomeEmpresa: string;
+  descricaoEmpresa: string | null;
   titulo: string;
   stack: string;
   nivel: string;
   totalPerguntas: number;
+  descricaoVaga: string | null;
   expiraEm: string;
   status: AssessmentInviteStatus;
   interviewId: string | null;

@@ -27,6 +27,10 @@ public class Company {
     // real hoje, e travar isso exigiria verificar a posse do CNPJ.
     private String cnpj;
 
+    // Texto livre sobre a empresa, opcional. O candidato vê no convite do teste.
+    @Column(columnDefinition = "text")
+    private String descricao;
+
     private OffsetDateTime criadoEm;
 
     public UUID getId() { return id; }
@@ -37,6 +41,9 @@ public class Company {
 
     public String getCnpj() { return cnpj; }
     public void setCnpj(String cnpj) { this.cnpj = cnpj; }
+
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }

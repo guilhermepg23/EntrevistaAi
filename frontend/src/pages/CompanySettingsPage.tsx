@@ -34,11 +34,13 @@ export function CompanySettingsPage() {
         <CompanyForm
           nomeInicial={company.nome}
           cnpjInicial={company.cnpj}
+          descricaoInicial={company.descricao}
+          comDescricao
           rotuloBotao="Salvar alterações"
           somenteLeitura={!ehAdmin}
-          onSalvar={async (nome, cnpj) => {
+          onSalvar={async (nome, cnpj, descricao) => {
             setSalvo(false);
-            setCompany(await companyApi.update(nome, cnpj));
+            setCompany(await companyApi.update(nome, cnpj, descricao));
             setSalvo(true);
           }}
         />

@@ -15,7 +15,7 @@ vi.mock('../api/companyApi', () => ({
 vi.mock('../api/assessmentApi', () => ({ assessmentApi: { list: vi.fn() } }));
 
 const acme: Company = {
-  id: 'c1', nome: 'Acme', cnpj: null, criadoEm: '2026-10-01T10:00:00Z', meuPapel: 'ADMIN', totalMembros: 3,
+  id: 'c1', nome: 'Acme', cnpj: null, criadoEm: '2026-10-01T10:00:00Z', descricao: null, meuPapel: 'ADMIN', totalMembros: 3,
 };
 
 function render() {

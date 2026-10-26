@@ -51,11 +51,11 @@ public class CompanyController {
             .body(CompanyResponse.from(company, PapelEmpresa.ADMIN, 1));
     }
 
-    // PATCH /company — ADMIN edita nome e CNPJ.
+    // PATCH /company — ADMIN edita nome, CNPJ e descrição.
     @PatchMapping
     public ResponseEntity<CompanyResponse> update(@RequestBody @Valid CompanyRequest request,
                                                   @AuthenticationPrincipal User user) {
-        Company company = companyService.atualizarEmpresa(user, request.nome(), request.cnpj());
+        Company company = companyService.atualizarEmpresa(user, request.nome(), request.cnpj(), request.descricao());
         return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
             companyService.totalMembros(company)));
     }

@@ -15,7 +15,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('../api/interviewApi', () => ({
   interviewApi: {
     history: vi.fn(), start: vi.fn(), uploadResume: vi.fn(),
-    assessmentInvites: vi.fn(), acceptAssessmentInvite: vi.fn(),
+    assessmentInvites: vi.fn(),
   },
 }));
 
@@ -34,8 +34,8 @@ function makeInterview(o: Partial<Interview> = {}): Interview {
 
 function makeInvite(o: Partial<CandidateAssessmentInvite> = {}): CandidateAssessmentInvite {
   return {
-    inviteId: 'inv-1', email: 'ana@x.com', nomeEmpresa: 'Acme', titulo: 'Back-end Java', stack: 'Java',
-    nivel: 'pleno', totalPerguntas: 8, expiraEm: '2027-01-01T00:00:00Z', status: 'PENDENTE',
+    inviteId: 'inv-1', email: 'ana@x.com', nomeEmpresa: 'Acme', descricaoEmpresa: null, titulo: 'Back-end Java',
+    stack: 'Java', nivel: 'pleno', totalPerguntas: 8, descricaoVaga: null, expiraEm: '2027-01-01T00:00:00Z', status: 'PENDENTE',
     interviewId: null, interviewStatus: null, ...o,
   };
 }
@@ -47,7 +47,6 @@ describe('HomePage', () => {
     vi.mocked(interviewApi.start).mockReset();
     vi.mocked(interviewApi.uploadResume).mockReset().mockResolvedValue(undefined as never);
     vi.mocked(interviewApi.assessmentInvites).mockReset().mockResolvedValue([]);
-    vi.mocked(interviewApi.acceptAssessmentInvite).mockReset();
   });
   afterEach(() => localStorage.clear());
 
@@ -118,19 +117,32 @@ describe('HomePage', () => {
   });
 });
 
-describe('HomePage: testes de empresas', () => {
+describe('HomePage: convites de empresas', () => {
   beforeEach(() => {
     navigateSpy.mockReset();
     vi.mocked(interviewApi.history).mockReset().mockResolvedValue([]);
     vi.mocked(interviewApi.assessmentInvites).mockReset().mockResolvedValue([]);
-    vi.mocked(interviewApi.acceptAssessmentInvite).mockReset();
   });
   afterEach(() => localStorage.clear());
 
-  it('sem convites, a seção não aparece', async () => {
+  it('sem convite em aberto, o aviso não aparece', async () => {
+    vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+      makeInvite({ status: 'ACEITO', interviewId: 'int-b', interviewStatus: 'FINALIZADA' }),
+    ]);
     renderWithProviders(<HomePage />);
     await screen.findByText('Nenhuma entrevista ainda.');
-    expect(screen.queryByRole('heading', { name: 'Testes de empresas' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Ver convites/ })).not.toBeInTheDocument();
+  });
+
+  it('com convites em aberto, mostra o aviso que leva à aba Convites', async () => {
+    vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+      makeInvite({ inviteId: 'i1' }),
+      makeInvite({ inviteId: 'i2', status: 'ACEITO', interviewId: 'int-a', interviewStatus: 'EM_ANDAMENTO' }),
+    ]);
+    renderWithProviders(<HomePage />);
+
+    expect(await screen.findByText('Você tem 2 convites')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Ver convites/ })).toHaveAttribute('href', '/convites');
   });
 
   it('o histórico de treinos não mostra as entrevistas de teste de empresa', async () => {
@@ -142,31 +154,5 @@ describe('HomePage: testes de empresas', () => {
 
     expect(await screen.findByText('React · junior')).toBeInTheDocument();
     expect(screen.queryByText('Go · senior')).not.toBeInTheDocument();
-  });
-
-  it('convite pendente: "Começar teste" aceita e vai pro chat', async () => {
-    const user = userEvent.setup();
-    vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([makeInvite()]);
-    vi.mocked(interviewApi.acceptAssessmentInvite).mockResolvedValue(makeInterview({ id: 'int-teste', origem: 'CONVITE' }));
-    renderWithProviders(<HomePage />);
-
-    expect(await screen.findByText('Back-end Java')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Começar teste' }));
-
-    expect(interviewApi.acceptAssessmentInvite).toHaveBeenCalledWith('inv-1');
-    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/interview/int-teste'));
-  });
-
-  it('teste em andamento continua; teste concluído só indica o envio', async () => {
-    const user = userEvent.setup();
-    vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
-      makeInvite({ inviteId: 'i1', titulo: 'Teste A', status: 'ACEITO', interviewId: 'int-a', interviewStatus: 'EM_ANDAMENTO' }),
-      makeInvite({ inviteId: 'i2', titulo: 'Teste B', status: 'ACEITO', interviewId: 'int-b', interviewStatus: 'FINALIZADA' }),
-    ]);
-    renderWithProviders(<HomePage />);
-
-    await user.click(await screen.findByRole('button', { name: 'Continuar teste' }));
-    expect(navigateSpy).toHaveBeenCalledWith('/interview/int-a');
-    expect(screen.getByText('Enviado à empresa')).toBeInTheDocument();
   });
 });

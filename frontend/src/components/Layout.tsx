@@ -82,7 +82,10 @@ export function Layout({ children }: { children: ReactNode }) {
         {isAuthenticated && (
           <div className="header-user">
             {tipo === 'CANDIDATO' && (
-              <Link to="/curriculo" className="header-nav-link">Analisar currículo</Link>
+              <nav className="nav-candidato" aria-label="Candidato">
+                <NavLink to="/convites" className="header-nav-link">Convites</NavLink>
+                <NavLink to="/curriculo" className="header-nav-link">Analisar currículo</NavLink>
+              </nav>
             )}
             {modoEmpresa && (
               <nav className="nav-empresa" aria-label="Modo empresa">

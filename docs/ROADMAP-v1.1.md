@@ -100,6 +100,7 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 - Modo empresa: item "Testes" no menu; `/empresa/testes` (lista), `/empresa/testes/novo` e `/:id/editar` (formulário com perguntas fixas), `/empresa/testes/:id` (detalhe, convite com link para copiar, candidatos e cancelamento, arquivar). O painel resume os testes abertos e os candidatos que concluíram.
 - Candidato: `/teste/:token` (público). Sem login, leva ao login ou cadastro com `?voltar=` (e o email já preenchido no cadastro). Logado, "Começar o teste". Também trata conta com outro email e conta de recrutador.
 - Home do candidato: seção "Testes de empresas" (começar, continuar ou "Enviado à empresa"). O histórico mostra só os treinos.
+- Aba "Convites" do candidato (`/convites`, no menu), separada da home: testes para fazer e já feitos, cada um com "Sobre a empresa" e "Descrição da vaga". A home mostra só um aviso que leva à aba. A descrição da empresa é nova (migration V6, `companies.descricao`), editada pelo ADMIN em "Configurações da empresa"; também aparece na página do link.
 - Chat em modo convite: aviso do teste no topo, "✓ Resposta enviada" no lugar do feedback, sem leitura do currículo e, no fim, "Teste concluído" em vez do relatório.
 
 ## Etapa 4 — painel de resultados

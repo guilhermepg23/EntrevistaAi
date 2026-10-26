@@ -12,12 +12,13 @@ public record CompanyResponse(
     UUID id,
     String nome,
     String cnpj,
+    String descricao,
     OffsetDateTime criadoEm,
     PapelEmpresa meuPapel,
     long totalMembros
 ) {
     public static CompanyResponse from(Company company, PapelEmpresa meuPapel, long totalMembros) {
         return new CompanyResponse(company.getId(), company.getNome(), company.getCnpj(),
-            company.getCriadoEm(), meuPapel, totalMembros);
+            company.getDescricao(), company.getCriadoEm(), meuPapel, totalMembros);
     }
 }

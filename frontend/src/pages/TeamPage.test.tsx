@@ -14,7 +14,7 @@ vi.mock('../api/companyApi', () => ({
 }));
 
 const acme: Company = {
-  id: 'c1', nome: 'Acme', cnpj: null, criadoEm: null, meuPapel: 'ADMIN', totalMembros: 2,
+  id: 'c1', nome: 'Acme', cnpj: null, criadoEm: null, descricao: null, meuPapel: 'ADMIN', totalMembros: 2,
 };
 const ana: TeamMember = { id: 'u1', nome: 'Ana', email: 'ana@acme.com', papel: 'ADMIN', criadoEm: null, voce: true };
 const bia: TeamMember = { id: 'u2', nome: 'Bia', email: 'bia@acme.com', papel: 'RECRUTADOR', criadoEm: null, voce: false };

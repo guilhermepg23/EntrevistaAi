@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
-import { formatarData } from '../lib/datas';
-import { nivelLabel } from '../labels';
-import type { CandidateAssessmentInvite, Interview } from '../types/interview';
+import { conviteEmAberto } from './CandidateInvitesPage';
+import type { Interview } from '../types/interview';
 
 const statusLabel: Record<Interview['status'], string> = {
   EM_ANDAMENTO: 'Em andamento',
@@ -24,19 +23,19 @@ export function HomePage() {
 
   const [historico, setHistorico] = useState<Interview[]>([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(true);
-  const [testes, setTestes] = useState<CandidateAssessmentInvite[]>([]);
+  const [convitesEmAberto, setConvitesEmAberto] = useState(0);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     interviewApi.history()
-      // Testes de empresa têm a seção própria (abaixo); aqui ficam só os treinos.
+      // Testes de empresa ficam na aba Convites; aqui só os treinos.
       .then(lista => setHistorico(lista.filter(i => i.origem !== 'CONVITE')))
       .catch(() => { /* histórico é secundário — falha aqui não bloqueia a tela */ })
       .finally(() => setCarregandoHistorico(false));
     interviewApi.assessmentInvites()
-      .then(setTestes)
-      .catch(() => { /* idem: sem a lista, a seção só não aparece */ });
+      .then(lista => setConvitesEmAberto(lista.filter(conviteEmAberto).length))
+      .catch(() => { /* idem: sem a lista, o aviso só não aparece */ });
   }, []);
 
   async function handleSubmit(e: FormEvent) {
@@ -65,7 +64,15 @@ export function HomePage() {
 
   return (
     <div className="home-page">
-      {testes.length > 0 && <TestesDeEmpresas testes={testes} />}
+      {convitesEmAberto > 0 && (
+        <Link to="/convites" className="aviso-convites">
+          <span>
+            <strong>{convitesEmAberto === 1 ? 'Você tem 1 convite' : `Você tem ${convitesEmAberto} convites`}</strong>
+            {' '}de empresa para fazer.
+          </span>
+          <span className="aviso-convites-acao">Ver convites →</span>
+        </Link>
+      )}
 
       <section className="start-interview">
         <h1>Nova entrevista</h1>
@@ -170,63 +177,5 @@ export function HomePage() {
         </ul>
       </section>
     </div>
-  );
-}
-
-// Testes para os quais o candidato foi convidado: os pendentes (começar) e os
-// já aceitos (continuar, ou só a indicação de que terminou — o resultado fica
-// com a empresa). Some da home quando não há nenhum.
-function TestesDeEmpresas({ testes }: { testes: CandidateAssessmentInvite[] }) {
-  const navigate = useNavigate();
-  const [comecandoId, setComecandoId] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-
-  async function comecar(teste: CandidateAssessmentInvite) {
-    setErro(null);
-    setComecandoId(teste.inviteId);
-    try {
-      const interview = await interviewApi.acceptAssessmentInvite(teste.inviteId);
-      navigate(`/interview/${interview.id}`);
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível começar o teste');
-      setComecandoId(null);
-    }
-  }
-
-  return (
-    <section className="testes-empresas">
-      <h2>Testes de empresas</h2>
-      <p className="curriculo-hint">
-        As respostas vão para a empresa, que vê a avaliação. Cada teste só pode ser feito uma vez.
-      </p>
-      {erro && <p className="erro">{erro}</p>}
-      <ul className="testes-empresas-lista">
-        {testes.map(teste => (
-          <li key={teste.inviteId} className="teste-empresa-item">
-            <div className="teste-empresa-info">
-              <span className="teste-empresa-nome">{teste.nomeEmpresa}</span>
-              <span className="historico-stack">{teste.titulo}</span>
-              <span className="historico-progresso">
-                {teste.stack} · {nivelLabel[teste.nivel] ?? teste.nivel} · {teste.totalPerguntas} perguntas
-                {!teste.interviewId && ` · vale até ${formatarData(teste.expiraEm)}`}
-              </span>
-            </div>
-            {!teste.interviewId ? (
-              <button type="button" onClick={() => comecar(teste)} disabled={comecandoId !== null}>
-                {comecandoId === teste.inviteId ? 'Preparando...' : 'Começar teste'}
-              </button>
-            ) : teste.interviewStatus === 'EM_ANDAMENTO' ? (
-              <button type="button" onClick={() => navigate(`/interview/${teste.interviewId}`)}>
-                Continuar teste
-              </button>
-            ) : (
-              <span className={`historico-status status-${(teste.interviewStatus ?? 'finalizada').toLowerCase()}`}>
-                {teste.interviewStatus === 'ABANDONADA' ? 'Encerrado' : 'Enviado à empresa'}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }

@@ -79,6 +79,26 @@ class CompanyServiceTest {
         return u;
     }
 
+    // ---------------------------------------------------------- dados
+
+    @Test
+    void atualizarEmpresa_salvaADescricaoComTrimEVaziaApaga() {
+        service.atualizarEmpresa(admin, "Acme", null, "  Fintech de pagamentos.  ");
+        assertThat(acme.getDescricao()).isEqualTo("Fintech de pagamentos.");
+
+        service.atualizarEmpresa(admin, "Acme", null, "   ");
+        assertThat(acme.getDescricao()).isNull();
+    }
+
+    @Test
+    void atualizarEmpresa_recrutadorComumNaoEdita() {
+        User comum = membro("Bia", PapelEmpresa.RECRUTADOR, acme);
+
+        assertThatThrownBy(() -> service.atualizarEmpresa(comum, "Outra", null, "x"))
+            .isInstanceOf(CompanyRuleException.class);
+        assertThat(acme.getNome()).isEqualTo("Acme");
+    }
+
     // ---------------------------------------------------------- fundação
 
     @Test

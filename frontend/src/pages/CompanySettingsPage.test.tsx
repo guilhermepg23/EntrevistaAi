@@ -11,7 +11,7 @@ vi.mock('../api/companyApi', () => ({
 }));
 
 const acme: Company = {
-  id: 'c1', nome: 'Acme', cnpj: '11222333000181', criadoEm: '2026-10-01T10:00:00Z', meuPapel: 'ADMIN', totalMembros: 4,
+  id: 'c1', nome: 'Acme', cnpj: '11222333000181', criadoEm: '2026-10-01T10:00:00Z', descricao: null, meuPapel: 'ADMIN', totalMembros: 4,
 };
 
 function render() {
@@ -36,7 +36,7 @@ describe('CompanySettingsPage', () => {
     await user.type(nome, 'Acme Brasil');
     await user.click(screen.getByRole('button', { name: 'Salvar alterações' }));
 
-    expect(companyApi.update).toHaveBeenCalledWith('Acme Brasil', '11222333000181');
+    expect(companyApi.update).toHaveBeenCalledWith('Acme Brasil', '11222333000181', '');
     expect(await screen.findByRole('heading', { name: 'Acme Brasil' })).toBeInTheDocument();
     expect(screen.getByText('Dados da empresa atualizados.')).toBeInTheDocument();
   });
