@@ -1,0 +1,3 @@
+# Scripts de shell sempre com LF: com CRLF (autocrlf no Windows) o bash quebra
+# com "\r: command not found".
+*.sh text eol=lf
