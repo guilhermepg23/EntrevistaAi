@@ -1,7 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, SESSION_EXPIRED_EVENT, useAuth } from './useAuth';
+import { recarregarPagina } from '../lib/navegador';
+
+vi.mock('../lib/navegador', () => ({ recarregarPagina: vi.fn() }));
 
 function wrapper({ children }: { children: ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;
@@ -10,6 +13,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('useAuth', () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.mocked(recarregarPagina).mockClear();
   });
 
   afterEach(() => {
@@ -83,6 +87,24 @@ describe('useAuth', () => {
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.sessionExpired).toBe(true);
+  });
+
+  it('outra aba trocando de conta (ou saindo) faz esta aba recarregar', () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: 'token', oldValue: 'tok-rita', newValue: 'tok-bob' })));
+    expect(recarregarPagina).toHaveBeenCalledTimes(1);
+
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: 'token', oldValue: 'tok-bob', newValue: null })));
+    expect(recarregarPagina).toHaveBeenCalledTimes(2);
+  });
+
+  it('mudança de outras chaves do storage (ex.: o nome) não recarrega', () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: 'nome', oldValue: 'Rita', newValue: 'Rita S.' })));
+
+    expect(recarregarPagina).not.toHaveBeenCalled();
   });
 
   it('clearSessionExpired reseta a flag depois que a UI já avisou o usuário', () => {

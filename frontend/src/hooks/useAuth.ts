@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react';
 import { createElement } from 'react';
 import type { TipoConta } from '../types/interview';
+import { recarregarPagina } from '../lib/navegador';
 
 const TOKEN_KEY = 'token';
 const NOME_KEY = 'nome';
@@ -78,6 +79,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
   }, [logout]);
+
+  // O token fica no localStorage, que é um só para todas as abas. Se outra aba
+  // entra com outra conta (ou sai), esta passaria a mandar o token novo com as
+  // telas da conta antiga — ex.: telas da empresa com token de candidato, e
+  // tudo volta 403 ACCESS_DENIED_ACCOUNT_TYPE. Recarregar faz a aba assumir a
+  // conta atual (ou ir pro login). O evento "storage" só chega nas OUTRAS abas.
+  useEffect(() => {
+    function handleStorage(e: StorageEvent) {
+      if (e.key === TOKEN_KEY && e.newValue !== e.oldValue) {
+        recarregarPagina();
+      }
+    }
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return createElement(
     AuthContext.Provider,
