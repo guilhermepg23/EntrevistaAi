@@ -167,6 +167,23 @@ andamento. Status, decisões e as próximas etapas ficam em
    auto-scroll do chat, range slider e `input[type=file]` estilizados, aviso de cold start
    no login/cadastro), mas não deu pra validar responsivo na sessão de dev.
 
+## Como rodar tudo localmente (um comando)
+
+No Git Bash, na raiz do projeto:
+
+```bash
+./dev.sh
+```
+
+O script sobe o Postgres no Docker, o backend pelo Maven (lendo o código direto, sem
+gerar imagem) e o front pelo Vite. Ele avisa quando o backend responde e deixa o front em
+`http://localhost:5173`. Precisa do `.env` da raiz (o mesmo do Docker Compose) e do
+`frontend/.env` (copie do `frontend/.env.example`). Sem `JAVA_HOME`, usa o JDK 21 que o
+IntelliJ baixa em `~/.jdks`.
+
+`Ctrl+C` derruba o backend e o front. O Postgres continua no Docker, para a próxima
+subida ser rápida; para desligar: `docker compose stop postgres`.
+
 ## Como rodar o backend
 
 ### Local (IntelliJ / linha de comando)
