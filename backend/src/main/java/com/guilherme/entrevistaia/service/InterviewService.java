@@ -10,6 +10,7 @@ import com.guilherme.entrevistaia.repository.QuestionRepository;
 import com.guilherme.entrevistaia.repository.ResumeAnalysisRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ public class InterviewService {
     private final ResumeTextExtractor resumeTextExtractor;
     private final AiResumeAnalyzer resumeAnalyzer;
     private final QuestionPromptBuilder questionPromptBuilder;
+    private final ApplicationEventPublisher eventPublisher;
 
     public InterviewService(InterviewRepository interviewRepository,
                              QuestionRepository questionRepository,
@@ -52,7 +54,8 @@ public class InterviewService {
                              AiReportGenerator reportGenerator,
                              ResumeTextExtractor resumeTextExtractor,
                              AiResumeAnalyzer resumeAnalyzer,
-                             QuestionPromptBuilder questionPromptBuilder) {
+                             QuestionPromptBuilder questionPromptBuilder,
+                             ApplicationEventPublisher eventPublisher) {
         this.interviewRepository = interviewRepository;
         this.questionRepository = questionRepository;
         this.answerRepository = answerRepository;
@@ -64,6 +67,7 @@ public class InterviewService {
         this.resumeTextExtractor = resumeTextExtractor;
         this.resumeAnalyzer = resumeAnalyzer;
         this.questionPromptBuilder = questionPromptBuilder;
+        this.eventPublisher = eventPublisher;
     }
 
     // Chamado por POST /interviews. Só cria o "envelope" da entrevista — as
@@ -257,6 +261,11 @@ public class InterviewService {
             interviewRepository.save(interview);
             log.info("[INTERVIEW_FINISHED] interviewId={} totalPerguntas={}",
                 interview.getId(), interview.getTotalPerguntas());
+            // Teste de empresa: o relatório é gerado em segundo plano, depois do
+            // commit, para a empresa já encontrar a nota no painel.
+            if (interview.deConvite()) {
+                eventPublisher.publishEvent(new InterviewFinishedEvent(interview.getId()));
+            }
         }
 
         return answer;
@@ -295,7 +304,29 @@ public class InterviewService {
     public FeedbackReport getOrGenerateReport(UUID interviewId, User user) {
         Interview interview = loadOwnedInterview(interviewId, user);
         exigirFeedbackVisivel(interview);
+        return relatorio(interview);
+    }
 
+    // Relatório de teste de empresa, gerado logo que o candidato termina (ver
+    // AssessmentReportListener) — o candidato não abre o relatório, então sem
+    // isso ele só existiria quando o recrutador fosse olhar. Sem checagem de
+    // dono: quem chama é o próprio sistema. Devolve null se a entrevista não
+    // estiver finalizada.
+    @Transactional
+    public FeedbackReport gerarRelatorioDeConvite(UUID interviewId) {
+        Interview interview = interviewRepository.findById(interviewId)
+            .orElseThrow(() -> new InterviewNotFoundException(interviewId));
+        if (!interview.deConvite() || interview.getStatus() != InterviewStatus.FINALIZADA) {
+            return null;
+        }
+        return relatorio(interview);
+    }
+
+    // Idempotente: devolve o relatório salvo ou gera (uma chamada de IA) e salva.
+    // Quem chama já conferiu o acesso. Usado também pelo painel de resultados
+    // da empresa (AssessmentService.resultado).
+    public FeedbackReport relatorio(Interview interview) {
+        UUID interviewId = interview.getId();
         if (interview.getReport() != null) {
             return interview.getReport();
         }
@@ -324,6 +355,7 @@ public class InterviewService {
         report.setRecomendacao(result.recomendacao());
         report.setCriadoEm(OffsetDateTime.now());
         reportRepository.save(report);
+        interview.setReport(report);
 
         log.info("[AI_REPORT_GENERATED] interviewId={} notaGeral={} recomendacao={}",
             interviewId, result.notaGeral(), result.recomendacao());

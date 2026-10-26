@@ -25,8 +25,8 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 | 1 | Tipo de conta no cadastro, papel no Spring Security, rotas e menu por tipo | ✅ no ar |
 | 1b | Recrutador sem CPF, CNPJ opcional | ✅ no ar |
 | 2 | Empresa e equipe: papéis, convites, modo empresa | ✅ no ar (telas conferidas no navegador em 2026-10-22) |
-| 3 | Testes de entrevista da empresa e convite de candidatos | 🔧 backend commitado (9eab61b, sem push); front pronto e conferido no navegador em 2026-10-26 (sem commit); V5 validada no Postgres local e no Testcontainers |
-| 4 | Painel de resultados do recrutador | ⏳ |
+| 3 | Testes de entrevista da empresa e convite de candidatos | ✅ no ar (V5 e V6 aplicadas no Supabase; aba Convites e descrição da empresa em d1bbf95) |
+| 4 | Painel de resultados do recrutador | ✅ no ar (2026-10-26; conferido pelo usuário no ambiente local) |
 | 5 | Fechamento da v1.1.0 (revisão visual, README, tag) | ⏳ |
 
 ## Antes de começar a etapa 3
@@ -109,6 +109,11 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 - Relatório completo de cada candidato para o recrutador: transcrição, notas por pergunta e currículo × desempenho. Reaproveita a tela de relatório da v1.0.
 - Permissão: qualquer membro da empresa vê os resultados dos testes da empresa.
 - Ordenar e filtrar por nota e recomendação.
+
+**Implementado** (2026-10-26, sem migration nova)
+- Backend: `GET /assessments/{id}/results` (quem aceitou o convite, com status, progresso, nota, recomendação e nível) e `GET /assessments/{id}/results/{interviewId}` (resumo, relatório, transcrição **com** a avaliação de cada resposta e a leitura do currículo). Qualquer membro da empresa vê; um teste de outra empresa dá 404 `ASSESSMENT_NOT_FOUND`, e uma entrevista de outro teste dá 404 `ASSESSMENT_RESULT_NOT_FOUND`.
+- Relatório do teste de empresa: o candidato não abre o relatório, então ele é gerado **em segundo plano** quando o teste termina (`InterviewFinishedEvent` → `AssessmentReportListener`, `@Async` + `@TransactionalEventListener` depois do commit; `AsyncConfig` liga o `@Async`). Se essa geração falhar, o detalhe do resultado gera o relatório na hora. Isso também cobre as entrevistas terminadas antes desta mudança.
+- Front: seção "Resultados" no detalhe do teste, ordenada por maior nota ou pelas mais recentes e com filtro por recomendação (ou "sem nota ainda"). A lista "Candidatos" virou "Convites". Também entrou a tela `/empresa/testes/:id/candidatos/:interviewId`, que reaproveita o corpo do relatório (`components/RelatorioConteudo.tsx`, extraído da `InterviewReportPage`) e já abre com a transcrição à mostra. Para quem não terminou, aparecem o andamento e as respostas.
 
 ## Etapa 5 — fechar a v1.1.0
 

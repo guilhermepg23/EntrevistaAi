@@ -2,16 +2,25 @@ package com.guilherme.entrevistaia.service;
 
 import com.guilherme.entrevistaia.dto.AssessmentRequest;
 import com.guilherme.entrevistaia.dto.AssessmentResponse;
+import com.guilherme.entrevistaia.dto.AssessmentResultResponse;
 import com.guilherme.entrevistaia.dto.CandidateAssessmentInviteResponse;
+import com.guilherme.entrevistaia.dto.CandidateResultResponse;
 import com.guilherme.entrevistaia.dto.CreatedAssessmentInviteResponse;
+import com.guilherme.entrevistaia.entity.Answer;
 import com.guilherme.entrevistaia.entity.Assessment;
 import com.guilherme.entrevistaia.entity.AssessmentInvite;
 import com.guilherme.entrevistaia.entity.AssessmentStatus;
 import com.guilherme.entrevistaia.entity.Company;
+import com.guilherme.entrevistaia.entity.Dificuldade;
+import com.guilherme.entrevistaia.entity.FeedbackReport;
 import com.guilherme.entrevistaia.entity.Interview;
 import com.guilherme.entrevistaia.entity.InterviewStatus;
+import com.guilherme.entrevistaia.entity.NivelDominio;
+import com.guilherme.entrevistaia.entity.NivelPercebido;
 import com.guilherme.entrevistaia.entity.OrigemEntrevista;
 import com.guilherme.entrevistaia.entity.PapelEmpresa;
+import com.guilherme.entrevistaia.entity.Question;
+import com.guilherme.entrevistaia.entity.Recomendacao;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.AssessmentRuleException;
@@ -56,6 +65,7 @@ class AssessmentServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private CompanyService companyService;
     @Mock private AssessmentInviteMailer mailer;
+    @Mock private InterviewService interviewService;
 
     private AssessmentService service;
     private Company acme;
@@ -65,7 +75,7 @@ class AssessmentServiceTest {
     @BeforeEach
     void setUp() {
         service = new AssessmentService(assessmentRepository, inviteRepository, interviewRepository,
-            userRepository, companyService, mailer, "https://app.exemplo.com/", 3);
+            userRepository, companyService, mailer, interviewService, "https://app.exemplo.com/", 3);
 
         acme = new Company();
         acme.setId(UUID.randomUUID());
@@ -354,5 +364,124 @@ class AssessmentServiceTest {
         List<CandidateAssessmentInviteResponse> lista = service.convitesDoCandidato(candidato);
 
         assertThat(lista).extracting(CandidateAssessmentInviteResponse::inviteId).containsExactly(pendente.getId());
+    }
+
+    // ---- painel de resultados ----
+
+    // Convite aceito, com a entrevista do candidato e `respondidas` perguntas já respondidas.
+    private AssessmentInvite aceito(Assessment a, InterviewStatus status, int respondidas) {
+        AssessmentInvite i = convite(a, candidato.getEmail());
+        Interview interview = new Interview();
+        interview.setId(UUID.randomUUID());
+        interview.setUser(candidato);
+        interview.setOrigem(OrigemEntrevista.CONVITE);
+        interview.setAssessment(a);
+        interview.setStack(a.getStack());
+        interview.setNivel(a.getNivel());
+        interview.setTotalPerguntas(a.getTotalPerguntas());
+        interview.setStatus(status);
+        for (int n = 1; n <= respondidas; n++) {
+            Question q = new Question();
+            q.setId(UUID.randomUUID());
+            q.setInterview(interview);
+            q.setOrdem(n);
+            q.setPergunta("P" + n);
+            q.setTopico("Java");
+            q.setDificuldade(Dificuldade.INTERMEDIARIO);
+            Answer ans = new Answer();
+            ans.setQuestion(q);
+            ans.setRespostaTexto("R" + n);
+            ans.setNota(7);
+            ans.setNivelDominio(NivelDominio.INTERMEDIARIO);
+            ans.setRespostaModelo("Modelo " + n);
+            q.setAnswer(ans);
+            interview.getQuestions().add(q);
+        }
+        i.setAceitoEm(OffsetDateTime.now());
+        i.setInterview(interview);
+        lenient().when(interviewRepository.findById(interview.getId())).thenReturn(Optional.of(interview));
+        lenient().when(inviteRepository.findByInterview(interview)).thenReturn(Optional.of(i));
+        return i;
+    }
+
+    private static FeedbackReport relatorio(Interview interview, int nota) {
+        FeedbackReport r = new FeedbackReport();
+        r.setId(UUID.randomUUID());
+        r.setInterview(interview);
+        r.setNotaGeral(nota);
+        r.setNivelPercebido(NivelPercebido.PLENO);
+        r.setRecomendacao(Recomendacao.APROVADO);
+        return r;
+    }
+
+    @Test
+    void resultados_deveListarSoQuemAceitouComStatusENota() {
+        candidato.setNome("Ana");
+        Assessment a = testeDaAcme();
+        AssessmentInvite terminou = aceito(a, InterviewStatus.FINALIZADA, 5);
+        terminou.getInterview().setReport(relatorio(terminou.getInterview(), 8));
+        AssessmentInvite fazendo = aceito(a, InterviewStatus.EM_ANDAMENTO, 2);
+        AssessmentInvite pendente = convite(a, "outro@exemplo.com");
+        when(inviteRepository.findByAssessmentOrderByCriadoEmDesc(a)).thenReturn(List.of(terminou, fazendo, pendente));
+
+        List<AssessmentResultResponse> lista = service.resultados(recrutador, a.getId());
+
+        assertThat(lista).hasSize(2);
+        assertThat(lista.get(0).nome()).isEqualTo("Ana");
+        assertThat(lista.get(0).notaGeral()).isEqualTo(8);
+        assertThat(lista.get(0).recomendacao()).isEqualTo("APROVADO");
+        assertThat(lista.get(1).status()).isEqualTo("EM_ANDAMENTO");
+        assertThat(lista.get(1).perguntasRespondidas()).isEqualTo(2);
+        assertThat(lista.get(1).notaGeral()).isNull();
+    }
+
+    @Test
+    void resultados_deveDar404ParaTesteDeOutraEmpresa() {
+        Assessment a = testeDaAcme();
+        Company outra = new Company();
+        outra.setId(UUID.randomUUID());
+        a.setCompany(outra);
+
+        assertThatThrownBy(() -> service.resultados(recrutador, a.getId()))
+            .isInstanceOf(AssessmentRuleException.class)
+            .extracting("errorCode").isEqualTo("ASSESSMENT_NOT_FOUND");
+    }
+
+    @Test
+    void resultado_deveTrazerRelatorioETranscricaoComAvaliacaoParaAEmpresa() {
+        Assessment a = testeDaAcme();
+        Interview interview = aceito(a, InterviewStatus.FINALIZADA, 5).getInterview();
+        when(interviewService.relatorio(interview)).thenReturn(relatorio(interview, 6));
+
+        CandidateResultResponse r = service.resultado(recrutador, a.getId(), interview.getId());
+
+        assertThat(r.relatorio().notaGeral()).isEqualTo(6);
+        assertThat(r.transcricao()).hasSize(5);
+        assertThat(r.transcricao().get(0).nota()).isEqualTo(7);
+        assertThat(r.transcricao().get(0).respostaModelo()).isEqualTo("Modelo 1");
+        assertThat(r.curriculo()).isNull();
+        assertThat(r.tituloTeste()).isEqualTo("Backend Java");
+    }
+
+    @Test
+    void resultado_naoGeraRelatorioDeEntrevistaQueNaoTerminou() {
+        Assessment a = testeDaAcme();
+        Interview interview = aceito(a, InterviewStatus.ABANDONADA, 2).getInterview();
+
+        CandidateResultResponse r = service.resultado(recrutador, a.getId(), interview.getId());
+
+        assertThat(r.relatorio()).isNull();
+        assertThat(r.transcricao()).hasSize(2);
+        verify(interviewService, never()).relatorio(any());
+    }
+
+    @Test
+    void resultado_deveDar404ParaEntrevistaDeOutroTeste() {
+        Assessment a = testeDaAcme();
+        Interview deOutroTeste = aceito(testeDaAcme(), InterviewStatus.FINALIZADA, 5).getInterview();
+
+        assertThatThrownBy(() -> service.resultado(recrutador, a.getId(), deOutroTeste.getId()))
+            .isInstanceOf(AssessmentRuleException.class)
+            .extracting("errorCode").isEqualTo("ASSESSMENT_RESULT_NOT_FOUND");
     }
 }

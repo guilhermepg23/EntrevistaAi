@@ -1,20 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
-import type { FeedbackReport, Interview, NivelPercebido, ResumeAnalysis, TranscriptItem } from '../types/interview';
-import { nivelPercebidoLabel, recomendacaoLabel } from '../labels';
-import { ChatBubble } from '../components/ChatBubble';
-import { transcriptToChatItems } from '../lib/transcript';
-
-const NIVEL_ORDEM: Record<NivelPercebido, number> = { JUNIOR: 0, PLENO: 1, SENIOR: 2 };
-
-function compararNiveis(curriculo: NivelPercebido, demonstrado: NivelPercebido) {
-  const diff = NIVEL_ORDEM[demonstrado] - NIVEL_ORDEM[curriculo];
-  if (diff === 0) return { veredito: 'condizente', texto: 'Desempenho condizente com o currículo' } as const;
-  if (diff > 0) return { veredito: 'acima', texto: 'Desempenho acima do que o currículo sugeria' } as const;
-  return { veredito: 'abaixo', texto: 'Desempenho abaixo do que o currículo sugeria' } as const;
-}
+import type { FeedbackReport, Interview, ResumeAnalysis, TranscriptItem } from '../types/interview';
+import { RelatorioConteudo } from '../components/RelatorioConteudo';
 
 export function InterviewReportPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +11,6 @@ export function InterviewReportPage() {
   const [interview, setInterview] = useState<Interview | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<TranscriptItem[] | null>(null);
-  const [mostrarTranscript, setMostrarTranscript] = useState(false);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [compartilhando, setCompartilhando] = useState(false);
@@ -124,115 +111,7 @@ export function InterviewReportPage() {
     <div className="report-page">
       <h1>Relatório da entrevista</h1>
 
-      <div className={`recomendacao recomendacao-${report.recomendacao.toLowerCase()}`}>
-        {recomendacaoLabel[report.recomendacao]}
-      </div>
-
-      <div className="report-resumo-geral">
-        <span
-          className="nota-ring"
-          style={{ '--pct': `${(report.notaGeral / 10) * 100}%` } as CSSProperties}
-        >
-          <span className="nota-ring-inner">
-            <span className="nota-geral">{report.notaGeral}</span>
-            <span className="nota-geral-max">de 10</span>
-          </span>
-        </span>
-        <span className="nivel-percebido">Nível percebido: {nivelPercebidoLabel[report.nivelPercebido]}</span>
-      </div>
-
-      <p className="resumo-executivo">{report.resumoExecutivo}</p>
-
-      {resumeAnalysis && (
-        <section className={`curriculo-comparacao veredito-${compararNiveis(resumeAnalysis.nivelPercebidoCurriculo, report.nivelPercebido).veredito}`}>
-          <h2>Currículo x desempenho na entrevista</h2>
-          <div className="curriculo-comparacao-niveis">
-            <span>
-              <span className="curriculo-comparacao-label">Percebido pelo currículo</span>
-              {nivelPercebidoLabel[resumeAnalysis.nivelPercebidoCurriculo]}
-            </span>
-            <span aria-hidden="true">→</span>
-            <span>
-              <span className="curriculo-comparacao-label">Demonstrado na entrevista</span>
-              {nivelPercebidoLabel[report.nivelPercebido]}
-            </span>
-          </div>
-          <p className="curriculo-comparacao-veredito">
-            {compararNiveis(resumeAnalysis.nivelPercebidoCurriculo, report.nivelPercebido).texto}
-          </p>
-
-          {resumeAnalysis.aderenciaVagaPercentual !== null && (
-            <div className="aderencia-vaga">
-              <div className="aderencia-vaga-header">
-                <span>Aderência à vaga</span>
-                <span className="aderencia-vaga-percentual">{resumeAnalysis.aderenciaVagaPercentual}%</span>
-              </div>
-              <div className="aderencia-vaga-track">
-                <div
-                  className="aderencia-vaga-fill"
-                  style={{ width: `${resumeAnalysis.aderenciaVagaPercentual}%` }}
-                />
-              </div>
-              {resumeAnalysis.pontosAderenciaVaga.length > 0 && (
-                <ul className="feedback-lista pontos-fortes">
-                  {resumeAnalysis.pontosAderenciaVaga.map((ponto, idx) => <li key={idx}>{ponto}</li>)}
-                </ul>
-              )}
-              {resumeAnalysis.gapsVaga.length > 0 && (
-                <ul className="feedback-lista gaps">
-                  {resumeAnalysis.gapsVaga.map((gap, idx) => <li key={idx}>{gap}</li>)}
-                </ul>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-
-      {report.pontosFortes.length > 0 && (
-        <section>
-          <h2>Pontos fortes</h2>
-          <ul className="pontos-fortes">
-            {report.pontosFortes.map((ponto, idx) => <li key={idx}>{ponto}</li>)}
-          </ul>
-        </section>
-      )}
-
-      {report.pontosFracos.length > 0 && (
-        <section>
-          <h2>Pontos de melhoria</h2>
-          <ul className="pontos-fracos">
-            {report.pontosFracos.map((ponto, idx) => <li key={idx}>{ponto}</li>)}
-          </ul>
-        </section>
-      )}
-
-      {report.sugestoesEstudo.length > 0 && (
-        <section>
-          <h2>Sugestões de estudo</h2>
-          <ul className="sugestoes-estudo">
-            {report.sugestoesEstudo.map((sugestao, idx) => <li key={idx}>{sugestao}</li>)}
-          </ul>
-        </section>
-      )}
-
-      {transcript && transcript.length > 0 && (
-        <section className="report-transcript">
-          <button
-            type="button"
-            className="transcript-toggle"
-            onClick={() => setMostrarTranscript(v => !v)}
-          >
-            {mostrarTranscript ? 'Ocultar' : 'Ver'} perguntas e respostas da entrevista
-          </button>
-          {mostrarTranscript && (
-            <div className="chat-history transcript-history">
-              {transcriptToChatItems(transcript).map((item, idx) => (
-                <ChatBubble key={idx} item={item} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      <RelatorioConteudo report={report} resumeAnalysis={resumeAnalysis} transcript={transcript} />
 
       {erroAcao && <p className="erro">{erroAcao}</p>}
 

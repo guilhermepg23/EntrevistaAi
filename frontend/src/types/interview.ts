@@ -262,6 +262,36 @@ export interface AssessmentInvite {
   interviewStatus: InterviewStatus | null;
 }
 
+// Linha do painel de resultados (GET /assessments/{id}/results): um candidato
+// que aceitou o convite. Nota, recomendação e nível vêm do relatório e ficam
+// null enquanto ele não existe (em andamento, desistiu, ou ainda gerando).
+export interface AssessmentResult {
+  interviewId: string;
+  inviteId: string;
+  nome: string;
+  email: string;
+  status: InterviewStatus;
+  iniciadoEm: string;
+  finalizadoEm: string | null;
+  perguntasRespondidas: number;
+  totalPerguntas: number;
+  notaGeral: number | null;
+  recomendacao: Recomendacao | null;
+  nivelPercebido: NivelPercebido | null;
+}
+
+// GET /assessments/{id}/results/{interviewId} — o resultado completo de um
+// candidato, com a avaliação de cada resposta (o candidato não vê nada disso).
+export interface CandidateResult {
+  resumo: AssessmentResult;
+  tituloTeste: string;
+  stack: string;
+  nivel: string;
+  relatorio: FeedbackReport | null;
+  transcricao: TranscriptItem[];
+  curriculo: ResumeAnalysis | null;
+}
+
 // POST /assessments/{id}/invites — o link só existe nesta resposta.
 export interface CreatedAssessmentInvite {
   convite: AssessmentInvite;

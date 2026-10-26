@@ -1160,6 +1160,45 @@ a {
 .tag-convite-finalizada { background: var(--color-success-bg); color: var(--color-success); }
 .tag-convite-pendente { background: var(--color-primary-light); color: var(--color-primary); }
 
+/* Painel de resultados do teste (etapa 4). */
+.resultados-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.resultados-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  flex: 1 1 11rem;
+}
+
+.resultado-nota {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.resultado-nota strong {
+  font-size: 1.15rem;
+  color: var(--color-text);
+}
+
+.tag-recomendacao-aprovado { background: var(--color-success-bg); color: var(--color-success); }
+.tag-recomendacao-aprovado_com_ressalvas { background: var(--color-warning-bg); color: var(--color-warning); }
+.tag-recomendacao-nao_aprovado { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.resultado-candidato-meta {
+  overflow-wrap: anywhere;
+  margin-bottom: 1.25rem;
+}
+
 /* Dados do teste em pares rótulo/valor (detalhe e página do convite). */
 .convite-teste-dados {
   margin: 0;

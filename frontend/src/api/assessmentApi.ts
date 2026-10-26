@@ -1,4 +1,6 @@
-import type { Assessment, AssessmentInput, AssessmentInvite, CreatedAssessmentInvite } from '../types/interview';
+import type {
+  Assessment, AssessmentInput, AssessmentInvite, AssessmentResult, CandidateResult, CreatedAssessmentInvite,
+} from '../types/interview';
 import { API_BASE, authHeaders, handleResponse } from './client';
 
 // Testes de entrevista da empresa (rotas /assessments/**, só recrutador). Teste
@@ -45,6 +47,16 @@ export const assessmentApi = {
       headers: authHeaders(),
       body: JSON.stringify({ email }),
     }).then(res => handleResponse<CreatedAssessmentInvite>(res)),
+
+  // Painel de resultados: quem aceitou o convite, com status e nota.
+  results: (id: string) =>
+    fetch(`${API_BASE}/assessments/${id}/results`, { headers: authHeaders() })
+      .then(res => handleResponse<AssessmentResult[]>(res)),
+
+  // Pode demorar na primeira vez: o servidor gera o relatório se ainda não existir.
+  result: (id: string, interviewId: string) =>
+    fetch(`${API_BASE}/assessments/${id}/results/${interviewId}`, { headers: authHeaders() })
+      .then(res => handleResponse<CandidateResult>(res)),
 
   cancelInvite: (id: string, inviteId: string) =>
     fetch(`${API_BASE}/assessments/${id}/invites/${inviteId}`, {

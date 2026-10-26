@@ -8,6 +8,7 @@ import com.guilherme.entrevistaia.repository.FeedbackReportRepository;
 import com.guilherme.entrevistaia.repository.InterviewRepository;
 import com.guilherme.entrevistaia.repository.QuestionRepository;
 import com.guilherme.entrevistaia.repository.ResumeAnalysisRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,7 @@ class InterviewServiceTest {
     @Mock private ResumeTextExtractor resumeTextExtractor;
     @Mock private AiResumeAnalyzer resumeAnalyzer;
     @Mock private QuestionPromptBuilder questionPromptBuilder;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     private InterviewService service;
 
@@ -51,7 +53,7 @@ class InterviewServiceTest {
     void setUp() {
         service = new InterviewService(interviewRepository, questionRepository, answerRepository,
             reportRepository, resumeAnalysisRepository, questionGenerator, answerEvaluator, reportGenerator,
-            resumeTextExtractor, resumeAnalyzer, questionPromptBuilder);
+            resumeTextExtractor, resumeAnalyzer, questionPromptBuilder, eventPublisher);
 
         owner = new User();
         owner.setId(UUID.randomUUID());
@@ -245,6 +247,34 @@ class InterviewServiceTest {
         assertThat(interview.getStatus()).isEqualTo(InterviewStatus.FINALIZADA);
         assertThat(interview.getFinalizadoEm()).isNotNull();
         verify(interviewRepository).save(interview);
+        // Treino: o relatório é gerado quando o candidato abre, não em segundo plano.
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void submitAnswer_testeDeEmpresaFinalizadoDeveDispararGeracaoDoRelatorio() {
+        Interview interview = novaInterview(InterviewStatus.EM_ANDAMENTO, 1);
+        interview.setOrigem(OrigemEntrevista.CONVITE);
+        Question question = new Question();
+        question.setId(UUID.randomUUID());
+        question.setInterview(interview);
+        question.setOrdem(1);
+        when(questionRepository.findById(question.getId())).thenReturn(Optional.of(question));
+        when(answerEvaluator.evaluate(question, "minha resposta"))
+            .thenReturn(new AiEvaluationResult(9, "otimo", List.of(), List.of(), NivelDominio.AVANCADO, "resposta modelo"));
+
+        service.submitAnswer(question.getId(), owner, "minha resposta");
+
+        verify(eventPublisher).publishEvent(new InterviewFinishedEvent(interview.getId()));
+    }
+
+    @Test
+    void gerarRelatorioDeConvite_deveGerarSoParaTesteDeEmpresaFinalizado() {
+        Interview treino = novaInterview(InterviewStatus.FINALIZADA, 1);
+        when(interviewRepository.findById(treino.getId())).thenReturn(Optional.of(treino));
+
+        assertThat(service.gerarRelatorioDeConvite(treino.getId())).isNull();
+        verify(reportGenerator, never()).generate(any());
     }
 
     @Test

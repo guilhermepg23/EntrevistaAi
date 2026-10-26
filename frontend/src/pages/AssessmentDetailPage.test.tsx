@@ -1,13 +1,13 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AssessmentDetailPage } from './AssessmentDetailPage';
 import { renderWithProviders } from '../test-utils';
 import { assessmentApi } from '../api/assessmentApi';
-import type { Assessment, AssessmentInvite } from '../types/interview';
+import type { Assessment, AssessmentInvite, AssessmentResult } from '../types/interview';
 
 vi.mock('../api/assessmentApi', () => ({
-  assessmentApi: { get: vi.fn(), invites: vi.fn(), invite: vi.fn(), cancelInvite: vi.fn(), archive: vi.fn() },
+  assessmentApi: { get: vi.fn(), invites: vi.fn(), results: vi.fn(), invite: vi.fn(), cancelInvite: vi.fn(), archive: vi.fn() },
 }));
 
 function makeAssessment(o: Partial<Assessment> = {}): Assessment {
@@ -34,6 +34,7 @@ describe('AssessmentDetailPage', () => {
   beforeEach(() => {
     vi.mocked(assessmentApi.get).mockReset().mockResolvedValue(makeAssessment());
     vi.mocked(assessmentApi.invites).mockReset().mockResolvedValue([]);
+    vi.mocked(assessmentApi.results).mockReset().mockResolvedValue([]);
     vi.mocked(assessmentApi.invite).mockReset();
     vi.mocked(assessmentApi.cancelInvite).mockReset().mockResolvedValue(undefined);
     vi.mocked(assessmentApi.archive).mockReset();
@@ -52,7 +53,7 @@ describe('AssessmentDetailPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Back-end Java' })).toBeInTheDocument();
     expect(screen.getByText('Fale de um projeto seu.')).toBeInTheDocument();
-    expect(screen.getByText('Candidatos (2)')).toBeInTheDocument();
+    expect(screen.getByText('Convites (2)')).toBeInTheDocument();
     expect(screen.getByText('Aguardando o candidato')).toBeInTheDocument();
     expect(screen.getByText('Concluiu')).toBeInTheDocument();
     // Só o convite pendente pode ser cancelado.
@@ -94,5 +95,54 @@ describe('AssessmentDetailPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Cancelar convite' }));
 
     expect(assessmentApi.cancelInvite).toHaveBeenCalledWith('as-1', 'ci-1');
+  });
+
+  describe('resultados', () => {
+    function makeResult(o: Partial<AssessmentResult> = {}): AssessmentResult {
+      return {
+        interviewId: 'int-1', inviteId: 'ci-1', nome: 'Ana', email: 'ana@x.com', status: 'FINALIZADA',
+        iniciadoEm: '2026-10-05T10:00:00Z', finalizadoEm: '2026-10-05T10:30:00Z',
+        perguntasRespondidas: 8, totalPerguntas: 8,
+        notaGeral: 6, recomendacao: 'APROVADO_COM_RESSALVAS', nivelPercebido: 'PLENO', ...o,
+      };
+    }
+
+    const resultados = [
+      makeResult(),
+      makeResult({ interviewId: 'int-2', nome: 'Bia', notaGeral: 9, recomendacao: 'APROVADO', iniciadoEm: '2026-10-01T10:00:00Z' }),
+      makeResult({
+        interviewId: 'int-3', nome: 'Caio', status: 'EM_ANDAMENTO', finalizadoEm: null, perguntasRespondidas: 3,
+        notaGeral: null, recomendacao: null, nivelPercebido: null, iniciadoEm: '2026-10-09T10:00:00Z',
+      }),
+    ];
+
+    function nomesNaOrdem() {
+      const lista = screen.getByRole('heading', { name: 'Resultados (3)' }).closest('section')!;
+      return within(lista).getAllByRole('listitem').map(li => li.querySelector('.item-equipe-nome')!.textContent);
+    }
+
+    it('lista quem fez, pela maior nota, com link para o resultado', async () => {
+      vi.mocked(assessmentApi.results).mockResolvedValue(resultados);
+      render();
+
+      await screen.findByRole('heading', { name: 'Resultados (3)' });
+      expect(nomesNaOrdem()).toEqual(['Bia', 'Ana', 'Caio']);
+      expect(screen.getByText('Aprovado', { selector: '.tag-papel' })).toBeInTheDocument();
+      expect(screen.getByText(/3 de 8 respondidas/)).toBeInTheDocument();
+      expect(screen.getAllByRole('link', { name: 'Ver resultado' })[0])
+        .toHaveAttribute('href', '/empresa/testes/as-1/candidatos/int-2');
+    });
+
+    it('ordena por data e filtra por recomendação', async () => {
+      const user = userEvent.setup();
+      vi.mocked(assessmentApi.results).mockResolvedValue(resultados);
+      render();
+
+      await user.selectOptions(await screen.findByLabelText('Ordenar por'), 'recentes');
+      expect(nomesNaOrdem()).toEqual(['Caio', 'Ana', 'Bia']);
+
+      await user.selectOptions(screen.getByLabelText('Recomendação'), 'SEM_NOTA');
+      expect(nomesNaOrdem()).toEqual(['Caio']);
+    });
   });
 });

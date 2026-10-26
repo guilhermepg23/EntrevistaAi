@@ -20,6 +20,7 @@ import { AssessmentFormPage } from './pages/AssessmentFormPage';
 import { AssessmentDetailPage } from './pages/AssessmentDetailPage';
 import { AssessmentInvitePage } from './pages/AssessmentInvitePage';
 import { CandidateInvitesPage } from './pages/CandidateInvitesPage';
+import { CandidateResultPage } from './pages/CandidateResultPage';
 import { useAuth } from './hooks/useAuth';
 
 // "/" é a raiz de quem está logado, e cada tipo de conta tem a sua: o candidato
@@ -44,6 +45,7 @@ export function App() {
         <Route path="/empresa/testes" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentsPage /></ProtectedRoute>} />
         <Route path="/empresa/testes/novo" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentFormPage /></ProtectedRoute>} />
         <Route path="/empresa/testes/:id" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentDetailPage /></ProtectedRoute>} />
+        <Route path="/empresa/testes/:id/candidatos/:interviewId" element={<ProtectedRoute tipo="RECRUTADOR"><CandidateResultPage /></ProtectedRoute>} />
         <Route path="/empresa/testes/:id/editar" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentFormPage /></ProtectedRoute>} />
         <Route path="/empresa/equipe" element={<ProtectedRoute tipo="RECRUTADOR"><TeamPage /></ProtectedRoute>} />
         <Route path="/empresa/configuracoes" element={<ProtectedRoute tipo="RECRUTADOR"><CompanySettingsPage /></ProtectedRoute>} />

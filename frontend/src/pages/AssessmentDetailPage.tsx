@@ -2,26 +2,32 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
-import { andamentoTesteLabel, conviteTesteStatusLabel, nivelLabel } from '../labels';
+import { andamentoTesteLabel, conviteTesteStatusLabel, nivelLabel, recomendacaoLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
 import { situacaoTeste } from './AssessmentsPage';
-import type { Assessment, AssessmentInvite, CreatedAssessmentInvite } from '../types/interview';
+import type {
+  Assessment, AssessmentInvite, AssessmentResult, CreatedAssessmentInvite, Recomendacao,
+} from '../types/interview';
 
 // Detalhe do teste (/empresa/testes/:id): dados e perguntas fixas, convite de
-// candidatos (email + link) e a lista de quem foi convidado. As notas e o
-// relatório de cada candidato entram na etapa 4.
+// candidatos (email + link), os resultados de quem fez (nota e recomendação,
+// com link para o resultado completo) e a lista de convites.
 export function AssessmentDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const [teste, setTeste] = useState<Assessment | null>(null);
   const [convites, setConvites] = useState<AssessmentInvite[]>([]);
+  const [resultados, setResultados] = useState<AssessmentResult[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [erroCarga, setErroCarga] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     try {
-      const [dados, lista] = await Promise.all([assessmentApi.get(id), assessmentApi.invites(id)]);
+      const [dados, lista, feitos] = await Promise.all([
+        assessmentApi.get(id), assessmentApi.invites(id), assessmentApi.results(id),
+      ]);
       setTeste(dados);
       setConvites(lista);
+      setResultados(feitos);
     } catch (err) {
       setErroCarga(err instanceof Error ? err.message : 'Erro ao carregar o teste');
     }
@@ -128,8 +134,10 @@ export function AssessmentDetailPage() {
         </p>
       )}
 
+      <ResultadosTeste assessmentId={teste.id} resultados={resultados} />
+
       <section className="painel-card">
-        <h2>Candidatos ({convites.length})</h2>
+        <h2>Convites ({convites.length})</h2>
         {convites.length === 0 ? (
           <p className="painel-texto">Ninguém foi convidado ainda.</p>
         ) : (
@@ -162,6 +170,114 @@ export function AssessmentDetailPage() {
         )}
       </section>
     </div>
+  );
+}
+
+type Ordem = 'nota' | 'recentes';
+type FiltroRecomendacao = 'TODAS' | Recomendacao | 'SEM_NOTA';
+
+const filtroLabel: Record<FiltroRecomendacao, string> = {
+  TODAS: 'Todas',
+  APROVADO: recomendacaoLabel.APROVADO,
+  APROVADO_COM_RESSALVAS: recomendacaoLabel.APROVADO_COM_RESSALVAS,
+  NAO_APROVADO: recomendacaoLabel.NAO_APROVADO,
+  SEM_NOTA: 'Sem nota ainda',
+};
+
+// Maior nota primeiro (sem nota vai para o fim); empate ou "recentes": quem
+// começou por último primeiro.
+export function ordenarResultados(lista: AssessmentResult[], ordem: Ordem): AssessmentResult[] {
+  const porData = (a: AssessmentResult, b: AssessmentResult) => b.iniciadoEm.localeCompare(a.iniciadoEm);
+  return [...lista].sort((a, b) => {
+    if (ordem === 'nota') {
+      const diff = (b.notaGeral ?? -1) - (a.notaGeral ?? -1);
+      if (diff !== 0) return diff;
+    }
+    return porData(a, b);
+  });
+}
+
+function andamento(r: AssessmentResult): string {
+  if (r.status === 'FINALIZADA') {
+    return r.finalizadoEm ? `Concluiu em ${formatarDataHora(r.finalizadoEm)}` : 'Concluiu';
+  }
+  const progresso = `${r.perguntasRespondidas} de ${r.totalPerguntas} respondidas`;
+  return r.status === 'ABANDONADA' ? `Desistiu · ${progresso}` : `Fazendo o teste · ${progresso}`;
+}
+
+// Painel de resultados: quem aceitou o convite, com nota e recomendação do
+// relatório. Ordena por nota ou data e filtra por recomendação.
+function ResultadosTeste({ assessmentId, resultados }: { assessmentId: string; resultados: AssessmentResult[] }) {
+  const [ordem, setOrdem] = useState<Ordem>('nota');
+  const [filtro, setFiltro] = useState<FiltroRecomendacao>('TODAS');
+
+  const visiveis = ordenarResultados(resultados, ordem).filter(r =>
+    filtro === 'TODAS' || (filtro === 'SEM_NOTA' ? r.recomendacao === null : r.recomendacao === filtro));
+
+  return (
+    <section className="painel-card">
+      <h2>Resultados ({resultados.length})</h2>
+      {resultados.length === 0 ? (
+        <p className="painel-texto">Ninguém começou o teste ainda. Os resultados aparecem aqui.</p>
+      ) : (
+        <>
+          <div className="resultados-filtros">
+            <label>
+              Ordenar por
+              <select value={ordem} onChange={e => setOrdem(e.target.value as Ordem)}>
+                <option value="nota">Maior nota</option>
+                <option value="recentes">Mais recentes</option>
+              </select>
+            </label>
+            <label>
+              Recomendação
+              <select value={filtro} onChange={e => setFiltro(e.target.value as FiltroRecomendacao)}>
+                {(Object.keys(filtroLabel) as FiltroRecomendacao[]).map(f => (
+                  <option key={f} value={f}>{filtroLabel[f]}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {visiveis.length === 0 ? (
+            <p className="painel-texto">Nenhum candidato com essa recomendação.</p>
+          ) : (
+            <ul className="lista-equipe">
+              {visiveis.map(r => (
+                <li key={r.interviewId} className="item-equipe">
+                  <div className="item-equipe-info">
+                    <span className="item-equipe-nome">{r.nome}</span>
+                    <span className="item-equipe-detalhe">{r.email} · {andamento(r)}</span>
+                  </div>
+                  {r.notaGeral !== null && r.recomendacao ? (
+                    <span className="resultado-nota">
+                      <strong>{r.notaGeral}</strong>/10
+                      <span className={`tag-papel tag-recomendacao-${r.recomendacao.toLowerCase()}`}>
+                        {recomendacaoLabel[r.recomendacao]}
+                      </span>
+                    </span>
+                  ) : r.status === 'FINALIZADA' ? (
+                    <span className="tag-papel">Relatório em preparo</span>
+                  ) : (
+                    <span className={`tag-papel tag-convite-${r.status.toLowerCase()}`}>
+                      {andamentoTesteLabel[r.status]}
+                    </span>
+                  )}
+                  <div className="item-equipe-acoes">
+                    <Link
+                      to={`/empresa/testes/${assessmentId}/candidatos/${r.interviewId}`}
+                      className="botao-link botao-link-secundario"
+                    >
+                      Ver resultado
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 

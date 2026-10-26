@@ -3,6 +3,8 @@ package com.guilherme.entrevistaia.controller;
 import com.guilherme.entrevistaia.dto.AssessmentInviteResponse;
 import com.guilherme.entrevistaia.dto.AssessmentRequest;
 import com.guilherme.entrevistaia.dto.AssessmentResponse;
+import com.guilherme.entrevistaia.dto.AssessmentResultResponse;
+import com.guilherme.entrevistaia.dto.CandidateResultResponse;
 import com.guilherme.entrevistaia.dto.CreateAssessmentInviteRequest;
 import com.guilherme.entrevistaia.dto.CreatedAssessmentInviteResponse;
 import com.guilherme.entrevistaia.entity.User;
@@ -70,6 +72,21 @@ public class AssessmentController {
                                                                   @AuthenticationPrincipal User user) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(assessmentService.convidar(user, id, request.email()));
+    }
+
+    // Painel de resultados: candidatos que aceitaram, com status e nota.
+    @GetMapping("/{id}/results")
+    public ResponseEntity<List<AssessmentResultResponse>> results(@PathVariable UUID id,
+                                                                  @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(assessmentService.resultados(user, id));
+    }
+
+    // Resultado completo de um candidato (relatório, transcrição, currículo).
+    // Pode demorar na primeira vez: gera o relatório se ainda não existir.
+    @GetMapping("/{id}/results/{interviewId}")
+    public ResponseEntity<CandidateResultResponse> result(@PathVariable UUID id, @PathVariable UUID interviewId,
+                                                          @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(assessmentService.resultado(user, id, interviewId));
     }
 
     @DeleteMapping("/{id}/invites/{inviteId}")

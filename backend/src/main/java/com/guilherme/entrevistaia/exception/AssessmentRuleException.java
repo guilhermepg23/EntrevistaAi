@@ -24,6 +24,12 @@ public class AssessmentRuleException extends AppException {
             "Teste não encontrado na sua empresa.", HttpStatus.NOT_FOUND);
     }
 
+    // A entrevista não existe ou não é deste teste.
+    public static AssessmentRuleException resultadoNaoEncontrado() {
+        return new AssessmentRuleException("ASSESSMENT_RESULT_NOT_FOUND",
+            "Resultado não encontrado neste teste.", HttpStatus.NOT_FOUND);
+    }
+
     public static AssessmentRuleException encerrado() {
         return new AssessmentRuleException("ASSESSMENT_CLOSED",
             "Este teste está arquivado ou venceu.", HttpStatus.CONFLICT);

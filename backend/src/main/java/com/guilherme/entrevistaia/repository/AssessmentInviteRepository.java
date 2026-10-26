@@ -2,6 +2,7 @@ package com.guilherme.entrevistaia.repository;
 
 import com.guilherme.entrevistaia.entity.Assessment;
 import com.guilherme.entrevistaia.entity.AssessmentInvite;
+import com.guilherme.entrevistaia.entity.Interview;
 import com.guilherme.entrevistaia.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,6 +24,9 @@ public interface AssessmentInviteRepository extends JpaRepository<AssessmentInvi
     // Convites endereçados a um candidato (tela "Testes de empresas"). Quem
     // filtra os pendentes é o AssessmentService (depende da hora atual).
     List<AssessmentInvite> findByEmailIgnoreCaseOrderByCriadoEmDesc(String email);
+
+    // O convite que gerou uma entrevista (painel de resultados).
+    Optional<AssessmentInvite> findByInterview(Interview interview);
 
     @Modifying
     @Query("update AssessmentInvite i set i.criadoPor = null where i.criadoPor = :user")

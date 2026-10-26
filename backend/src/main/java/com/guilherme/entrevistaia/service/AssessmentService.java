@@ -3,12 +3,18 @@ package com.guilherme.entrevistaia.service;
 import com.guilherme.entrevistaia.dto.AssessmentInviteResponse;
 import com.guilherme.entrevistaia.dto.AssessmentRequest;
 import com.guilherme.entrevistaia.dto.AssessmentResponse;
+import com.guilherme.entrevistaia.dto.AssessmentResultResponse;
 import com.guilherme.entrevistaia.dto.CandidateAssessmentInviteResponse;
+import com.guilherme.entrevistaia.dto.CandidateResultResponse;
 import com.guilherme.entrevistaia.dto.CreatedAssessmentInviteResponse;
+import com.guilherme.entrevistaia.dto.FeedbackReportResponse;
+import com.guilherme.entrevistaia.dto.QuestionWithAnswerResponse;
+import com.guilherme.entrevistaia.dto.ResumeAnalysisResponse;
 import com.guilherme.entrevistaia.entity.Assessment;
 import com.guilherme.entrevistaia.entity.AssessmentInvite;
 import com.guilherme.entrevistaia.entity.AssessmentQuestion;
 import com.guilherme.entrevistaia.entity.AssessmentStatus;
+import com.guilherme.entrevistaia.entity.FeedbackReport;
 import com.guilherme.entrevistaia.entity.Interview;
 import com.guilherme.entrevistaia.entity.InterviewStatus;
 import com.guilherme.entrevistaia.entity.OrigemEntrevista;
@@ -55,6 +61,7 @@ public class AssessmentService {
     private final UserRepository userRepository;
     private final CompanyService companyService;
     private final AssessmentInviteMailer mailer;
+    private final InterviewService interviewService;
     private final String frontendBaseUrl;
     private final int validadeMeses;
 
@@ -64,6 +71,7 @@ public class AssessmentService {
                              UserRepository userRepository,
                              CompanyService companyService,
                              AssessmentInviteMailer mailer,
+                             InterviewService interviewService,
                              @Value("${app.frontend-base-url}") String frontendBaseUrl,
                              @Value("${app.assessments.validade-meses:3}") int validadeMeses) {
         this.assessmentRepository = assessmentRepository;
@@ -72,6 +80,7 @@ public class AssessmentService {
         this.userRepository = userRepository;
         this.companyService = companyService;
         this.mailer = mailer;
+        this.interviewService = interviewService;
         this.frontendBaseUrl = frontendBaseUrl;
         this.validadeMeses = validadeMeses;
     }
@@ -220,6 +229,45 @@ public class AssessmentService {
         invite.setCanceladoEm(OffsetDateTime.now());
         inviteRepository.save(invite);
         log.info("[ASSESSMENT_INVITE_CANCELLED] inviteId={} por={}", invite.getId(), principal.getId());
+    }
+
+    // GET /assessments/{id}/results — os candidatos que aceitaram o convite,
+    // com o status da entrevista e, quando já existe, a nota do relatório.
+    // Qualquer membro da empresa vê. Ordenar e filtrar fica com o front.
+    @Transactional(readOnly = true)
+    public List<AssessmentResultResponse> resultados(User principal, UUID assessmentId) {
+        Assessment assessment = daEmpresa(principal, assessmentId);
+        return inviteRepository.findByAssessmentOrderByCriadoEmDesc(assessment).stream()
+            .filter(c -> c.getInterview() != null)
+            .map(AssessmentResultResponse::from)
+            .toList();
+    }
+
+    // GET /assessments/{id}/results/{interviewId} — o resultado completo de um
+    // candidato. Se a entrevista terminou e o relatório ainda não existe (a
+    // geração em segundo plano falhou ou não acabou), gera aqui.
+    @Transactional
+    public CandidateResultResponse resultado(User principal, UUID assessmentId, UUID interviewId) {
+        Assessment assessment = daEmpresa(principal, assessmentId);
+        Interview interview = interviewRepository.findById(interviewId)
+            .filter(i -> i.getAssessment() != null && i.getAssessment().getId().equals(assessment.getId()))
+            .orElseThrow(AssessmentRuleException::resultadoNaoEncontrado);
+        AssessmentInvite invite = inviteRepository.findByInterview(interview)
+            .orElseThrow(AssessmentRuleException::resultadoNaoEncontrado);
+
+        FeedbackReport report = interview.getStatus() == InterviewStatus.FINALIZADA
+            ? interviewService.relatorio(interview)
+            : null;
+
+        log.info("[ASSESSMENT_RESULT_VIEWED] assessmentId={} interviewId={} por={}",
+            assessment.getId(), interview.getId(), principal.getId());
+        return new CandidateResultResponse(
+            AssessmentResultResponse.from(invite),
+            assessment.getTitulo(), interview.getStack(), interview.getNivel(),
+            report != null ? FeedbackReportResponse.from(report) : null,
+            interview.getQuestions().stream().map(QuestionWithAnswerResponse::from).toList(),
+            interview.getResumeAnalysis() != null ? ResumeAnalysisResponse.from(interview.getResumeAnalysis()) : null
+        );
     }
 
     // ----------------------------------------------------- lado candidato
