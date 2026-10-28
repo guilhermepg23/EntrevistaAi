@@ -9,6 +9,7 @@ vi.mock('../api/interviewApi', () => ({
     streamNextQuestion: vi.fn(),
     submitAnswer: vi.fn(),
     getTranscript: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
@@ -59,6 +60,22 @@ describe('useInterview.initialize', () => {
     expect(result.current.currentQuestion?.id).toBe('q1');
   });
 
+  it('com tudo respondido e a entrevista já finalizada (F5 na tela final), mostra o fim sem pedir pergunta nova', async () => {
+    const respondida: TranscriptItem = {
+      id: 'q1', interviewId: 'i1', ordem: 1, pergunta: 'P1', topico: 'T', dificuldade: 'BASICO',
+      respostaTexto: 'R1', nota: null, resumo: null, pontosFortes: [], gaps: [], nivelDominio: null, respostaModelo: null,
+    };
+    mockedApi.getTranscript.mockResolvedValue([respondida]);
+    mockedApi.get.mockResolvedValue({ id: 'i1', status: 'FINALIZADA' } as Awaited<ReturnType<typeof interviewApi.get>>);
+
+    const { result } = renderHook(() => useInterview('i1'));
+    await act(async () => result.current.initialize());
+
+    expect(mockedApi.streamNextQuestion).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('finished');
+    expect(result.current.chatItems).toHaveLength(2);
+  });
+
   it('se getTranscript falhar, ainda assim segue pro fluxo normal de buscar pergunta nova', async () => {
     mockedApi.getTranscript.mockRejectedValue(new Error('rede fora'));
     mockedApi.streamNextQuestion.mockResolvedValue(question());
@@ -93,6 +110,7 @@ describe('useInterview em teste de empresa (feedback oculto)', () => {
       respostaTexto: 'R1', nota: null, resumo: null, pontosFortes: [], gaps: [], nivelDominio: null, respostaModelo: null,
     };
     mockedApi.getTranscript.mockResolvedValue([respondida]);
+    mockedApi.get.mockResolvedValue({ id: 'i1', status: 'EM_ANDAMENTO' } as Awaited<ReturnType<typeof interviewApi.get>>);
     mockedApi.streamNextQuestion.mockResolvedValue(question({ id: 'q2', ordem: 2 }));
 
     const { result } = renderHook(() => useInterview('i1'));

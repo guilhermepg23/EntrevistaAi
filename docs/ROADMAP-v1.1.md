@@ -27,7 +27,7 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 | 2 | Empresa e equipe: papéis, convites, modo empresa | ✅ no ar (telas conferidas no navegador em 2026-10-22) |
 | 3 | Testes de entrevista da empresa e convite de candidatos | ✅ no ar (V5 e V6 aplicadas no Supabase; aba Convites e descrição da empresa em d1bbf95) |
 | 4 | Painel de resultados do recrutador | ✅ no ar (2026-10-26; conferido pelo usuário no ambiente local) |
-| 5 | Fechamento da v1.1.0 (revisão visual, README, tag) | ⏳ |
+| 5 | Fechamento da v1.1.0 (revisão visual, README, tag) | ✅ (2026-10-27) |
 
 ## Antes de começar a etapa 3
 
@@ -120,6 +120,14 @@ resultados. Mais adiante, o treino vira parte de um plano de assinatura.
 - Revisão visual completa (desktop e celular) e capturas em `docs/`.
 - README: seção do modo empresa e novas variáveis, se houver.
 - Subir a versão para `1.1.0` no `pom.xml`, no `package.json` e no `package-lock.json`, e criar a tag `v1.1.0`.
+
+**Feito** (2026-10-27)
+- Revisão visual no navegador: telas da empresa e do candidato no desktop, e todas as rotas num celular de 390px, sem rolagem horizontal. Saíram duas correções:
+  - a tag de dificuldade na bolha da pergunta quebrava no meio da palavra no celular ("Intermediár/io") quando o tópico era longo;
+  - abrir uma entrevista já terminada (F5 na tela "Teste concluído", ou voltar pelo histórico) mostrava "network error", porque o chat pedia uma pergunta nova. Agora mostra direto o fim.
+- Capturas do modo empresa em `docs/`.
+- README: seção "Modo empresa (v1.1)", `FRONTEND_BASE_URL` (obrigatória em produção, monta os links dos convites) e `ASSESSMENT_VALIDITY_MONTHS`; as duas também no `.env.example` e no `docker-compose.yml`.
+- Versão `1.1.0` no `pom.xml`, no `package.json` e no `package-lock.json`.
 
 ## Depois da v1.1 (assinatura)
 

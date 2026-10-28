@@ -41,6 +41,7 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@entrevista-ia.local}
+      ASSESSMENT_VALIDITY_MONTHS: ${ASSESSMENT_VALIDITY_MONTHS:-3}
     ports:
       # Porta do host configurável (default 8080) — útil se já houver algo
       # local ocupando a 8080 (ex.: backend rodando direto pela IDE).

@@ -1,18 +1,15 @@
 # Capturas de tela
 
-Coloque aqui os PNGs referenciados no README da raiz. Sugestão de telas:
+Telas do modo empresa (v1.1), tiradas do ambiente local com dados de teste:
 
 | Arquivo | Tela |
 |---|---|
-| `home.png` | Home — formulário de nova entrevista + histórico |
-| `entrevista.png` | Chat da entrevista com a pergunta aparecendo em streaming |
-| `feedback.png` | Feedback de uma resposta (nota, pontos fortes, gaps, resposta modelo) |
-| `relatorio.png` | Relatório final (anel de nota, recomendação, currículo × desempenho) |
-| `curriculo.png` | Análise de currículo avulsa (`/curriculo`) |
-| `conta.png` | Minha conta (abas Detalhes / Configurações) |
+| `empresa-painel.jpg` | Painel da empresa (equipe, convites, testes abertos) |
+| `empresa-testes.jpg` | Lista de testes da empresa |
+| `empresa-resultados.jpg` | Detalhe do teste: convite e resultados, com ordenação e filtro |
+| `empresa-resultado-candidato.jpg` | Resultado de um candidato (relatório completo) |
+| `candidato-convites.jpg` | Aba "Convites" do candidato |
 
-Largura sugerida: ~1280px. Depois de adicionar, referencie no README:
-
-```markdown
-![Home](docs/home.png)
-```
+Ainda faltam capturas das telas da v1.0 (home, chat em streaming, feedback de uma
+resposta, relatório, análise de currículo avulsa e conta). Largura sugerida: ~1280px.
+Referência no README: `![Painel](docs/empresa-painel.jpg)`.

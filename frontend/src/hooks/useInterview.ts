@@ -119,6 +119,17 @@ export function useInterview(interviewId: string) {
         setStatus('waiting-answer');
         return;
       }
+
+      // Tudo respondido: se a entrevista já terminou (F5 na tela de conclusão,
+      // ou voltar pelo histórico do navegador), não há pergunta a buscar —
+      // pedir uma dava erro. Mostra direto o fim.
+      if (transcript.length > 0) {
+        const dados = await interviewApi.get(interviewId);
+        if (dados.status === 'FINALIZADA') {
+          setStatus('finished');
+          return;
+        }
+      }
     } catch {
       // Falha ao buscar o transcript não deve travar a entrevista — segue
       // pro fluxo normal de buscar a próxima pergunta.

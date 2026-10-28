@@ -6,6 +6,10 @@
 Projeto de portfólio: simulador de entrevistas técnicas adaptativo, usando IA para gerar
 perguntas, avaliar respostas e produzir um relatório final.
 
+Desde a v1.1 há dois tipos de conta. O **candidato** treina entrevistas e faz os testes
+para os quais foi convidado. O **recrutador** trabalha em nome de uma empresa: monta testes,
+convida candidatos e vê os resultados (ver [Modo empresa](#modo-empresa-v11)).
+
 > **Cold start**: o backend roda no free tier do Render e hiberna após 15 min. A primeira
 > requisição depois disso leva ~1 min (o app mostra um aviso). Abra a demo um pouco antes.
 
@@ -16,8 +20,11 @@ perguntas, avaliar respostas e produzir um relatório final.
 
 ## Telas
 
-Capturas em [`docs/`](docs/): home (nova entrevista), chat com a pergunta em streaming,
-feedback de uma resposta, relatório final, análise de currículo avulsa e tela de conta.
+Modo empresa: resultados de um teste e o resultado completo de um candidato. Mais
+capturas em [`docs/`](docs/).
+
+![Resultados do teste](docs/empresa-resultados.jpg)
+![Resultado do candidato](docs/empresa-resultado-candidato.jpg)
 
 ## Status atual
 
@@ -67,7 +74,8 @@ feedback de uma resposta, relatório final, análise de currículo avulsa e tela
   configuráveis por env (`RATE_LIMIT_AUTH_PER_MINUTE`, `RATE_LIMIT_AI_PER_MINUTE`)
 - Health check próprio em `/health` (sem Actuator); controllers + DTOs REST documentados
   via Swagger/OpenAPI
-- Testes automatizados (`mvn test`, 142 testes): unitários (service, JWT, `CpfValidator`,
+- Testes automatizados (`mvn test`, 222 testes, incluindo empresa, testes, convites e
+  resultados): unitários (service, JWT, `CpfValidator`,
   `RateLimitFilter`, streaming e transcrição de áudio via MockRestServiceServer, mapeamento
   do JSON da IA, recuperação de senha, conta), controller (MockMvc — cobre todas as rotas,
   incluindo currículo, análise avulsa, CPF/forgot/reset no auth, `/account`, `/health`,
@@ -114,7 +122,8 @@ feedback de uma resposta, relatório final, análise de currículo avulsa e tela
 - `ErrorBoundary` no topo da árvore: um erro de renderização vira tela amigável, não branca
 - Base da API em `api/config.ts`: `VITE_API_URL` (do `.env`) com fallback pro backend em
   produção, pra o deploy não quebrar se a env var não entrar no build
-- Testes automatizados (Vitest + Testing Library, `npm test`, 131 testes):
+- Testes automatizados (Vitest + Testing Library, `npm test`, 199 testes, incluindo as
+  telas do modo empresa):
   - **Client/hooks**: parsing do streaming SSE e sessão expirada (`interviewApi`), upload
     multipart da análise de currículo avulsa (`interviewApi.reviewResume`), `useAuth`
     (persistência de sessão, evento de sessão expirada), `useInterview` (máquina de estados
@@ -131,6 +140,40 @@ feedback de uma resposta, relatório final, análise de currículo avulsa e tela
     `AccountPage` (detalhes, editar nome, trocar senha, excluir conta), `HomePage`,
     `InterviewChat`, `InterviewChatPage`, `InterviewReportPage`, `PublicReportPage`,
     `ResumeReviewPage` (upload → nota/veredito/melhorias, histórico, botão travado sem PDF)
+
+## Modo empresa (v1.1)
+
+O tipo de conta (candidato ou recrutador) é escolhido no cadastro e não muda depois. O
+recrutador não informa CPF, e o CNPJ da empresa é opcional. As rotas são separadas por
+tipo no Spring Security: conta do tipo errado recebe 403 `ACCESS_DENIED_ACCOUNT_TYPE`.
+
+- **Empresa e equipe** (`/company/**`): cada recrutador pertence a uma empresa, com papel
+  `ADMIN` ou `RECRUTADOR`; pode haver vários ADMINs, mas nunca nenhum. O ADMIN edita os
+  dados da empresa (incluindo o texto "Sobre a empresa", mostrado ao candidato), convida
+  recrutadores (link de 2 a 7 dias, também enviado por email quando há SMTP), promove e
+  remove membros. O modo empresa tem identidade visual própria (paleta verde-petróleo,
+  header escuro).
+- **Testes** (`/assessments/**`): título, stack, nível, número de perguntas, descrição da
+  vaga e perguntas fixas opcionais, feitas antes das que a IA gera. O teste vale 3 meses a
+  partir da criação (`ASSESSMENT_VALIDITY_MONTHS`) e não pode ser editado depois que alguém
+  começou. Dá para arquivar.
+- **Convite de candidatos**: um convite por email, com link de uso único (só o hash do
+  token fica no banco). O candidato precisa ter conta com aquele email; o convite aparece
+  na aba "Convites" e na página pública `/teste/:token`. Cada convite gera uma única
+  entrevista, sem refazer.
+- **Entrevista de convite** (`origem=CONVITE`): o candidato não vê nota, resposta modelo
+  nem relatório, só "Resposta enviada". Relatório, currículo e compartilhamento respondem
+  403 `INTERVIEW_FEEDBACK_HIDDEN` para ele.
+- **Resultados**: qualquer membro da empresa vê, no detalhe do teste, quem fez, com
+  andamento, nota, recomendação e nível, ordenados por nota ou data e filtrados por
+  recomendação. O resultado de cada candidato reaproveita o relatório da v1.0, com a
+  avaliação de cada resposta. O relatório é gerado em segundo plano quando o teste termina
+  (`AssessmentReportListener`, `@Async` depois do commit), já que o candidato não o abre.
+- **Banco**: migrations Flyway V2 a V6 (tipo de conta, empresas e equipe, testes e
+  convites, descrição da empresa). A entrevista ganhou `origem` (`TREINO`/`CONVITE`), que
+  prepara a futura assinatura do treino.
+
+Histórico das etapas e decisões em [docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md).
 
 ## Deploy
 
@@ -151,21 +194,23 @@ Publicado e validado ponta a ponta em produção:
 - **Frontend**: Vercel (root directory `frontend`, `VITE_API_URL` apontando pro backend).
   Push em `main` dispara build/deploy automático nas duas plataformas.
 - CORS liberado pra origem exata do frontend via `CORS_ALLOWED_ORIGINS` no Render.
-- **Email de recuperação de senha**: setar no Render `MAIL_HOST`, `MAIL_PORT`,
-  `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` e `FRONTEND_BASE_URL` (URL da Vercel).
-  Sem `MAIL_HOST`, o backend sobe normalmente e só **loga** o link de recuperação no
-  servidor em vez de enviar — o fluxo continua testável.
+- **`FRONTEND_BASE_URL`** (obrigatória em produção): a URL da Vercel. O backend monta com
+  ela os links de convite de teste, convite de equipe e recuperação de senha; sem ela, os
+  links saem com `http://localhost:5173`.
+- **`ASSESSMENT_VALIDITY_MONTHS`** (opcional, padrão 3): validade dos testes de empresa.
+- **Email** (convites e recuperação de senha): setar no Render `MAIL_HOST`, `MAIL_PORT`,
+  `MAIL_USERNAME`, `MAIL_PASSWORD` e `MAIL_FROM`. Sem `MAIL_HOST`, o backend sobe
+  normalmente e só **loga** o link em vez de enviar; os convites seguem funcionando pelo
+  link copiado na tela.
 
 ## Próximos passos
 
-A v1.1 (modo empresa: recrutadores, equipe, testes para candidatos) está em
-andamento. Status, decisões e as próximas etapas ficam em
-[docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md).
+A v1.1.0 (modo empresa) está concluída; o histórico fica em
+[docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md). Próximos passos:
 
-1. Conferir os breakpoints mobile num device/DevTools real — o resto do polimento visual
-   está feito (breakpoint mobile no CSS, `prefers-reduced-motion`, `:focus-visible`,
-   auto-scroll do chat, range slider e `input[type=file]` estilizados, aviso de cold start
-   no login/cadastro), mas não deu pra validar responsivo na sessão de dev.
+1. **Assinatura**: limitar ou cobrar os treinos (`origem=TREINO`) e escolher o provedor de
+   pagamento.
+2. **SMTP no Render**, para os convites e a recuperação de senha chegarem por email.
 
 ## Como rodar tudo localmente (um comando)
 
