@@ -217,6 +217,14 @@ a {
   flex-direction: column;
 }
 
+/* Fica preso no topo com o header, e não no rodapé: lá o aviso de nova versão
+   cobriria o campo de resposta da entrevista (.answer-input). */
+.app-topo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -225,9 +233,33 @@ a {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+}
+
+.aviso-nova-versao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.4rem 1rem;
+  background: var(--color-primary-light);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.aviso-nova-versao-recarregar {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.82rem;
+}
+
+.aviso-nova-versao-dispensar {
+  padding: 0.1rem 0.5rem;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .header-left {
