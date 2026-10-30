@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando, HintServidor } from '../components/HintServidor';
 import { conviteEmAberto } from './CandidateInvitesPage';
 import type { Interview } from '../types/interview';
 
@@ -86,7 +87,7 @@ export function HomePage() {
       <section className="start-interview">
         <h1>Nova entrevista</h1>
         <form onSubmit={handleSubmit}>
-          {erro && <p className="erro">{erro}</p>}
+          {erro && <p className="erro" role="alert">{erro}</p>}
           <label>
             Stack
             <input
@@ -141,6 +142,7 @@ export function HomePage() {
           <button type="submit" disabled={criando}>
             {etapaCriacao === 'curriculo' ? 'Analisando currículo...' : criando ? 'Iniciando...' : 'Começar entrevista'}
           </button>
+          <HintServidor ativo={etapaCriacao === 'entrevista'} />
         </form>
         <p className="start-interview-alt">
           Só quer um retorno sobre o currículo? <Link to="/curriculo">Analisar currículo sem entrevista</Link>
@@ -149,7 +151,7 @@ export function HomePage() {
 
       <section className="historico">
         <h2>Treinos anteriores</h2>
-        {carregandoHistorico && <p>Carregando...</p>}
+        {carregandoHistorico && <Carregando texto="Carregando..." />}
         {erroHistorico && (
           <ErroCarga mensagem={erroHistorico} onTentar={() => setTentativaHistorico(t => t + 1)} />
         )}

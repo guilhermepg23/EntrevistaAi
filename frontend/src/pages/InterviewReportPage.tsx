@@ -116,7 +116,7 @@ export function InterviewReportPage() {
 
       <RelatorioConteudo report={report} resumeAnalysis={resumeAnalysis} transcript={transcript} />
 
-      {erroAcao && <p className="erro">{erroAcao}</p>}
+      {erroAcao && <p className="erro" role="alert">{erroAcao}</p>}
 
       <div className="report-acoes">
         {report.pontosFracos.length > 0 && (
@@ -130,6 +130,7 @@ export function InterviewReportPage() {
             <input
               type="text"
               readOnly
+              aria-label="Link público do relatório"
               value={`${window.location.origin}/relatorio-publico/${shareToken}`}
               onFocus={e => e.target.select()}
             />

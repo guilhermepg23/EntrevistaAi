@@ -96,12 +96,13 @@ export function AnswerInput({
 
   return (
     <div className="answer-input">
-      {aviso && <p className="answer-input-aviso">{aviso}</p>}
+      {aviso && <p className="answer-input-aviso" role="alert">{aviso}</p>}
       <div className="answer-input-row">
         <textarea
           value={texto}
           onChange={e => alterarTexto(e.target.value)}
           onKeyDown={handleKeyDown}
+          aria-label="Sua resposta"
           disabled={disabled}
           placeholder={
             transcrevendo ? 'Transcrevendo o áudio...' : disabled ? 'Aguarde...' : 'Digite ou grave sua resposta...'

@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
-import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
+import { HintServidor } from '../components/HintServidor';
 import { PasswordInput } from '../components/PasswordInput';
 import { destinoSeguro } from '../lib/redirect';
 
@@ -12,7 +12,6 @@ export function LoginPage() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const acordandoServidor = useSlowRequestHint(carregando);
   const { login, sessionExpired, clearSessionExpired } = useAuth();
   const navigate = useNavigate();
   // ?voltar= : quem veio do link de um teste volta pra ele depois de entrar.
@@ -40,9 +39,9 @@ export function LoginPage() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <h1>Entrar</h1>
         {sessionExpired && !erro && (
-          <p className="aviso">Sua sessão expirou. Faça login novamente.</p>
+          <p className="aviso" role="status">Sua sessão expirou. Faça login novamente.</p>
         )}
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Email
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
@@ -62,12 +61,7 @@ export function LoginPage() {
         <p className="auth-switch">
           <Link to="/esqueci-senha">Esqueceu sua senha?</Link>
         </p>
-        {acordandoServidor && (
-          <p className="hint-servidor">
-            O servidor gratuito estava hibernando e está acordando — a primeira
-            requisição pode levar até 1 minuto.
-          </p>
-        )}
+        <HintServidor ativo={carregando} />
         <p className="auth-switch">
           Não tem conta? <Link to={voltar ? `/register?voltar=${encodeURIComponent(voltar)}` : '/register'}>Cadastre-se</Link>
         </p>

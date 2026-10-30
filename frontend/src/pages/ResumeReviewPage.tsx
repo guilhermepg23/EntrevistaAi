@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import type { ResumeReview } from '../types/interview';
 import { veredictoCurriculoLabel } from '../labels';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
@@ -125,7 +126,7 @@ export function ResumeReviewPage() {
           melhorias concretas — sem precisar iniciar uma entrevista.
         </p>
         <form onSubmit={handleSubmit}>
-          {erro && <p className="erro">{erro}</p>}
+          {erro && <p className="erro" role="alert">{erro}</p>}
           {demorando && (
             <p className="aviso">
               O servidor pode estar retomando de hibernação — a primeira análise leva alguns segundos.
@@ -149,7 +150,7 @@ export function ResumeReviewPage() {
 
       <section className="historico">
         <h2>Análises anteriores</h2>
-        {carregandoHistorico && <p>Carregando...</p>}
+        {carregandoHistorico && <Carregando texto="Carregando..." />}
         {erroHistorico && <ErroCarga mensagem={erroHistorico} onTentar={carregarHistorico} />}
         {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma análise ainda.</p>}
         <ul className="historico-lista">

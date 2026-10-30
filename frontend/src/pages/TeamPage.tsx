@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { companyApi } from '../api/companyApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { useCompany } from '../hooks/useCompany';
 import { papelEmpresaLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
@@ -36,7 +37,7 @@ export function TeamPage() {
     if (company) void carregarEquipe();
   }, [company, carregarEquipe]);
 
-  if (carregando) return <div className="equipe-page"><p>Carregando equipe...</p></div>;
+  if (carregando) return <div className="equipe-page"><Carregando texto="Carregando equipe..." /></div>;
   // Sem empresa: a home é quem oferece criar uma.
   if (semEmpresa) return <Navigate to="/" replace />;
   if (erroEmpresa) return <div className="equipe-page"><ErroCarga mensagem={erroEmpresa} onTentar={recarregar} /></div>;
@@ -90,7 +91,7 @@ export function TeamPage() {
         </p>
       </header>
 
-      {erro && <p className="erro">{erro}</p>}
+      {erro && <p className="erro" role="alert">{erro}</p>}
 
       {ehAdmin && <ConvidarRecrutador onConvidado={atualizarTudo} />}
 
@@ -205,7 +206,7 @@ function ConvidarRecrutador({ onConvidado }: { onConvidado: () => Promise<void> 
     <section className="painel-card convidar-card">
       <h2>Convidar recrutador</h2>
       <form className="convidar-form" onSubmit={handleSubmit}>
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Email do recrutador
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />

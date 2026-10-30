@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { apagarRascunho, lerRascunho, salvarRascunho } from '../lib/rascunho';
 
 interface DadosForm {
@@ -151,7 +152,7 @@ export function AssessmentFormPage() {
     }
   }
 
-  if (carregando) return <div className="equipe-page"><p>Carregando teste...</p></div>;
+  if (carregando) return <div className="equipe-page"><Carregando texto="Carregando teste..." /></div>;
 
   if (!testeCarregado) {
     return (
@@ -196,7 +197,7 @@ export function AssessmentFormPage() {
             </button>
           </div>
         )}
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Título
           <input

@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { formatarData } from '../lib/datas';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando, HintServidor } from '../components/HintServidor';
 import { nivelLabel } from '../labels';
 import type { CandidateAssessmentInvite } from '../types/interview';
 
@@ -67,7 +68,7 @@ export function AssessmentInvitePage() {
       <div className="auth-page">
         <div className="auth-form">
           <h1>Convite indisponível</h1>
-          <p className="erro">{invalido}</p>
+          <p className="erro" role="alert">{invalido}</p>
           <p className="auth-intro">
             Se você ainda não fez o teste, peça um novo link para a empresa. Testes que você
             já começou aparecem na sua página inicial.
@@ -87,7 +88,7 @@ export function AssessmentInvitePage() {
   }
 
   if (!convite) {
-    return <div className="auth-page"><p>Carregando convite...</p></div>;
+    return <div className="auth-page"><Carregando texto="Carregando convite..." /></div>;
   }
 
   return (
@@ -108,7 +109,7 @@ export function AssessmentInvitePage() {
           reserve um tempo antes de começar.
         </p>
 
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
 
         {!isAuthenticated && (
           <>
@@ -145,6 +146,7 @@ export function AssessmentInvitePage() {
             </button>
           )
         )}
+        <HintServidor ativo={comecando} />
       </div>
     </div>
   );

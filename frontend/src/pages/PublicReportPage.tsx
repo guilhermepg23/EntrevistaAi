@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import type { PublicReport } from '../types/interview';
 import { nivelPercebidoLabel, recomendacaoLabel } from '../labels';
 
@@ -34,7 +35,7 @@ export function PublicReportPage() {
   }
 
   if (!report) {
-    return <div className="report-page"><p>Carregando relatório...</p></div>;
+    return <div className="report-page"><Carregando texto="Carregando relatório..." /></div>;
   }
 
   return (

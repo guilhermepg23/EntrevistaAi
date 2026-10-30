@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { andamentoTesteLabel, conviteTesteStatusLabel, nivelLabel, recomendacaoLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
 import { situacaoTeste } from './AssessmentsPage';
@@ -67,7 +68,7 @@ export function AssessmentDetailPage() {
       </div>
     );
   }
-  if (!teste) return <div className="equipe-page"><p>Carregando teste...</p></div>;
+  if (!teste) return <div className="equipe-page"><Carregando texto="Carregando teste..." /></div>;
 
   const situacao = situacaoTeste(teste);
 
@@ -93,7 +94,7 @@ export function AssessmentDetailPage() {
         </div>
       </header>
 
-      {erro && <p className="erro">{erro}</p>}
+      {erro && <p className="erro" role="alert">{erro}</p>}
 
       <section className="painel-card">
         <h2>Como é o teste</h2>
@@ -328,7 +329,7 @@ function ConvidarCandidato({ assessmentId, onConvidado }: { assessmentId: string
         uma única vez. Quem ainda não tem conta cria uma pelo link.
       </p>
       <form className="convidar-form convidar-form-simples" onSubmit={handleSubmit}>
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Email do candidato
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />

@@ -4,16 +4,16 @@
   --color-surface-alt: #f8f8fc;
   --color-border: #e4e5ec;
   --color-text: #171923;
-  --color-text-muted: #6b7080;
+  --color-text-muted: #646978;
   --color-primary: #4f46e5;
   --color-primary-hover: #4338ca;
   --color-primary-light: #eef0ff;
-  --color-primary-gradient: linear-gradient(135deg, #6366f1, #4338ca);
-  --color-success: #16a34a;
+  --color-primary-gradient: linear-gradient(135deg, #5a55ea, #4338ca);
+  --color-success: #15803d;
   --color-success-bg: #dcfce7;
   --color-warning: #b45309;
   --color-warning-bg: #fef3c7;
-  --color-danger: #dc2626;
+  --color-danger: #c81e1e;
   --color-danger-bg: #fef2f2;
   --radius-sm: 8px;
   --radius: 14px;
@@ -181,6 +181,7 @@ a {
   color: var(--color-text-muted);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .password-toggle:hover:not(:disabled) {
@@ -209,6 +210,10 @@ a {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.6rem 1rem;
+}
+
+.erro-carga p {
+  margin: 0;
 }
 
 .aviso-rascunho {
@@ -431,6 +436,10 @@ a {
 }
 
 /* Aviso de cold start do servidor (free tier) — informativo, não é erro. */
+.carregando .hint-servidor {
+  margin-top: 0.75rem;
+}
+
 .hint-servidor {
   margin: -0.35rem 0 0;
   padding: 0.6rem 0.8rem;
@@ -514,7 +523,7 @@ a {
   --color-primary: #0f766e;
   --color-primary-hover: #115e59;
   --color-primary-light: #e3f4f1;
-  --color-primary-gradient: linear-gradient(135deg, #14b8a6, #0f766e);
+  --color-primary-gradient: linear-gradient(135deg, #0e8074, #0f766e);
   --color-empresa-header: #0b2b29;
 }
 
@@ -2773,6 +2782,27 @@ a {
   margin: 1rem 0 0;
   font-size: 0.82rem;
   color: var(--color-text-muted);
+}
+
+/* Alvos de toque de pelo menos 40px no celular. Fica de fora do desktop, onde
+   os botões compactos do header e das listas são confortáveis com o mouse. */
+@media (max-width: 600px), (pointer: coarse) {
+  button,
+  select,
+  input:not([type='checkbox'], [type='radio'], [type='range']) {
+    min-height: 40px;
+  }
+
+  button {
+    min-width: 40px;
+  }
+
+  .header-nav-link,
+  .header-conta-menu a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
 }
 
 /* Quem pede menos animação no SO recebe transições sóbrias, sem os

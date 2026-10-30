@@ -159,10 +159,10 @@ describe('RegisterPage', () => {
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 
-  it('renderiza o aviso de "servidor hibernando" quando useSlowRequestHint indica lentidão', () => {
+  it('renderiza o aviso de "servidor acordando" quando useSlowRequestHint indica lentidão', () => {
     vi.mocked(useSlowRequestHint).mockReturnValue(true);
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
-    expect(screen.getByText(/servidor gratuito estava hibernando/i)).toBeInTheDocument();
+    expect(screen.getByText(/servidor está acordando/i)).toBeInTheDocument();
   });
 });

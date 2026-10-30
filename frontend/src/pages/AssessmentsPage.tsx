@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { useCompany } from '../hooks/useCompany';
 import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
@@ -30,7 +31,7 @@ export function AssessmentsPage() {
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar os testes'));
   }, [company, tentativa]);
 
-  if (carregando) return <div className="equipe-page"><p>Carregando...</p></div>;
+  if (carregando) return <div className="equipe-page"><Carregando texto="Carregando..." /></div>;
   if (semEmpresa) return <Navigate to="/" replace />;
   if (erroEmpresa) return <div className="equipe-page"><ErroCarga mensagem={erroEmpresa} onTentar={recarregar} /></div>;
   if (!company) return null;
@@ -51,7 +52,7 @@ export function AssessmentsPage() {
 
       {erro && <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />}
 
-      {testes === null && !erro && <p>Carregando testes...</p>}
+      {testes === null && !erro && <Carregando texto="Carregando testes..." />}
 
       {testes?.length === 0 && (
         <section className="painel-card painel-em-breve">

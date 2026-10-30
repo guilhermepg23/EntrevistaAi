@@ -2,14 +2,13 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '../api/authApi';
-import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
+import { HintServidor } from '../components/HintServidor';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [carregando, setCarregando] = useState(false);
-  const acordandoServidor = useSlowRequestHint(carregando);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -34,7 +33,7 @@ export function ForgotPasswordPage() {
 
         {enviado ? (
           <>
-            <p className="aviso">
+            <p className="aviso" role="status">
               Se existir uma conta com esse email, enviamos um link para redefinir a senha.
               Confira sua caixa de entrada (e o spam).
             </p>
@@ -44,7 +43,7 @@ export function ForgotPasswordPage() {
           </>
         ) : (
           <>
-            {erro && <p className="erro">{erro}</p>}
+            {erro && <p className="erro" role="alert">{erro}</p>}
             <p className="auth-intro">
               Informe o email da sua conta e enviaremos um link para você criar uma nova senha.
             </p>
@@ -55,12 +54,7 @@ export function ForgotPasswordPage() {
             <button type="submit" disabled={carregando}>
               {carregando ? 'Enviando...' : 'Enviar link de recuperação'}
             </button>
-            {acordandoServidor && (
-              <p className="hint-servidor">
-                O servidor gratuito estava hibernando e está acordando — a primeira
-                requisição pode levar até 1 minuto.
-              </p>
-            )}
+            <HintServidor ativo={carregando} />
             <p className="auth-switch">
               Lembrou a senha? <Link to="/login">Entrar</Link>
             </p>

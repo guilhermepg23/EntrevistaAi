@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
 import type { CandidateAssessmentInvite } from '../types/interview';
@@ -86,9 +87,9 @@ export function CandidateInvitesPage() {
         </p>
       </header>
 
-      {erro && convites !== null && <p className="erro">{erro}</p>}
+      {erro && convites !== null && <p className="erro" role="alert">{erro}</p>}
       {erro && convites === null && <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />}
-      {convites === null && !erro && <p>Carregando convites...</p>}
+      {convites === null && !erro && <Carregando texto="Carregando convites..." />}
 
       {convites?.length === 0 && (
         <section className="painel-card painel-em-breve">

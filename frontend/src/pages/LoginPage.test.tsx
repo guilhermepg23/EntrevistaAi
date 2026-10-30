@@ -91,18 +91,18 @@ describe('LoginPage', () => {
     await waitFor(() => expect(navigateSpy).toHaveBeenCalled());
   });
 
-  it('renderiza o aviso de "servidor hibernando" quando useSlowRequestHint indica lentidão', () => {
+  it('renderiza o aviso de "servidor acordando" quando useSlowRequestHint indica lentidão', () => {
     vi.mocked(useSlowRequestHint).mockReturnValue(true);
     renderWithProviders(<LoginPage />, { route: '/login' });
 
-    expect(screen.getByText(/servidor gratuito estava hibernando/i)).toBeInTheDocument();
+    expect(screen.getByText(/servidor está acordando/i)).toBeInTheDocument();
   });
 
   it('não mostra o aviso enquanto useSlowRequestHint retorna false', () => {
     vi.mocked(useSlowRequestHint).mockReturnValue(false);
     renderWithProviders(<LoginPage />, { route: '/login' });
 
-    expect(screen.queryByText(/servidor gratuito estava hibernando/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/servidor está acordando/i)).not.toBeInTheDocument();
   });
 
   it('mostra o link "Esqueceu sua senha?" apontando para /esqueci-senha', () => {

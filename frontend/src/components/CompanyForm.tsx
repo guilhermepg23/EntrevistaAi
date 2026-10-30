@@ -48,7 +48,7 @@ export function CompanyForm({
 
   return (
     <form className="form-empresa" onSubmit={handleSubmit}>
-      {erro && <p className="erro">{erro}</p>}
+      {erro && <p className="erro" role="alert">{erro}</p>}
       <label>
         Nome da empresa
         <input

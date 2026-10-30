@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
-import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
+import { HintServidor } from '../components/HintServidor';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatCpf, isValidCpf, onlyDigits } from '../lib/cpf';
 import { formatCnpj, isValidCnpj, onlyDigitsCnpj } from '../lib/cnpj';
@@ -33,7 +33,6 @@ export function RegisterPage() {
   const ehCandidato = tipo === 'CANDIDATO';
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const acordandoServidor = useSlowRequestHint(carregando);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -91,7 +90,7 @@ export function RegisterPage() {
     <div className="auth-page">
       <form className="auth-form" onSubmit={handleSubmit}>
         <h1>Criar conta</h1>
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
         <fieldset className="tipo-conta">
           <legend>Como você vai usar a plataforma?</legend>
           {OPCOES_TIPO.map(opcao => (
@@ -176,12 +175,7 @@ export function RegisterPage() {
         <button type="submit" disabled={carregando}>
           {carregando ? 'Cadastrando...' : 'Cadastrar'}
         </button>
-        {acordandoServidor && (
-          <p className="hint-servidor">
-            O servidor gratuito estava hibernando e está acordando — a primeira
-            requisição pode levar até 1 minuto.
-          </p>
-        )}
+        <HintServidor ativo={carregando} />
         <p className="auth-switch">
           Já tem conta? <Link to={voltar ? `/login?voltar=${encodeURIComponent(voltar)}` : '/login'}>Entrar</Link>
         </p>

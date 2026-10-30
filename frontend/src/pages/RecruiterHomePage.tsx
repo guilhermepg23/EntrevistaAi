@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { papelEmpresaLabel } from '../labels';
 
 // Painel do modo empresa ("/" do recrutador). Resumo dos testes, da empresa e
@@ -28,7 +29,7 @@ export function RecruiterHomePage() {
       .catch(() => setTestes(null));
   }, [company]);
 
-  if (carregando) return <div className="painel-empresa"><p>Carregando sua empresa...</p></div>;
+  if (carregando) return <div className="painel-empresa"><Carregando texto="Carregando sua empresa..." /></div>;
   if (erro) return <div className="painel-empresa"><ErroCarga mensagem={erro} onTentar={recarregar} /></div>;
 
   if (semEmpresa || !company) {

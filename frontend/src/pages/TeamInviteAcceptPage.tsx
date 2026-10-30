@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { ApiError } from '../api/client';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatarDataHora } from '../lib/datas';
@@ -64,7 +65,7 @@ export function TeamInviteAcceptPage() {
       <div className="auth-page">
         <div className="auth-form">
           <h1>Convite indisponível</h1>
-          <p className="erro">{invalido}</p>
+          <p className="erro" role="alert">{invalido}</p>
           <p className="auth-intro">Peça um novo convite a um administrador da empresa.</p>
           <p className="auth-switch"><Link to="/login">Ir para o login</Link></p>
         </div>
@@ -81,7 +82,7 @@ export function TeamInviteAcceptPage() {
   }
 
   if (!convite) {
-    return <div className="auth-page"><p>Carregando convite...</p></div>;
+    return <div className="auth-page"><Carregando texto="Carregando convite..." /></div>;
   }
 
   return (
@@ -94,7 +95,7 @@ export function TeamInviteAcceptPage() {
           a equipe de recrutadores. Crie sua senha para entrar. O convite vale
           até {formatarDataHora(convite.expiraEm)}.
         </p>
-        {erro && <p className="erro">{erro}</p>}
+        {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Email
           <input type="email" value={convite.email} readOnly />

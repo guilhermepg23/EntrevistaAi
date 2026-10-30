@@ -165,7 +165,7 @@ export function InterviewChat({
           )
         )}
         {status === 'error' && (
-          <div className="error-banner">
+          <div className="error-banner" role="alert">
             {errorMessage} — <button onClick={retry}>Tentar novamente</button>
           </div>
         )}

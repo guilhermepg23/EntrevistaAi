@@ -4,6 +4,7 @@ import { companyApi } from '../api/companyApi';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import { formatarData } from '../lib/datas';
 
 // "Configurações da empresa" (/empresa/configuracoes) — separada de "Minha
@@ -13,7 +14,7 @@ export function CompanySettingsPage() {
   const { company, carregando, semEmpresa, erro, recarregar, setCompany } = useCompany();
   const [salvo, setSalvo] = useState(false);
 
-  if (carregando) return <div className="conta-page"><p>Carregando...</p></div>;
+  if (carregando) return <div className="conta-page"><Carregando texto="Carregando..." /></div>;
   if (semEmpresa) return <Navigate to="/" replace />;
   if (erro) return <div className="conta-page"><ErroCarga mensagem={erro} onTentar={recarregar} /></div>;
   if (!company) return null;

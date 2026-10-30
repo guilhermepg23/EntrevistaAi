@@ -5,6 +5,7 @@ import { accountApi } from '../api/accountApi';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import { ErroCarga } from '../components/ErroCarga';
+import { Carregando } from '../components/HintServidor';
 import type { AccountDetails } from '../types/interview';
 import { papelEmpresaLabel, tipoContaLabel } from '../labels';
 import { formatarData } from '../lib/datas';
@@ -109,7 +110,7 @@ export function AccountPage() {
   }
 
   if (!detalhes) {
-    return <div className="conta-page"><p>Carregando...</p></div>;
+    return <div className="conta-page"><Carregando texto="Carregando..." /></div>;
   }
 
   return (
@@ -165,8 +166,8 @@ export function AccountPage() {
           <section className="conta-secao">
             <h2>Editar nome</h2>
             <form onSubmit={salvarNome}>
-              {erroNome && <p className="erro">{erroNome}</p>}
-              {msgNome && <p className="aviso">{msgNome}</p>}
+              {erroNome && <p className="erro" role="alert">{erroNome}</p>}
+              {msgNome && <p className="aviso" role="status">{msgNome}</p>}
               <label>
                 Nome de exibição
                 <input type="text" value={nome} onChange={e => setNome(e.target.value)} required />
@@ -180,8 +181,8 @@ export function AccountPage() {
           <section className="conta-secao">
             <h2>Trocar senha</h2>
             <form onSubmit={trocarSenha}>
-              {erroSenha && <p className="erro">{erroSenha}</p>}
-              {msgSenha && <p className="aviso">{msgSenha}</p>}
+              {erroSenha && <p className="erro" role="alert">{erroSenha}</p>}
+              {msgSenha && <p className="aviso" role="status">{msgSenha}</p>}
               <label>
                 Senha atual
                 <PasswordInput
@@ -223,7 +224,7 @@ export function AccountPage() {
               Isso apaga sua conta e <strong>todas as entrevistas e análises de currículo</strong>.
               A ação é irreversível.
             </p>
-            {erroExcluir && <p className="erro">{erroExcluir}</p>}
+            {erroExcluir && <p className="erro" role="alert">{erroExcluir}</p>}
             <label className="conta-perigo-check">
               <input
                 type="checkbox"
