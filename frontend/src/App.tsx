@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
@@ -21,6 +21,7 @@ import { AssessmentDetailPage } from './pages/AssessmentDetailPage';
 import { AssessmentInvitePage } from './pages/AssessmentInvitePage';
 import { CandidateInvitesPage } from './pages/CandidateInvitesPage';
 import { CandidateResultPage } from './pages/CandidateResultPage';
+import { NaoEncontradoPage } from './pages/NaoEncontradoPage';
 import { useAuth } from './hooks/useAuth';
 
 // "/" é a raiz de quem está logado, e cada tipo de conta tem a sua: o candidato
@@ -55,7 +56,7 @@ export function App() {
         <Route path="/conta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path="/interview/:id" element={<ProtectedRoute tipo="CANDIDATO"><InterviewChatPage /></ProtectedRoute>} />
         <Route path="/interview/:id/report" element={<ProtectedRoute tipo="CANDIDATO"><InterviewReportPage /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NaoEncontradoPage />} />
       </Routes>
     </Layout>
   );

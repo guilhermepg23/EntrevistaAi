@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { interviewApi } from '../api/interviewApi';
+import { apagarRascunho, lerRascunho, salvarRascunho } from '../lib/rascunho';
 
 function MicIcon() {
   return (
@@ -20,8 +21,21 @@ function StopIcon() {
   );
 }
 
-export function AnswerInput({ disabled, onSubmit }: { disabled: boolean; onSubmit: (texto: string) => void }) {
-  const [texto, setTexto] = useState('');
+// `questionId`: o rascunho é por pergunta, e o chat remonta este componente a
+// cada pergunta nova (key). Enviar limpa o campo, mas não apaga o rascunho: se a
+// página recarregar antes de a resposta chegar ao servidor, a pergunta continua
+// pendente e o texto volta.
+export function AnswerInput({
+  questionId,
+  disabled,
+  onSubmit,
+}: {
+  questionId?: string;
+  disabled: boolean;
+  onSubmit: (texto: string) => void;
+}) {
+  const chaveRascunho = `resposta:${questionId}`;
+  const [texto, setTexto] = useState(() => (questionId && lerRascunho<string>(chaveRascunho)) || '');
   const [transcrevendo, setTranscrevendo] = useState(false);
   const [erroAudio, setErroAudio] = useState<string | null>(null);
 
@@ -45,6 +59,15 @@ export function AnswerInput({ disabled, onSubmit }: { disabled: boolean; onSubmi
       }
     },
   });
+
+  useEffect(() => {
+    if (questionId && texto) salvarRascunho(chaveRascunho, texto);
+  }, [questionId, chaveRascunho, texto]);
+
+  function alterarTexto(novo: string) {
+    setTexto(novo);
+    if (!novo) apagarRascunho(chaveRascunho);
+  }
 
   function submit() {
     const trimmed = texto.trim();
@@ -77,7 +100,7 @@ export function AnswerInput({ disabled, onSubmit }: { disabled: boolean; onSubmi
       <div className="answer-input-row">
         <textarea
           value={texto}
-          onChange={e => setTexto(e.target.value)}
+          onChange={e => alterarTexto(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={

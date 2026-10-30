@@ -5,7 +5,7 @@ import { AssessmentInvitePage } from './AssessmentInvitePage';
 import { renderWithProviders } from '../test-utils';
 import { authApi } from '../api/authApi';
 import { interviewApi } from '../api/interviewApi';
-import { ApiError } from '../api/client';
+import { ApiError, ErroDeRede } from '../api/client';
 import type { CandidateAssessmentInvite, TipoConta } from '../types/interview';
 
 const navigateSpy = vi.fn();
@@ -95,5 +95,25 @@ describe('AssessmentInvitePage', () => {
 
     expect(await screen.findByText('Convite indisponível')).toBeInTheDocument();
     expect(screen.getByText('Este convite não é válido.')).toBeInTheDocument();
+  });
+
+  it('sem conexão: não diz que o convite é inválido e deixa tentar de novo', async () => {
+    vi.mocked(authApi.getAssessmentInvite).mockRejectedValueOnce(new ErroDeRede());
+    render();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível falar com o servidor');
+    expect(screen.queryByText('Convite indisponível')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+
+    expect(await screen.findByRole('heading', { name: 'Back-end Java' })).toBeInTheDocument();
+  });
+
+  it('servidor fora do ar: também não diz que o convite é inválido', async () => {
+    vi.mocked(authApi.getAssessmentInvite).mockRejectedValueOnce(new ApiError('Fora do ar', 503));
+    render();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Fora do ar');
+    expect(screen.queryByText('Convite indisponível')).not.toBeInTheDocument();
   });
 });

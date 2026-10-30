@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
+import { ErroCarga } from '../components/ErroCarga';
 import { andamentoTesteLabel, conviteTesteStatusLabel, nivelLabel, recomendacaoLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
 import { situacaoTeste } from './AssessmentsPage';
@@ -21,6 +22,7 @@ export function AssessmentDetailPage() {
   const [erroCarga, setErroCarga] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
+    setErroCarga(null);
     try {
       const [dados, lista, feitos] = await Promise.all([
         assessmentApi.get(id), assessmentApi.invites(id), assessmentApi.results(id),
@@ -60,7 +62,7 @@ export function AssessmentDetailPage() {
   if (erroCarga) {
     return (
       <div className="equipe-page">
-        <p className="erro">{erroCarga}</p>
+        <ErroCarga mensagem={erroCarga} onTentar={() => void carregar()} />
         <Link to="/empresa/testes">Voltar aos testes</Link>
       </div>
     );

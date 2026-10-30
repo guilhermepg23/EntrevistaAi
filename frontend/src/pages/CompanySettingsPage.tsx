@@ -3,17 +3,19 @@ import { Navigate } from 'react-router-dom';
 import { companyApi } from '../api/companyApi';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
+import { ErroCarga } from '../components/ErroCarga';
 import { formatarData } from '../lib/datas';
 
 // "Configurações da empresa" (/empresa/configuracoes) — separada de "Minha
 // conta" de propósito: aqui são os dados da EMPRESA, compartilhados pela
 // equipe; lá, os dados pessoais do recrutador. Só ADMIN edita.
 export function CompanySettingsPage() {
-  const { company, carregando, semEmpresa, setCompany } = useCompany();
+  const { company, carregando, semEmpresa, erro, recarregar, setCompany } = useCompany();
   const [salvo, setSalvo] = useState(false);
 
   if (carregando) return <div className="conta-page"><p>Carregando...</p></div>;
   if (semEmpresa) return <Navigate to="/" replace />;
+  if (erro) return <div className="conta-page"><ErroCarga mensagem={erro} onTentar={recarregar} /></div>;
   if (!company) return null;
 
   const ehAdmin = company.meuPapel === 'ADMIN';

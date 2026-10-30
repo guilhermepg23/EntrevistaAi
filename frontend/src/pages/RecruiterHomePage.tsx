@@ -6,6 +6,7 @@ import type { Assessment } from '../types/interview';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
+import { ErroCarga } from '../components/ErroCarga';
 import { papelEmpresaLabel } from '../labels';
 
 // Painel do modo empresa ("/" do recrutador). Resumo dos testes, da empresa e
@@ -13,7 +14,7 @@ import { papelEmpresaLabel } from '../labels';
 // Recrutador sem empresa (foi removido da equipe) cai no formulário de criar uma.
 export function RecruiterHomePage() {
   const { nome } = useAuth();
-  const { company, carregando, semEmpresa, erro, setCompany } = useCompany();
+  const { company, carregando, semEmpresa, erro, recarregar, setCompany } = useCompany();
   const [convitesPendentes, setConvitesPendentes] = useState<number | null>(null);
   const [testes, setTestes] = useState<Assessment[] | null>(null);
 
@@ -28,7 +29,7 @@ export function RecruiterHomePage() {
   }, [company]);
 
   if (carregando) return <div className="painel-empresa"><p>Carregando sua empresa...</p></div>;
-  if (erro) return <p className="erro">{erro}</p>;
+  if (erro) return <div className="painel-empresa"><ErroCarga mensagem={erro} onTentar={recarregar} /></div>;
 
   if (semEmpresa || !company) {
     return (

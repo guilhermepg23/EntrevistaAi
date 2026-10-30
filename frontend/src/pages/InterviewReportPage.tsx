@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import type { FeedbackReport, Interview, ResumeAnalysis, TranscriptItem } from '../types/interview';
 import { RelatorioConteudo } from '../components/RelatorioConteudo';
+import { ErroCarga } from '../components/ErroCarga';
 
 export function InterviewReportPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,13 +18,15 @@ export function InterviewReportPage() {
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [praticando, setPraticando] = useState(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     if (!id) return;
+    setErro(null);
     interviewApi.getReport(id)
       .then(setReport)
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar relatório'));
-  }, [id]);
+  }, [id, tentativa]);
 
   useEffect(() => {
     if (!id) return;
@@ -97,7 +100,7 @@ export function InterviewReportPage() {
   if (erro) {
     return (
       <div className="report-page">
-        <p className="erro">{erro}</p>
+        <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />
         <Link to="/">Voltar</Link>
       </div>
     );

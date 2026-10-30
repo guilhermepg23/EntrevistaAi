@@ -67,6 +67,21 @@ class AssessmentControllerTest {
     }
 
     @Test
+    void rotaInexistenteResponde404() throws Exception {
+        mockMvc.perform(get("/rota-que-nao-existe").with(authentication(auth(recrutador))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.errorCode").value("RESOURCE_NOT_FOUND"));
+    }
+
+    @Test
+    void idQueNaoEUuidResponde404() throws Exception {
+        mockMvc.perform(get("/assessments/nao-e-uuid").with(authentication(auth(recrutador))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.errorCode").value("RESOURCE_NOT_FOUND"));
+        verifyNoInteractions(assessmentService);
+    }
+
+    @Test
     void candidatoNaoAcessaOsTestesDaEmpresa() throws Exception {
         mockMvc.perform(get("/assessments").with(authentication(auth(candidato))))
             .andExpect(status().isForbidden())

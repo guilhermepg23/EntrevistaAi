@@ -2,6 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
+import { ErroCarga } from '../components/ErroCarga';
+import { apagarRascunho, lerRascunho, salvarRascunho } from '../lib/rascunho';
+
+interface DadosForm {
+  titulo: string;
+  stack: string;
+  nivel: string;
+  totalPerguntas: number;
+  descricaoVaga: string;
+  perguntasFixas: string[];
+}
+
+const FORM_VAZIO: DadosForm = {
+  titulo: '', stack: '', nivel: 'junior', totalPerguntas: 8, descricaoVaga: '', perguntasFixas: [],
+};
 
 // Criar (/empresa/testes/novo) ou editar (/empresa/testes/:id/editar) um teste.
 // Mesmos limites do treino: de 5 a 15 perguntas. As perguntas fixas são
@@ -12,32 +27,79 @@ export function AssessmentFormPage() {
   const editando = Boolean(id);
   const navigate = useNavigate();
 
-  const [titulo, setTitulo] = useState('');
-  const [stack, setStack] = useState('');
-  const [nivel, setNivel] = useState('junior');
-  const [totalPerguntas, setTotalPerguntas] = useState(8);
-  const [descricaoVaga, setDescricaoVaga] = useState('');
-  const [perguntasFixas, setPerguntasFixas] = useState<string[]>([]);
+  // Teste novo: o rascunho já vale no primeiro render. Edição: só depois de
+  // carregar o teste, ver o useEffect abaixo.
+  const chaveRascunho = `teste:${id ?? 'novo'}`;
+  const [rascunho] = useState(() => lerRascunho<DadosForm>(chaveRascunho));
+  const inicial = !id && rascunho ? rascunho : FORM_VAZIO;
+  const [titulo, setTitulo] = useState(inicial.titulo);
+  const [stack, setStack] = useState(inicial.stack);
+  const [nivel, setNivel] = useState(inicial.nivel);
+  const [totalPerguntas, setTotalPerguntas] = useState(inicial.totalPerguntas);
+  const [descricaoVaga, setDescricaoVaga] = useState(inicial.descricaoVaga);
+  const [perguntasFixas, setPerguntasFixas] = useState(inicial.perguntasFixas);
+  // O que está salvo no servidor: igual a isto, não há o que guardar.
+  const [original, setOriginal] = useState(FORM_VAZIO);
+  const [rascunhoRecuperado, setRascunhoRecuperado] = useState(!id && rascunho !== null);
   const [carregando, setCarregando] = useState(editando);
   const [bloqueado, setBloqueado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     if (!id) return;
+    setErro(null);
+    setCarregando(true);
     assessmentApi.get(id)
       .then(teste => {
-        setTitulo(teste.titulo);
-        setStack(teste.stack);
-        setNivel(teste.nivel);
-        setTotalPerguntas(teste.totalPerguntas);
-        setDescricaoVaga(teste.descricaoVaga ?? '');
-        setPerguntasFixas(teste.perguntasFixas);
+        const salvo: DadosForm = {
+          titulo: teste.titulo,
+          stack: teste.stack,
+          nivel: teste.nivel,
+          totalPerguntas: teste.totalPerguntas,
+          descricaoVaga: teste.descricaoVaga ?? '',
+          perguntasFixas: teste.perguntasFixas,
+        };
+        setOriginal(salvo);
         setBloqueado(!teste.editavel);
+        if (rascunho && teste.editavel) {
+          preencher(rascunho);
+          setRascunhoRecuperado(true);
+        } else {
+          preencher(salvo);
+          apagarRascunho(chaveRascunho);
+        }
       })
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar o teste'))
       .finally(() => setCarregando(false));
-  }, [id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, tentativa]);
+
+  const dadosAtuais: DadosForm = { titulo, stack, nivel, totalPerguntas, descricaoVaga, perguntasFixas };
+  const dadosJson = JSON.stringify(dadosAtuais);
+  const originalJson = JSON.stringify(original);
+  // Edição que não carregou: o formulário está vazio, e isso não é um rascunho.
+  const testeCarregado = !id || original !== FORM_VAZIO;
+  useEffect(() => {
+    if (carregando || bloqueado || !testeCarregado) return;
+    if (dadosJson === originalJson) apagarRascunho(chaveRascunho);
+    else salvarRascunho(chaveRascunho, JSON.parse(dadosJson));
+  }, [carregando, bloqueado, testeCarregado, dadosJson, originalJson, chaveRascunho]);
+
+  function preencher(dados: DadosForm) {
+    setTitulo(dados.titulo);
+    setStack(dados.stack);
+    setNivel(dados.nivel);
+    setTotalPerguntas(dados.totalPerguntas);
+    setDescricaoVaga(dados.descricaoVaga);
+    setPerguntasFixas(dados.perguntasFixas);
+  }
+
+  function descartarRascunho() {
+    preencher(original);
+    setRascunhoRecuperado(false);
+  }
 
   // "+ Adicionar pergunta" leva o foco pro campo novo — senão ele ficava no
   // botão, e cada espaço digitado em seguida apertava o botão de novo.
@@ -81,6 +143,7 @@ export function AssessmentFormPage() {
     };
     try {
       const teste = id ? await assessmentApi.update(id, dados) : await assessmentApi.create(dados);
+      apagarRascunho(chaveRascunho);
       navigate(`/empresa/testes/${teste.id}`, { replace: true });
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao salvar o teste');
@@ -89,6 +152,14 @@ export function AssessmentFormPage() {
   }
 
   if (carregando) return <div className="equipe-page"><p>Carregando teste...</p></div>;
+
+  if (!testeCarregado) {
+    return (
+      <div className="equipe-page">
+        <ErroCarga mensagem={erro ?? 'Erro ao carregar o teste'} onTentar={() => setTentativa(t => t + 1)} />
+      </div>
+    );
+  }
 
   if (bloqueado) {
     return (
@@ -117,6 +188,14 @@ export function AssessmentFormPage() {
       </header>
 
       <form className="painel-card form-teste" onSubmit={handleSubmit}>
+        {rascunhoRecuperado && (
+          <div className="aviso aviso-rascunho" role="status">
+            <span>Recuperamos o que você tinha preenchido.</span>
+            <button type="button" className="botao-secundario" onClick={descartarRascunho}>
+              Descartar rascunho
+            </button>
+          </div>
+        )}
         {erro && <p className="erro">{erro}</p>}
         <label>
           Título
@@ -208,7 +287,9 @@ export function AssessmentFormPage() {
           <button type="submit" disabled={salvando}>
             {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar teste'}
           </button>
-          <Link to={id ? `/empresa/testes/${id}` : '/empresa/testes'}>Cancelar</Link>
+          <Link to={id ? `/empresa/testes/${id}` : '/empresa/testes'} onClick={() => apagarRascunho(chaveRascunho)}>
+            Cancelar
+          </Link>
         </div>
       </form>
     </div>

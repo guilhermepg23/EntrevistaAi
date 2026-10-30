@@ -17,7 +17,7 @@ export function InterviewChat({
   onExit: () => void;
 }) {
   const {
-    chatItems, status, errorMessage, streamingQuestionText, initialize, submitAnswer, retry,
+    chatItems, currentQuestion, status, errorMessage, streamingQuestionText, initialize, submitAnswer, retry,
   } = useInterview(interviewId);
   const [interview, setInterview] = useState<Interview | null>(null);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
@@ -186,6 +186,8 @@ export function InterviewChat({
         </button>
       ) : (
         <AnswerInput
+          key={currentQuestion?.id}
+          questionId={currentQuestion?.id}
           disabled={status !== 'waiting-answer'}
           onSubmit={submitAnswer}
         />

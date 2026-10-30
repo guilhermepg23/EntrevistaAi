@@ -83,4 +83,71 @@ describe('AssessmentFormPage', () => {
     expect(await screen.findByText('Este teste não pode mais ser editado')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Salvar alterações' })).not.toBeInTheDocument();
   });
+
+  describe('rascunho', () => {
+    it('teste novo: recupera depois de recarregar e deixa descartar', async () => {
+      const { unmount } = renderNovo();
+      await userEvent.type(screen.getByLabelText('Título'), 'Vaga X');
+      unmount();
+
+      renderNovo();
+
+      expect(screen.getByLabelText('Título')).toHaveValue('Vaga X');
+      await userEvent.click(screen.getByRole('button', { name: 'Descartar rascunho' }));
+      expect(screen.getByLabelText('Título')).toHaveValue('');
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('abrir sem preencher não cria rascunho', () => {
+      const { unmount } = renderNovo();
+      unmount();
+
+      renderNovo();
+
+      expect(screen.queryByRole('button', { name: 'Descartar rascunho' })).not.toBeInTheDocument();
+    });
+
+    it('edição: o rascunho vem por cima do que está salvo', async () => {
+      vi.mocked(assessmentApi.get).mockResolvedValue(makeAssessment());
+      const { unmount } = renderEdicao();
+      const titulo = await screen.findByLabelText('Título');
+      await userEvent.type(titulo, ' editado');
+      unmount();
+
+      renderEdicao();
+
+      expect(await screen.findByLabelText('Título')).toHaveValue('Back-end Java editado');
+      await userEvent.click(screen.getByRole('button', { name: 'Descartar rascunho' }));
+      expect(screen.getByLabelText('Título')).toHaveValue('Back-end Java');
+    });
+
+    it('salvar apaga o rascunho', async () => {
+      const { unmount } = renderNovo();
+      await userEvent.type(screen.getByLabelText('Título'), 'Vaga X');
+      await userEvent.type(screen.getByLabelText('Stack'), 'Java');
+      await userEvent.click(screen.getByRole('button', { name: 'Criar teste' }));
+      await waitFor(() => expect(navigateSpy).toHaveBeenCalled());
+      unmount();
+
+      renderNovo();
+
+      expect(screen.getByLabelText('Título')).toHaveValue('');
+    });
+
+    it('edição que falha ao carregar não apaga o rascunho e deixa tentar de novo', async () => {
+      vi.mocked(assessmentApi.get).mockResolvedValueOnce(makeAssessment());
+      const { unmount } = renderEdicao();
+      await userEvent.type(await screen.findByLabelText('Título'), ' editado');
+      unmount();
+
+      vi.mocked(assessmentApi.get).mockRejectedValueOnce(new Error('Sem conexão'));
+      renderEdicao();
+      expect(await screen.findByRole('alert')).toHaveTextContent('Sem conexão');
+
+      vi.mocked(assessmentApi.get).mockResolvedValueOnce(makeAssessment());
+      await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+
+      expect(await screen.findByLabelText('Título')).toHaveValue('Back-end Java editado');
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AuthProvider } from '../hooks/useAuth';
@@ -71,5 +71,24 @@ describe('ProtectedRoute', () => {
     renderAt('/so-candidato');
 
     expect(screen.getByText('tela de candidato')).toBeInTheDocument();
+  });
+
+  it('sem token: guarda a tela de origem para voltar depois do login', () => {
+    function LoginEspiao() {
+      const { search } = useLocation();
+      return <p>login{search}</p>;
+    }
+    render(
+      <MemoryRouter initialEntries={['/protegida?aba=2']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/protegida" element={<ProtectedRoute><p>conteúdo</p></ProtectedRoute>} />
+            <Route path="/login" element={<LoginEspiao />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('login?voltar=%2Fprotegida%3Faba%3D2')).toBeInTheDocument();
   });
 });

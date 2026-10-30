@@ -8,6 +8,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -171,6 +173,16 @@ public class GlobalExceptionHandler {
         log.info("[INVALID_REQUEST_BODY] {}", ex.getMostSpecificCause().getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(new ErrorResponse("INVALID_REQUEST_BODY", "Corpo da requisição inválido."));
+    }
+
+    // Rota que não existe, ou id que nem é um UUID (ex.: /assessments/abc): sem
+    // esse handler, os dois caem no catch-all abaixo e viram 500, como se fosse
+    // uma falha do servidor.
+    @ExceptionHandler({NoResourceFoundException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ErrorResponse> handleRouteNotFound(Exception ex) {
+        log.info("[RESOURCE_NOT_FOUND] {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse("RESOURCE_NOT_FOUND", "Recurso não encontrado."));
     }
 
     // Rede de segurança: qualquer exceção NÃO mapeada acima (bug, NullPointerException,

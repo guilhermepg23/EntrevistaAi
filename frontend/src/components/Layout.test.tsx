@@ -1,7 +1,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './Layout';
+import { ProtectedRoute } from './ProtectedRoute';
+import { lerRascunho, salvarRascunho } from '../lib/rascunho';
 import { renderWithProviders } from '../test-utils';
 
 // Sessão de recrutador: o CompanyProvider busca a empresa pro selo do header.
@@ -104,5 +107,28 @@ describe('Layout', () => {
 
     expect(localStorage.getItem('token')).toBeNull();
     expect(screen.queryByRole('button', { name: /Guilherme/ })).not.toBeInTheDocument();
+  });
+
+  it('sair apaga os rascunhos, sem passar pelo ?voltar=', async () => {
+    salvarRascunho('teste:novo', { titulo: 'x' });
+    function Local() {
+      const { pathname, search } = useLocation();
+      return <p>em {pathname}{search}</p>;
+    }
+    renderWithProviders(
+      <Layout>
+        <Routes>
+          <Route path="/conta" element={<ProtectedRoute><p>conta</p></ProtectedRoute>} />
+          <Route path="/login" element={<Local />} />
+        </Routes>
+      </Layout>,
+      { route: '/conta', auth },
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /Guilherme/ }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Sair' }));
+
+    expect(await screen.findByText('em /login')).toBeInTheDocument();
+    expect(lerRascunho('teste:novo')).toBeNull();
   });
 });

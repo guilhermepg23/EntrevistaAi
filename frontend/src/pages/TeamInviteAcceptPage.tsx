@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
+import { ApiError } from '../api/client';
+import { ErroCarga } from '../components/ErroCarga';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatarDataHora } from '../lib/datas';
@@ -17,6 +19,8 @@ export function TeamInviteAcceptPage() {
   const navigate = useNavigate();
   const [convite, setConvite] = useState<PublicTeamInvite | null>(null);
   const [invalido, setInvalido] = useState<string | null>(null);
+  const [falhaCarga, setFalhaCarga] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmar, setConfirmar] = useState('');
@@ -24,10 +28,15 @@ export function TeamInviteAcceptPage() {
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
+    setFalhaCarga(null);
     authApi.getTeamInvite(token)
       .then(setConvite)
-      .catch(err => setInvalido(err instanceof Error ? err.message : 'Convite inválido'));
-  }, [token]);
+      .catch(err => {
+        const recusado = err instanceof ApiError && err.status < 500;
+        if (recusado) setInvalido(err.message);
+        else setFalhaCarga(err instanceof Error ? err.message : 'Erro ao carregar o convite');
+      });
+  }, [token, tentativa]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -59,6 +68,14 @@ export function TeamInviteAcceptPage() {
           <p className="auth-intro">Peça um novo convite a um administrador da empresa.</p>
           <p className="auth-switch"><Link to="/login">Ir para o login</Link></p>
         </div>
+      </div>
+    );
+  }
+
+  if (falhaCarga) {
+    return (
+      <div className="auth-page">
+        <ErroCarga mensagem={falhaCarga} onTentar={() => setTentativa(t => t + 1)} />
       </div>
     );
   }

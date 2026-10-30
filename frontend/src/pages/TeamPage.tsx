@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { companyApi } from '../api/companyApi';
+import { ErroCarga } from '../components/ErroCarga';
 import { useCompany } from '../hooks/useCompany';
 import { papelEmpresaLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
@@ -13,18 +14,21 @@ const OPCOES_VALIDADE = [2, 3, 4, 5, 6, 7];
 // Tela "Equipe" do modo empresa (/empresa/equipe). Todo membro vê a equipe e os
 // convites pendentes; só ADMIN convida, cancela convite, promove/rebaixa e remove.
 export function TeamPage() {
-  const { company, carregando, semEmpresa, recarregar } = useCompany();
+  const { company, carregando, semEmpresa, erro: erroEmpresa, recarregar } = useCompany();
   const [membros, setMembros] = useState<TeamMember[]>([]);
   const [convites, setConvites] = useState<TeamInvite[]>([]);
   const [erro, setErro] = useState<string | null>(null);
 
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
+
   const carregarEquipe = useCallback(async () => {
+    setErroCarga(null);
     try {
       const [listaMembros, listaConvites] = await Promise.all([companyApi.members(), companyApi.invites()]);
       setMembros(listaMembros);
       setConvites(listaConvites);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Erro ao carregar a equipe');
+      setErroCarga(err instanceof Error ? err.message : 'Erro ao carregar a equipe');
     }
   }, []);
 
@@ -35,7 +39,11 @@ export function TeamPage() {
   if (carregando) return <div className="equipe-page"><p>Carregando equipe...</p></div>;
   // Sem empresa: a home é quem oferece criar uma.
   if (semEmpresa) return <Navigate to="/" replace />;
+  if (erroEmpresa) return <div className="equipe-page"><ErroCarga mensagem={erroEmpresa} onTentar={recarregar} /></div>;
   if (!company) return null;
+  if (erroCarga) {
+    return <div className="equipe-page"><ErroCarga mensagem={erroCarga} onTentar={() => void carregarEquipe()} /></div>;
+  }
 
   const ehAdmin = company.meuPapel === 'ADMIN';
 

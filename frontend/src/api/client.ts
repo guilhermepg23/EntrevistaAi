@@ -26,6 +26,30 @@ export class ApiError extends Error {
   }
 }
 
+// A requisição nem chegou ao servidor (sem internet, servidor fora do ar). Fica
+// separada do ApiError para a tela não tratar isso como resposta do servidor:
+// "convite inválido" e "sem conexão" pedem reações opostas.
+export class ErroDeRede extends Error {
+  constructor() {
+    super('Não foi possível falar com o servidor. Confira sua internet e tente de novo.');
+    this.name = 'ErroDeRede';
+  }
+}
+
+// O fetch rejeita com uma mensagem do navegador, em inglês ("Failed to fetch"),
+// que iria direto para a tela.
+export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new ErroDeRede();
+  }
+}
+
+function mensagemPadrao(status: number) {
+  return status >= 500 ? 'O servidor está com problemas. Tente de novo em instantes.' : `Erro ${status}`;
+}
+
 async function parseBody(res: Response): Promise<unknown> {
   return res.json().catch(() => null);
 }
@@ -45,7 +69,7 @@ export async function handleResponse<T>(res: Response): Promise<T> {
       throw new Error('Sessão expirada. Faça login novamente.');
     }
 
-    throw new ApiError(body?.message ?? `Erro ${res.status}`, res.status, body?.errorCode);
+    throw new ApiError(body?.message ?? mensagemPadrao(res.status), res.status, body?.errorCode);
   }
   if (res.status === 204) {
     return undefined as T;
@@ -59,7 +83,7 @@ export async function handleResponse<T>(res: Response): Promise<T> {
 export async function handleAuthResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = (await parseBody(res)) as { errorCode?: string; message?: string } | null;
-    throw new ApiError(body?.message ?? `Erro ${res.status}`, res.status, body?.errorCode);
+    throw new ApiError(body?.message ?? mensagemPadrao(res.status), res.status, body?.errorCode);
   }
   return res.json().catch(() => undefined as T);
 }

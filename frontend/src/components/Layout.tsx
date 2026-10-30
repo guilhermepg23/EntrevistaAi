@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
+import { limparRascunhos } from '../lib/rascunho';
 import { AvisoNovaVersao } from './AvisoNovaVersao';
 
 // Rotas onde "Voltar" não faz sentido: a home é a raiz de quem está logado, e
@@ -55,6 +56,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   function handleLogout() {
     setMenuAberto(false);
+    limparRascunhos();
     logout();
     navigate('/login');
   }

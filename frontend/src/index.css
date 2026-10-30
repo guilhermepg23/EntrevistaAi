@@ -203,6 +203,22 @@ a {
   border-color: #fecaca;
 }
 
+.erro-carga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
+.aviso-rascunho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
 .aviso {
   color: var(--color-warning);
   background: var(--color-warning-bg);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
+import { ErroCarga } from '../components/ErroCarga';
 import type { ResumeReview } from '../types/interview';
 import { veredictoCurriculoLabel } from '../labels';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
@@ -83,13 +84,17 @@ export function ResumeReviewPage() {
 
   const [historico, setHistorico] = useState<ResumeReview[]>([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(true);
+  const [erroHistorico, setErroHistorico] = useState<string | null>(null);
 
   const demorando = useSlowRequestHint(analisando);
 
   function carregarHistorico() {
+    setErroHistorico(null);
+    setCarregandoHistorico(true);
     interviewApi.resumeReviewHistory()
       .then(setHistorico)
-      .catch(() => { /* histórico é secundário — falha aqui não bloqueia a tela */ })
+      // Falha aqui não bloqueia a análise, mas não pode parecer lista vazia.
+      .catch(err => setErroHistorico(err instanceof Error ? err.message : 'Erro ao carregar as análises'))
       .finally(() => setCarregandoHistorico(false));
   }
 
@@ -145,7 +150,8 @@ export function ResumeReviewPage() {
       <section className="historico">
         <h2>Análises anteriores</h2>
         {carregandoHistorico && <p>Carregando...</p>}
-        {!carregandoHistorico && historico.length === 0 && <p>Nenhuma análise ainda.</p>}
+        {erroHistorico && <ErroCarga mensagem={erroHistorico} onTentar={carregarHistorico} />}
+        {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma análise ainda.</p>}
         <ul className="historico-lista">
           {historico.map(review => (
             <li key={review.id}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
+import { ErroCarga } from '../components/ErroCarga';
 import type { PublicReport } from '../types/interview';
 import { nivelPercebidoLabel, recomendacaoLabel } from '../labels';
 
@@ -13,18 +14,20 @@ export function PublicReportPage() {
   const { token } = useParams<{ token: string }>();
   const [report, setReport] = useState<PublicReport | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     if (!token) return;
+    setErro(null);
     interviewApi.getPublicReport(token)
       .then(setReport)
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar relatório'));
-  }, [token]);
+  }, [token, tentativa]);
 
   if (erro) {
     return (
       <div className="report-page">
-        <p className="erro">{erro}</p>
+        <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />
         <Link to="/">Ir para o Entrevista IA</Link>
       </div>
     );

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import type { TipoConta } from '../types/interview';
 
@@ -8,7 +8,13 @@ import type { TipoConta } from '../types/interview';
 // em vez de deixar a página abrir e só falhar no 403 da API.
 export function ProtectedRoute({ children, tipo }: { children: ReactNode; tipo?: TipoConta }) {
   const { isAuthenticated, tipo: tipoDaConta } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const { pathname, search } = useLocation();
+  // ?voltar= : quem caiu aqui (sessão expirada, link aberto sem login) volta
+  // para esta mesma tela depois de entrar.
+  if (!isAuthenticated) {
+    const destino = pathname === '/' ? '/login' : `/login?voltar=${encodeURIComponent(pathname + search)}`;
+    return <Navigate to={destino} replace />;
+  }
   if (tipo && tipo !== tipoDaConta) return <Navigate to="/" replace />;
   return <>{children}</>;
 }

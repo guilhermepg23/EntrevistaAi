@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
+import { ErroCarga } from '../components/ErroCarga';
 import { useCompany } from '../hooks/useCompany';
 import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
@@ -16,19 +17,22 @@ export function situacaoTeste(teste: Assessment): { texto: string; classe: strin
 // Tela "Testes" do modo empresa (/empresa/testes): todos os testes da empresa,
 // mais recentes primeiro. Qualquer membro cria, edita, convida e arquiva.
 export function AssessmentsPage() {
-  const { company, carregando, semEmpresa } = useCompany();
+  const { company, carregando, semEmpresa, erro: erroEmpresa, recarregar } = useCompany();
   const [testes, setTestes] = useState<Assessment[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     if (!company) return;
+    setErro(null);
     assessmentApi.list()
       .then(setTestes)
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar os testes'));
-  }, [company]);
+  }, [company, tentativa]);
 
   if (carregando) return <div className="equipe-page"><p>Carregando...</p></div>;
   if (semEmpresa) return <Navigate to="/" replace />;
+  if (erroEmpresa) return <div className="equipe-page"><ErroCarga mensagem={erroEmpresa} onTentar={recarregar} /></div>;
   if (!company) return null;
 
   return (
@@ -45,7 +49,7 @@ export function AssessmentsPage() {
         <Link to="/empresa/testes/novo" className="botao-link">Novo teste</Link>
       </header>
 
-      {erro && <p className="erro">{erro}</p>}
+      {erro && <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />}
 
       {testes === null && !erro && <p>Carregando testes...</p>}
 

@@ -1,5 +1,5 @@
 import type { AuthResponse, CandidateAssessmentInvite, PublicTeamInvite, TipoConta } from '../types/interview';
-import { API_BASE, handleAuthResponse } from './client';
+import { API_BASE, apiFetch, handleAuthResponse } from './client';
 
 export interface RegisterDados {
   email: string;
@@ -17,7 +17,7 @@ export const authApi = {
   // Objeto (não argumentos posicionais) porque os documentos variam com o tipo:
   // candidato manda cpf; recrutador pode mandar cnpj (opcional) e nunca cpf.
   register: (dados: RegisterDados) =>
-    fetch(`${API_BASE}/auth/register`, {
+    apiFetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dados),
@@ -26,11 +26,11 @@ export const authApi = {
   // Convite de equipe (públicas: o convidado ainda não tem conta). Convite
   // inválido/expirado/usado -> 404 COMPANY_INVITE_INVALID.
   getTeamInvite: (token: string) =>
-    fetch(`${API_BASE}/auth/team-invites/${encodeURIComponent(token)}`)
+    apiFetch(`${API_BASE}/auth/team-invites/${encodeURIComponent(token)}`)
       .then(res => handleAuthResponse<PublicTeamInvite>(res)),
 
   acceptTeamInvite: (token: string, nome: string, senha: string) =>
-    fetch(`${API_BASE}/auth/team-invites/${encodeURIComponent(token)}/accept`, {
+    apiFetch(`${API_BASE}/auth/team-invites/${encodeURIComponent(token)}/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, senha }),
@@ -39,11 +39,11 @@ export const authApi = {
   // Convite de teste de empresa (pública: quem abre o link pode não ter
   // conta). Vencido, cancelado ou já usado -> 404 ASSESSMENT_INVITE_INVALID.
   getAssessmentInvite: (token: string) =>
-    fetch(`${API_BASE}/auth/assessment-invites/${encodeURIComponent(token)}`)
+    apiFetch(`${API_BASE}/auth/assessment-invites/${encodeURIComponent(token)}`)
       .then(res => handleAuthResponse<CandidateAssessmentInvite>(res)),
 
   login: (email: string, senha: string) =>
-    fetch(`${API_BASE}/auth/login`, {
+    apiFetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha }),
@@ -53,7 +53,7 @@ export const authApi = {
   // não existir (o backend não revela isso) — a tela mostra sempre a mesma
   // mensagem de "se existir, enviamos".
   forgotPassword: (email: string) =>
-    fetch(`${API_BASE}/auth/forgot-password`, {
+    apiFetch(`${API_BASE}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -61,7 +61,7 @@ export const authApi = {
 
   // Troca a senha usando o token que veio no link do email.
   resetPassword: (token: string, novaSenha: string) =>
-    fetch(`${API_BASE}/auth/reset-password`, {
+    apiFetch(`${API_BASE}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, novaSenha }),

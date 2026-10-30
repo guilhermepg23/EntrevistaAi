@@ -1,5 +1,5 @@
 import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
-import { API_BASE, authHeaders, authHeadersMultipart, handleResponse } from './client';
+import { API_BASE, ErroDeRede, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
 
 // Faz o parse manual de UM evento SSE já isolado (texto entre duas quebras de
 // linha duplas), extraindo "event:" e "data:" — não usamos EventSource porque
@@ -20,24 +20,24 @@ export const interviewApi = {
     stack: string, nivel: string, totalPerguntas: number,
     descricaoVaga: string | null, focoPratica: string | null = null
   ) =>
-    fetch(`${API_BASE}/interviews`, {
+    apiFetch(`${API_BASE}/interviews`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ stack, nivel, totalPerguntas, descricaoVaga, focoPratica }),
     }).then(res => handleResponse<Interview>(res)),
 
   get: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}`, {
       headers: authHeaders(),
     }).then(res => handleResponse<Interview>(res)),
 
   history: () =>
-    fetch(`${API_BASE}/interviews`, {
+    apiFetch(`${API_BASE}/interviews`, {
       headers: authHeaders(),
     }).then(res => handleResponse<Interview[]>(res)),
 
   nextQuestion: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}/next-question`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}/next-question`, {
       headers: authHeaders(),
     }).then(res => handleResponse<Question>(res)),
 
@@ -45,7 +45,7 @@ export const interviewApi = {
   // texto da pergunta (efeito "IA digitando"). Resolve com a Question final
   // (já persistida) quando o evento "done" chega.
   streamNextQuestion: async (interviewId: string, onDelta: (chunk: string) => void): Promise<Question> => {
-    const res = await fetch(`${API_BASE}/interviews/${interviewId}/next-question/stream`, {
+    const res = await apiFetch(`${API_BASE}/interviews/${interviewId}/next-question/stream`, {
       headers: authHeaders(),
     });
 
@@ -60,7 +60,7 @@ export const interviewApi = {
     let erroRecebido: string | null = null;
 
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await reader.read().catch(() => { throw new ErroDeRede(); });
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
 
@@ -83,7 +83,7 @@ export const interviewApi = {
   },
 
   submitAnswer: (questionId: string, resposta: string) =>
-    fetch(`${API_BASE}/interviews/questions/${questionId}/answer`, {
+    apiFetch(`${API_BASE}/interviews/questions/${questionId}/answer`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ resposta }),
@@ -91,32 +91,32 @@ export const interviewApi = {
 
   // Testes de empresas do candidato logado: pendentes e já aceitos.
   assessmentInvites: () =>
-    fetch(`${API_BASE}/interviews/invites`, {
+    apiFetch(`${API_BASE}/interviews/invites`, {
       headers: authHeaders(),
     }).then(res => handleResponse<CandidateAssessmentInvite[]>(res)),
 
   // Cria a entrevista do teste (ou devolve a mesma, se já tinha aceitado).
   // Outra conta que não a do email convidado -> 403 ASSESSMENT_INVITE_WRONG_ACCOUNT.
   acceptAssessmentInvite: (inviteId: string) =>
-    fetch(`${API_BASE}/interviews/invites/${inviteId}/accept`, {
+    apiFetch(`${API_BASE}/interviews/invites/${inviteId}/accept`, {
       method: 'POST',
       headers: authHeaders(),
     }).then(res => handleResponse<Interview>(res)),
 
   getReport: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}/report`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}/report`, {
       headers: authHeaders(),
     }).then(res => handleResponse<FeedbackReport>(res)),
 
   getTranscript: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}/transcript`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}/transcript`, {
       headers: authHeaders(),
     }).then(res => handleResponse<TranscriptItem[]>(res)),
 
   uploadResume: (interviewId: string, arquivo: File) => {
     const form = new FormData();
     form.append('arquivo', arquivo);
-    return fetch(`${API_BASE}/interviews/${interviewId}/resume`, {
+    return apiFetch(`${API_BASE}/interviews/${interviewId}/resume`, {
       method: 'POST',
       headers: authHeadersMultipart(),
       body: form,
@@ -130,7 +130,7 @@ export const interviewApi = {
     const ext = audio.type.includes('mp4') ? 'mp4' : audio.type.includes('ogg') ? 'ogg' : 'webm';
     const form = new FormData();
     form.append('audio', audio, `resposta.${ext}`);
-    const res = await fetch(`${API_BASE}/interviews/transcribe`, {
+    const res = await apiFetch(`${API_BASE}/interviews/transcribe`, {
       method: 'POST',
       headers: authHeadersMultipart(),
       body: form,
@@ -144,7 +144,7 @@ export const interviewApi = {
   reviewResume: (arquivo: File) => {
     const form = new FormData();
     form.append('arquivo', arquivo);
-    return fetch(`${API_BASE}/resume-reviews`, {
+    return apiFetch(`${API_BASE}/resume-reviews`, {
       method: 'POST',
       headers: authHeadersMultipart(),
       body: form,
@@ -153,14 +153,14 @@ export const interviewApi = {
 
   // Histórico de análises de currículo avulsas do usuário logado.
   resumeReviewHistory: () =>
-    fetch(`${API_BASE}/resume-reviews`, {
+    apiFetch(`${API_BASE}/resume-reviews`, {
       headers: authHeaders(),
     }).then(res => handleResponse<ResumeReview[]>(res)),
 
   // 404 aqui só significa "candidato não enviou currículo" — não é erro,
   // então devolve null em vez de propagar a exceção de handleResponse.
   getResume: async (interviewId: string): Promise<ResumeAnalysis | null> => {
-    const res = await fetch(`${API_BASE}/interviews/${interviewId}/resume`, {
+    const res = await apiFetch(`${API_BASE}/interviews/${interviewId}/resume`, {
       headers: authHeaders(),
     });
     if (res.status === 404) return null;
@@ -168,19 +168,19 @@ export const interviewApi = {
   },
 
   abandon: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}/abandon`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}/abandon`, {
       method: 'POST',
       headers: authHeaders(),
     }).then(res => handleResponse<Interview>(res)),
 
   share: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}/share`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}/share`, {
       method: 'POST',
       headers: authHeaders(),
     }).then(res => handleResponse<{ shareToken: string }>(res)),
 
   revokeShare: (interviewId: string) =>
-    fetch(`${API_BASE}/interviews/${interviewId}/share`, {
+    apiFetch(`${API_BASE}/interviews/${interviewId}/share`, {
       method: 'DELETE',
       headers: authHeaders(),
     }).then(res => {
@@ -189,6 +189,6 @@ export const interviewApi = {
 
   // SEM Authorization de propósito — é o endpoint público, acessível sem login.
   getPublicReport: (shareToken: string) =>
-    fetch(`${API_BASE}/interviews/public/${shareToken}/report`)
+    apiFetch(`${API_BASE}/interviews/public/${shareToken}/report`)
       .then(res => handleResponse<PublicReport>(res)),
 };

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
+import { ErroCarga } from '../components/ErroCarga';
 import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
 import type { CandidateAssessmentInvite } from '../types/interview';
@@ -19,12 +20,14 @@ export function CandidateInvitesPage() {
   const [convites, setConvites] = useState<CandidateAssessmentInvite[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [comecandoId, setComecandoId] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
+    setErro(null);
     interviewApi.assessmentInvites()
       .then(setConvites)
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar os convites'));
-  }, []);
+  }, [tentativa]);
 
   async function comecar(convite: CandidateAssessmentInvite) {
     setErro(null);
@@ -83,7 +86,8 @@ export function CandidateInvitesPage() {
         </p>
       </header>
 
-      {erro && <p className="erro">{erro}</p>}
+      {erro && convites !== null && <p className="erro">{erro}</p>}
+      {erro && convites === null && <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />}
       {convites === null && !erro && <p>Carregando convites...</p>}
 
       {convites?.length === 0 && (

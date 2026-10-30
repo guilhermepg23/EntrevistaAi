@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
 import { RelatorioConteudo, TranscricaoAlternavel } from '../components/RelatorioConteudo';
+import { ErroCarga } from '../components/ErroCarga';
 import { andamentoTesteLabel, nivelLabel } from '../labels';
 import { formatarDataHora } from '../lib/datas';
 import type { CandidateResult } from '../types/interview';
@@ -15,19 +16,21 @@ export function CandidateResultPage() {
   const [dados, setDados] = useState<CandidateResult | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [transcricaoAberta, setTranscricaoAberta] = useState(true);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
+    setErro(null);
     assessmentApi.result(id, interviewId)
       .then(setDados)
       .catch(err => setErro(err instanceof Error ? err.message : 'Erro ao carregar o resultado'));
-  }, [id, interviewId]);
+  }, [id, interviewId, tentativa]);
 
   const voltar = <Link to={`/empresa/testes/${id}`}>Voltar ao teste</Link>;
 
   if (erro) {
     return (
       <div className="report-page">
-        <p className="erro">{erro}</p>
+        <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />
         {voltar}
       </div>
     );

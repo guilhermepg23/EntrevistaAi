@@ -157,4 +157,49 @@ describe('AnswerInput', () => {
       expect(screen.getByText('Permissão de microfone negada.')).toBeInTheDocument();
     });
   });
+
+  describe('rascunho', () => {
+    it('volta depois de recarregar, na mesma pergunta', async () => {
+      const { unmount } = render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+      await userEvent.type(screen.getByPlaceholderText(PLACEHOLDER), 'minha resposta');
+      unmount();
+
+      render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('minha resposta');
+    });
+
+    it('não aparece em outra pergunta', async () => {
+      const { unmount } = render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+      await userEvent.type(screen.getByPlaceholderText(PLACEHOLDER), 'minha resposta');
+      unmount();
+
+      render(<AnswerInput questionId="q2" disabled={false} onSubmit={vi.fn()} />);
+
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('');
+    });
+
+    it('enviar limpa o campo, mas guarda o texto até a pergunta mudar', async () => {
+      const { unmount } = render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+      await userEvent.type(screen.getByPlaceholderText(PLACEHOLDER), 'minha resposta{Enter}');
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('');
+      unmount();
+
+      render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('minha resposta');
+    });
+
+    it('apagar o texto na mão apaga o rascunho', async () => {
+      const { unmount } = render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+      const campo = screen.getByPlaceholderText(PLACEHOLDER);
+      await userEvent.type(campo, 'abc');
+      await userEvent.clear(campo);
+      unmount();
+
+      render(<AnswerInput questionId="q1" disabled={false} onSubmit={vi.fn()} />);
+
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('');
+    });
+  });
 });

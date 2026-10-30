@@ -6,6 +6,7 @@ import { ApiError } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { formatarData } from '../lib/datas';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
+import { ErroCarga } from '../components/ErroCarga';
 import { nivelLabel } from '../labels';
 import type { CandidateAssessmentInvite } from '../types/interview';
 
@@ -19,15 +20,24 @@ export function AssessmentInvitePage() {
   const navigate = useNavigate();
   const [convite, setConvite] = useState<CandidateAssessmentInvite | null>(null);
   const [invalido, setInvalido] = useState<string | null>(null);
+  const [falhaCarga, setFalhaCarga] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
   const [contaErrada, setContaErrada] = useState(false);
   const [comecando, setComecando] = useState(false);
 
   useEffect(() => {
+    setFalhaCarga(null);
     authApi.getAssessmentInvite(token)
       .then(setConvite)
-      .catch(err => setInvalido(err instanceof Error ? err.message : 'Convite inválido'));
-  }, [token]);
+      .catch(err => {
+        // Rede ou servidor fora do ar não dizem nada sobre o convite: mandar a
+        // pessoa pedir um link novo seria errado.
+        const recusado = err instanceof ApiError && err.status < 500;
+        if (recusado) setInvalido(err.message);
+        else setFalhaCarga(err instanceof Error ? err.message : 'Erro ao carregar o convite');
+      });
+  }, [token, tentativa]);
 
   const voltar = encodeURIComponent(`/teste/${token}`);
 
@@ -64,6 +74,14 @@ export function AssessmentInvitePage() {
           </p>
           <p className="auth-switch"><Link to="/">Ir para o início</Link></p>
         </div>
+      </div>
+    );
+  }
+
+  if (falhaCarga) {
+    return (
+      <div className="auth-page">
+        <ErroCarga mensagem={falhaCarga} onTentar={() => setTentativa(t => t + 1)} />
       </div>
     );
   }

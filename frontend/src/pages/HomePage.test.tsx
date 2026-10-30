@@ -155,4 +155,17 @@ describe('HomePage: convites de empresas', () => {
     expect(await screen.findByText('React · junior')).toBeInTheDocument();
     expect(screen.queryByText('Go · senior')).not.toBeInTheDocument();
   });
+
+  it('falha ao carregar os treinos não parece lista vazia e deixa tentar de novo', async () => {
+    vi.mocked(interviewApi.history).mockRejectedValueOnce(new Error('Sem conexão'));
+    renderWithProviders(<HomePage />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sem conexão');
+    expect(screen.queryByText('Nenhuma entrevista ainda.')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+
+    expect(await screen.findByText('Nenhuma entrevista ainda.')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });

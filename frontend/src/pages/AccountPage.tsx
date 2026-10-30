@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountApi } from '../api/accountApi';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
+import { ErroCarga } from '../components/ErroCarga';
 import type { AccountDetails } from '../types/interview';
 import { papelEmpresaLabel, tipoContaLabel } from '../labels';
 import { formatarData } from '../lib/datas';
@@ -18,6 +19,7 @@ export function AccountPage() {
   const [aba, setAba] = useState<Aba>(searchParams.get('tab') === 'config' ? 'config' : 'detalhes');
   const [detalhes, setDetalhes] = useState<AccountDetails | null>(null);
   const [erroCarregar, setErroCarregar] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
 
   // Editar nome
   const [nome, setNome] = useState('');
@@ -39,10 +41,11 @@ export function AccountPage() {
   const [erroExcluir, setErroExcluir] = useState<string | null>(null);
 
   useEffect(() => {
+    setErroCarregar(null);
     accountApi.get()
       .then(d => { setDetalhes(d); setNome(d.nome); })
       .catch(err => setErroCarregar(err instanceof Error ? err.message : 'Erro ao carregar a conta'));
-  }, []);
+  }, [tentativa]);
 
   async function salvarNome(e: FormEvent) {
     e.preventDefault();
@@ -99,7 +102,7 @@ export function AccountPage() {
   if (erroCarregar) {
     return (
       <div className="conta-page">
-        <p className="erro">{erroCarregar}</p>
+        <ErroCarga mensagem={erroCarregar} onTentar={() => setTentativa(t => t + 1)} />
         <Link to="/">Voltar</Link>
       </div>
     );

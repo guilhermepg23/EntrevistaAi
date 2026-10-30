@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
+import { ErroCarga } from '../components/ErroCarga';
 import { conviteEmAberto } from './CandidateInvitesPage';
 import type { Interview } from '../types/interview';
 
@@ -23,19 +24,27 @@ export function HomePage() {
 
   const [historico, setHistorico] = useState<Interview[]>([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(true);
+  const [erroHistorico, setErroHistorico] = useState<string | null>(null);
+  const [tentativaHistorico, setTentativaHistorico] = useState(0);
   const [convitesEmAberto, setConvitesEmAberto] = useState(0);
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    setErroHistorico(null);
+    setCarregandoHistorico(true);
     interviewApi.history()
       // Testes de empresa ficam na aba Convites; aqui só os treinos.
       .then(lista => setHistorico(lista.filter(i => i.origem !== 'CONVITE')))
-      .catch(() => { /* histórico é secundário — falha aqui não bloqueia a tela */ })
+      // Falha aqui não bloqueia o formulário, mas não pode parecer lista vazia.
+      .catch(err => setErroHistorico(err instanceof Error ? err.message : 'Erro ao carregar os treinos'))
       .finally(() => setCarregandoHistorico(false));
+  }, [tentativaHistorico]);
+
+  useEffect(() => {
     interviewApi.assessmentInvites()
       .then(lista => setConvitesEmAberto(lista.filter(conviteEmAberto).length))
-      .catch(() => { /* idem: sem a lista, o aviso só não aparece */ });
+      .catch(() => { /* sem a lista, o aviso só não aparece */ });
   }, []);
 
   async function handleSubmit(e: FormEvent) {
@@ -141,7 +150,10 @@ export function HomePage() {
       <section className="historico">
         <h2>Treinos anteriores</h2>
         {carregandoHistorico && <p>Carregando...</p>}
-        {!carregandoHistorico && historico.length === 0 && <p>Nenhuma entrevista ainda.</p>}
+        {erroHistorico && (
+          <ErroCarga mensagem={erroHistorico} onTentar={() => setTentativaHistorico(t => t + 1)} />
+        )}
+        {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma entrevista ainda.</p>}
         <ul className="historico-lista">
           {historico.map(interview => (
             <li key={interview.id}>
