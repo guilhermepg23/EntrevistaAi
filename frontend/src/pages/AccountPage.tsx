@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountApi } from '../api/accountApi';
+import { ApiError } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import { ErroCarga } from '../components/ErroCarga';
+import { CampoErro } from '../components/CampoErro';
 import { Carregando } from '../components/HintServidor';
 import type { AccountDetails } from '../types/interview';
 import { papelEmpresaLabel, tipoContaLabel } from '../labels';
@@ -35,6 +37,8 @@ export function AccountPage() {
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [msgSenha, setMsgSenha] = useState<string | null>(null);
   const [erroSenha, setErroSenha] = useState<string | null>(null);
+  const [erroSenhaAtual, setErroSenhaAtual] = useState<string | null>(null);
+  const [erroConfirmacao, setErroConfirmacao] = useState<string | null>(null);
 
   // Excluir conta
   const [confirmaExclusao, setConfirmaExclusao] = useState(false);
@@ -70,7 +74,7 @@ export function AccountPage() {
     setErroSenha(null);
     setMsgSenha(null);
     if (novaSenha !== confirmarSenha) {
-      setErroSenha('As senhas não conferem.');
+      setErroConfirmacao('As senhas não conferem.');
       return;
     }
     setSalvandoSenha(true);
@@ -81,7 +85,12 @@ export function AccountPage() {
       setConfirmarSenha('');
       setMsgSenha('Senha alterada.');
     } catch (err) {
-      setErroSenha(err instanceof Error ? err.message : 'Erro ao trocar a senha');
+      // O código é o mesmo do login, mas a mensagem de lá fala em "email ou senha".
+      if (err instanceof ApiError && err.errorCode === 'AUTH_INVALID_CREDENTIALS') {
+        setErroSenhaAtual('Senha atual incorreta.');
+      } else {
+        setErroSenha(err instanceof Error ? err.message : 'Erro ao trocar a senha');
+      }
     } finally {
       setSalvandoSenha(false);
     }
@@ -187,10 +196,12 @@ export function AccountPage() {
                 Senha atual
                 <PasswordInput
                   value={senhaAtual}
-                  onChange={e => setSenhaAtual(e.target.value)}
+                  onChange={e => { setSenhaAtual(e.target.value); setErroSenhaAtual(null); }}
                   autoComplete="current-password"
+                  aria-invalid={Boolean(erroSenhaAtual)}
                   required
                 />
+                <CampoErro mensagem={erroSenhaAtual} />
               </label>
               <label>
                 Nova senha
@@ -206,11 +217,13 @@ export function AccountPage() {
                 Confirmar nova senha
                 <PasswordInput
                   value={confirmarSenha}
-                  onChange={e => setConfirmarSenha(e.target.value)}
+                  onChange={e => { setConfirmarSenha(e.target.value); setErroConfirmacao(null); }}
                   autoComplete="new-password"
                   minLength={6}
+                  aria-invalid={Boolean(erroConfirmacao)}
                   required
                 />
+                <CampoErro mensagem={erroConfirmacao} />
               </label>
               <button type="submit" disabled={salvandoSenha}>
                 {salvandoSenha ? 'Salvando...' : 'Trocar senha'}

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
+import { ApiError } from '../api/client';
 import { companyApi } from '../api/companyApi';
+import { CampoErro } from '../components/CampoErro';
 import { ErroCarga } from '../components/ErroCarga';
 import { Carregando } from '../components/HintServidor';
 import { useCompany } from '../hooks/useCompany';
@@ -21,6 +23,7 @@ export function TeamPage() {
   const [erro, setErro] = useState<string | null>(null);
 
   const [erroCarga, setErroCarga] = useState<string | null>(null);
+  const [sucesso, setSucesso] = useState<string | null>(null);
 
   const carregarEquipe = useCallback(async () => {
     setErroCarga(null);
@@ -55,28 +58,30 @@ export function TeamPage() {
     await Promise.all([carregarEquipe(), recarregar()]);
   }
 
-  async function executar(acao: () => Promise<unknown>) {
+  async function executar(acao: () => Promise<unknown>, mensagem: string) {
     setErro(null);
+    setSucesso(null);
     try {
       await acao();
       await atualizarTudo();
+      setSucesso(mensagem);
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Não foi possível concluir a ação');
     }
   }
 
   function alterarPapel(membro: TeamMember, papel: PapelEmpresa) {
-    void executar(() => companyApi.changeRole(membro.id, papel));
+    void executar(() => companyApi.changeRole(membro.id, papel), 'Papel alterado.');
   }
 
   function remover(membro: TeamMember) {
     if (!window.confirm(`Remover ${membro.nome} da equipe? A conta dela continua existindo, mas sem acesso à empresa.`)) return;
-    void executar(() => companyApi.removeMember(membro.id));
+    void executar(() => companyApi.removeMember(membro.id), 'Membro removido.');
   }
 
   function cancelarConvite(convite: TeamInvite) {
     if (!window.confirm(`Cancelar o convite de ${convite.email}? O link deixa de funcionar.`)) return;
-    void executar(() => companyApi.cancelInvite(convite.id));
+    void executar(() => companyApi.cancelInvite(convite.id), 'Convite cancelado.');
   }
 
   return (
@@ -92,6 +97,7 @@ export function TeamPage() {
       </header>
 
       {erro && <p className="erro" role="alert">{erro}</p>}
+      {sucesso && <p className="aviso-sucesso" role="status">{sucesso}</p>}
 
       {ehAdmin && <ConvidarRecrutador onConvidado={atualizarTudo} />}
 
@@ -173,6 +179,7 @@ function ConvidarRecrutador({ onConvidado }: { onConvidado: () => Promise<void> 
   const [erro, setErro] = useState<string | null>(null);
   const [criado, setCriado] = useState<CreatedTeamInvite | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [erroEmail, setErroEmail] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -185,7 +192,8 @@ function ConvidarRecrutador({ onConvidado }: { onConvidado: () => Promise<void> 
       setEmail('');
       await onConvidado();
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Erro ao criar o convite');
+      if (err instanceof ApiError && err.status < 500) setErroEmail(err.message);
+      else setErro(err instanceof Error ? err.message : 'Erro ao criar o convite');
     } finally {
       setEnviando(false);
     }
@@ -209,7 +217,14 @@ function ConvidarRecrutador({ onConvidado }: { onConvidado: () => Promise<void> 
         {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Email do recrutador
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setErroEmail(null); }}
+            aria-invalid={Boolean(erroEmail)}
+            required
+          />
+          <CampoErro mensagem={erroEmail} />
         </label>
         <label>
           Validade do convite

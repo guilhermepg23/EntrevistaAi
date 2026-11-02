@@ -95,6 +95,7 @@ describe('TeamPage', () => {
 
     expect(window.confirm).toHaveBeenCalled();
     await waitFor(() => expect(companyApi.removeMember).toHaveBeenCalledWith('u2'));
+    expect(await screen.findByText('Membro removido.')).toBeInTheDocument();
   });
 
   it('recrutador comum só consulta: sem convite nem ações', async () => {

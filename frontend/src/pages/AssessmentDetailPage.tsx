@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { assessmentApi } from '../api/assessmentApi';
+import { ApiError } from '../api/client';
+import { CampoErro } from '../components/CampoErro';
 import { ErroCarga } from '../components/ErroCarga';
 import { Carregando } from '../components/HintServidor';
 import { andamentoTesteLabel, conviteTesteStatusLabel, nivelLabel, recomendacaoLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
+import { duracaoEstimada } from '../lib/duracao';
 import { situacaoTeste } from './AssessmentsPage';
 import type {
   Assessment, AssessmentInvite, AssessmentResult, CreatedAssessmentInvite, Recomendacao,
@@ -21,6 +24,9 @@ export function AssessmentDetailPage() {
   const [resultados, setResultados] = useState<AssessmentResult[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [erroCarga, setErroCarga] = useState<string | null>(null);
+  // Vem do formulário, depois de criar ou editar o teste.
+  const location = useLocation();
+  const [sucesso, setSucesso] = useState<string | null>((location.state as { sucesso?: string } | null)?.sucesso ?? null);
 
   const carregar = useCallback(async () => {
     setErroCarga(null);
@@ -40,11 +46,13 @@ export function AssessmentDetailPage() {
     void carregar();
   }, [carregar]);
 
-  async function executar(acao: () => Promise<unknown>) {
+  async function executar(acao: () => Promise<unknown>, mensagem: string) {
     setErro(null);
+    setSucesso(null);
     try {
       await acao();
       await carregar();
+      setSucesso(mensagem);
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Não foi possível concluir a ação');
     }
@@ -52,12 +60,12 @@ export function AssessmentDetailPage() {
 
   function arquivar() {
     if (!window.confirm('Arquivar este teste? Os convites pendentes deixam de valer; quem já começou ainda pode terminar.')) return;
-    void executar(() => assessmentApi.archive(id));
+    void executar(() => assessmentApi.archive(id), 'Teste arquivado.');
   }
 
   function cancelarConvite(convite: AssessmentInvite) {
     if (!window.confirm(`Cancelar o convite de ${convite.email}? O link deixa de funcionar.`)) return;
-    void executar(() => assessmentApi.cancelInvite(id, convite.id));
+    void executar(() => assessmentApi.cancelInvite(id, convite.id), 'Convite cancelado.');
   }
 
   if (erroCarga) {
@@ -95,6 +103,7 @@ export function AssessmentDetailPage() {
       </header>
 
       {erro && <p className="erro" role="alert">{erro}</p>}
+      {sucesso && <p className="aviso-sucesso" role="status">{sucesso}</p>}
 
       <section className="painel-card">
         <h2>Como é o teste</h2>
@@ -103,6 +112,7 @@ export function AssessmentDetailPage() {
           <div><dt>Nível</dt><dd>{nivelLabel[teste.nivel] ?? teste.nivel}</dd></div>
           <div><dt>Perguntas</dt><dd>{teste.totalPerguntas}</dd></div>
           <div><dt>Fixas</dt><dd>{teste.perguntasFixas.length}</dd></div>
+          <div><dt>Duração</dt><dd>{duracaoEstimada(teste.totalPerguntas)}</dd></div>
         </dl>
         {teste.perguntasFixas.length > 0 ? (
           <>
@@ -142,7 +152,9 @@ export function AssessmentDetailPage() {
       <section className="painel-card">
         <h2>Convites ({convites.length})</h2>
         {convites.length === 0 ? (
-          <p className="painel-texto">Ninguém foi convidado ainda.</p>
+          <p className="painel-texto">
+            Ninguém foi convidado ainda.{teste.aberto && ' Mande o primeiro convite em "Convidar candidato".'}
+          </p>
         ) : (
           <ul className="lista-equipe">
             {convites.map(convite => (
@@ -290,6 +302,7 @@ function ConvidarCandidato({ assessmentId, onConvidado }: { assessmentId: string
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroEmail, setErroEmail] = useState<string | null>(null);
   const [criado, setCriado] = useState<CreatedAssessmentInvite | null>(null);
   const [copiado, setCopiado] = useState(false);
 
@@ -304,7 +317,8 @@ function ConvidarCandidato({ assessmentId, onConvidado }: { assessmentId: string
       setEmail('');
       await onConvidado();
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Erro ao criar o convite');
+      if (err instanceof ApiError && err.status < 500) setErroEmail(err.message);
+      else setErro(err instanceof Error ? err.message : 'Erro ao criar o convite');
     } finally {
       setEnviando(false);
     }
@@ -332,7 +346,14 @@ function ConvidarCandidato({ assessmentId, onConvidado }: { assessmentId: string
         {erro && <p className="erro" role="alert">{erro}</p>}
         <label>
           Email do candidato
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setErroEmail(null); }}
+            aria-invalid={Boolean(erroEmail)}
+            required
+          />
+          <CampoErro mensagem={erroEmail} />
         </label>
         <button type="submit" disabled={enviando}>
           {enviando ? 'Criando convite...' : 'Enviar convite'}

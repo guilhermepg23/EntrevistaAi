@@ -4,6 +4,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { HintServidor } from '../components/HintServidor';
+import { CampoErro } from '../components/CampoErro';
+import { ApiError } from '../api/client';
 import { PasswordInput } from '../components/PasswordInput';
 import { formatCpf, isValidCpf, onlyDigits } from '../lib/cpf';
 import { formatCnpj, isValidCnpj, onlyDigitsCnpj } from '../lib/cnpj';
@@ -32,6 +34,7 @@ export function RegisterPage() {
   const [cnpj, setCnpj] = useState('');
   const ehCandidato = tipo === 'CANDIDATO';
   const [erro, setErro] = useState<string | null>(null);
+  const [errosCampo, setErrosCampo] = useState<Partial<Record<'email' | 'cpf' | 'cnpj' | 'confirmarSenha', string>>>({});
   const [carregando, setCarregando] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -39,26 +42,23 @@ export function RegisterPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErro(null);
+    const erros: typeof errosCampo = {};
 
     // Checagem do documento no cliente (mesmo algoritmo do backend, ver lib/cpf
     // e lib/cnpj) — barra o erro antes de gastar a chamada. O back revalida de
     // qualquer jeito. Candidato: CPF obrigatório. Recrutador: CNPJ opcional,
     // validado só se preenchido.
-    if (ehCandidato && !isValidCpf(cpf)) {
-      setErro('CPF inválido. Confira os números.');
-      return;
-    }
+    if (ehCandidato && !isValidCpf(cpf)) erros.cpf = 'CPF inválido. Confira os números.';
     if (!ehCandidato && cnpj !== '' && !isValidCnpj(cnpj)) {
-      setErro('CNPJ inválido. Confira os números ou deixe o campo em branco.');
-      return;
+      erros.cnpj = 'CNPJ inválido. Confira os números ou deixe o campo em branco.';
     }
 
     // Confirmação de senha é só no cliente — o backend recebe um campo só
     // (ver RegisterRequest). Barra o erro de digitação antes de gastar a chamada.
-    if (senha !== confirmarSenha) {
-      setErro('As senhas não conferem.');
-      return;
-    }
+    if (senha !== confirmarSenha) erros.confirmarSenha = 'As senhas não conferem.';
+
+    setErrosCampo(erros);
+    if (Object.keys(erros).length > 0) return;
 
     setCarregando(true);
     try {
@@ -80,7 +80,9 @@ export function RegisterPage() {
       login(resposta.token, resposta.nome, resposta.tipo);
       navigate(voltar ?? '/');
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Erro ao cadastrar');
+      if (err instanceof ApiError && err.errorCode === 'AUTH_EMAIL_TAKEN') setErrosCampo({ email: err.message });
+      else if (err instanceof ApiError && err.errorCode === 'AUTH_CPF_TAKEN') setErrosCampo({ cpf: err.message });
+      else setErro(err instanceof Error ? err.message : 'Erro ao cadastrar');
     } finally {
       setCarregando(false);
     }
@@ -113,7 +115,14 @@ export function RegisterPage() {
         </label>
         <label>
           Email
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setErrosCampo({ ...errosCampo, email: undefined }); }}
+            aria-invalid={Boolean(errosCampo.email)}
+            required
+          />
+          <CampoErro mensagem={errosCampo.email} />
         </label>
         {ehCandidato ? (
           <label>
@@ -122,11 +131,13 @@ export function RegisterPage() {
               type="text"
               inputMode="numeric"
               value={cpf}
-              onChange={e => setCpf(formatCpf(e.target.value))}
+              onChange={e => { setCpf(formatCpf(e.target.value)); setErrosCampo({ ...errosCampo, cpf: undefined }); }}
               placeholder="000.000.000-00"
               maxLength={14}
+              aria-invalid={Boolean(errosCampo.cpf)}
               required
             />
+            <CampoErro mensagem={errosCampo.cpf} />
           </label>
         ) : (
           <>
@@ -145,10 +156,12 @@ export function RegisterPage() {
                 type="text"
                 inputMode="numeric"
                 value={cnpj}
-                onChange={e => setCnpj(formatCnpj(e.target.value))}
+                onChange={e => { setCnpj(formatCnpj(e.target.value)); setErrosCampo({ ...errosCampo, cnpj: undefined }); }}
                 placeholder="00.000.000/0000-00"
                 maxLength={18}
+                aria-invalid={Boolean(errosCampo.cnpj)}
               />
+              <CampoErro mensagem={errosCampo.cnpj} />
             </label>
           </>
         )}
@@ -166,11 +179,13 @@ export function RegisterPage() {
           Confirmar senha
           <PasswordInput
             value={confirmarSenha}
-            onChange={e => setConfirmarSenha(e.target.value)}
+            onChange={e => { setConfirmarSenha(e.target.value); setErrosCampo({ ...errosCampo, confirmarSenha: undefined }); }}
             autoComplete="new-password"
             minLength={6}
+            aria-invalid={Boolean(errosCampo.confirmarSenha)}
             required
           />
+          <CampoErro mensagem={errosCampo.confirmarSenha} />
         </label>
         <button type="submit" disabled={carregando}>
           {carregando ? 'Cadastrando...' : 'Cadastrar'}

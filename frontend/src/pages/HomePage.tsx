@@ -155,7 +155,7 @@ export function HomePage() {
         {erroHistorico && (
           <ErroCarga mensagem={erroHistorico} onTentar={() => setTentativaHistorico(t => t + 1)} />
         )}
-        {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma entrevista ainda.</p>}
+        {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma entrevista ainda. Preencha o formulário nesta página para começar o primeiro treino.</p>}
         <ul className="historico-lista">
           {historico.map(interview => (
             <li key={interview.id}>

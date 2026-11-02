@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountPage } from './AccountPage';
+import { ApiError } from '../api/client';
 import { renderWithProviders } from '../test-utils';
 import { accountApi } from '../api/accountApi';
 import type { AccountDetails } from '../types/interview';
@@ -145,5 +146,18 @@ describe('AccountPage', () => {
     render();
 
     expect(await screen.findByText('Sessão expirada. Faça login novamente.')).toBeInTheDocument();
+  });
+
+  it('senha atual errada: avisa no campo, sem falar em email', async () => {
+    vi.mocked(accountApi.changePassword).mockRejectedValue(new ApiError('Email ou senha inválidos', 401, 'AUTH_INVALID_CREDENTIALS'));
+    renderWithProviders(<AccountPage />, { route: '/conta?tab=config', auth: { token: 't', nome: 'Ana' } });
+
+    await userEvent.type(await screen.findByLabelText('Senha atual'), 'errada');
+    await userEvent.type(screen.getByLabelText('Nova senha'), 'segredo1');
+    await userEvent.type(screen.getByLabelText('Confirmar nova senha'), 'segredo1');
+    await userEvent.click(screen.getByRole('button', { name: 'Trocar senha' }));
+
+    expect(await screen.findByText('Senha atual incorreta.')).toBeInTheDocument();
+    expect(screen.queryByText('Email ou senha inválidos')).not.toBeInTheDocument();
   });
 });

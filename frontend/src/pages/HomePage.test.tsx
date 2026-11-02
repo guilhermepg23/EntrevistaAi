@@ -64,7 +64,7 @@ describe('HomePage', () => {
 
   it('mostra "Nenhuma entrevista ainda." quando o histórico volta vazio', async () => {
     renderWithProviders(<HomePage />);
-    expect(await screen.findByText('Nenhuma entrevista ainda.')).toBeInTheDocument();
+    expect(await screen.findByText(/^Nenhuma entrevista ainda\./)).toBeInTheDocument();
   });
 
   it('não quebra a tela se o histórico falhar (é secundário)', async () => {
@@ -78,7 +78,7 @@ describe('HomePage', () => {
     const user = userEvent.setup();
     vi.mocked(interviewApi.start).mockResolvedValue(makeInterview({ id: 'nova-1', status: 'EM_ANDAMENTO' }));
     renderWithProviders(<HomePage />);
-    await screen.findByText('Nenhuma entrevista ainda.');
+    await screen.findByText(/^Nenhuma entrevista ainda\./);
 
     await user.type(screen.getByLabelText('Stack'), '  Java + Spring  ');
     await user.click(screen.getByRole('button', { name: 'Começar entrevista' }));
@@ -92,7 +92,7 @@ describe('HomePage', () => {
     const user = userEvent.setup();
     vi.mocked(interviewApi.start).mockResolvedValue(makeInterview({ id: 'nova-2', status: 'EM_ANDAMENTO' }));
     renderWithProviders(<HomePage />);
-    await screen.findByText('Nenhuma entrevista ainda.');
+    await screen.findByText(/^Nenhuma entrevista ainda\./);
 
     await user.type(screen.getByLabelText('Stack'), 'Python');
     const pdf = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' });
@@ -107,7 +107,7 @@ describe('HomePage', () => {
     const user = userEvent.setup();
     vi.mocked(interviewApi.start).mockRejectedValue(new Error('Falha ao iniciar'));
     renderWithProviders(<HomePage />);
-    await screen.findByText('Nenhuma entrevista ainda.');
+    await screen.findByText(/^Nenhuma entrevista ainda\./);
 
     await user.type(screen.getByLabelText('Stack'), 'Rust');
     await user.click(screen.getByRole('button', { name: 'Começar entrevista' }));
@@ -130,7 +130,7 @@ describe('HomePage: convites de empresas', () => {
       makeInvite({ status: 'ACEITO', interviewId: 'int-b', interviewStatus: 'FINALIZADA' }),
     ]);
     renderWithProviders(<HomePage />);
-    await screen.findByText('Nenhuma entrevista ainda.');
+    await screen.findByText(/^Nenhuma entrevista ainda\./);
     expect(screen.queryByRole('link', { name: /Ver convites/ })).not.toBeInTheDocument();
   });
 
@@ -161,11 +161,11 @@ describe('HomePage: convites de empresas', () => {
     renderWithProviders(<HomePage />);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Sem conexão');
-    expect(screen.queryByText('Nenhuma entrevista ainda.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Nenhuma entrevista ainda\./)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-    expect(await screen.findByText('Nenhuma entrevista ainda.')).toBeInTheDocument();
+    expect(await screen.findByText(/^Nenhuma entrevista ainda\./)).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

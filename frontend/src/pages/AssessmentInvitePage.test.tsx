@@ -116,4 +116,9 @@ describe('AssessmentInvitePage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Fora do ar');
     expect(screen.queryByText('Convite indisponível')).not.toBeInTheDocument();
   });
+
+  it('mostra a duração estimada', async () => {
+    render();
+    expect(await screen.findByText('cerca de 24 min')).toBeInTheDocument();
+  });
 });

@@ -5,6 +5,7 @@ import { interviewApi } from '../api/interviewApi';
 import { ApiError } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { formatarData } from '../lib/datas';
+import { duracaoEstimada } from '../lib/duracao';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
 import { Carregando, HintServidor } from '../components/HintServidor';
@@ -100,6 +101,7 @@ export function AssessmentInvitePage() {
           <div><dt>Stack</dt><dd>{convite.stack}</dd></div>
           <div><dt>Nível</dt><dd>{nivelLabel[convite.nivel] ?? convite.nivel}</dd></div>
           <div><dt>Perguntas</dt><dd>{convite.totalPerguntas}</dd></div>
+          <div><dt>Duração</dt><dd>{duracaoEstimada(convite.totalPerguntas)}</dd></div>
           <div><dt>Vale até</dt><dd>{formatarData(convite.expiraEm)}</dd></div>
         </dl>
         <ConviteDescricoes convite={convite} abertos />

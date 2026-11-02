@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RegisterPage } from './RegisterPage';
+import { ApiError } from '../api/client';
 import { renderWithProviders } from '../test-utils';
 import { authApi } from '../api/authApi';
 import { useSlowRequestHint } from '../hooks/useSlowRequestHint';
@@ -164,5 +165,25 @@ describe('RegisterPage', () => {
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
     expect(screen.getByText(/servidor está acordando/i)).toBeInTheDocument();
+  });
+
+  it('email já cadastrado: o erro aparece no campo de email', async () => {
+    vi.mocked(authApi.register).mockRejectedValue(new ApiError('Email já cadastrado: ana@x.com', 409, 'AUTH_EMAIL_TAKEN'));
+    renderWithProviders(<RegisterPage />);
+
+    await userEvent.type(screen.getByLabelText('Nome'), 'Ana');
+    await userEvent.type(screen.getByLabelText('Email'), 'ana@x.com');
+    await userEvent.type(screen.getByLabelText('CPF'), '52998224725');
+    await userEvent.type(screen.getByLabelText('Senha'), 'segredo1');
+    await userEvent.type(screen.getByLabelText('Confirmar senha'), 'segredo1');
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    const campo = await screen.findByLabelText(/^Email/);
+    expect(campo).toHaveAttribute('aria-invalid', 'true');
+    expect(campo.closest('label')).toHaveTextContent('Email já cadastrado: ana@x.com');
+
+    await userEvent.type(campo, 'a');
+    expect(campo).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.queryByText(/Email já cadastrado/)).not.toBeInTheDocument();
   });
 });

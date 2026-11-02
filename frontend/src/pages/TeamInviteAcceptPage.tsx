@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { ApiError } from '../api/client';
 import { ErroCarga } from '../components/ErroCarga';
+import { CampoErro } from '../components/CampoErro';
 import { Carregando } from '../components/HintServidor';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
@@ -26,6 +27,7 @@ export function TeamInviteAcceptPage() {
   const [senha, setSenha] = useState('');
   const [confirmar, setConfirmar] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  const [erroConfirmacao, setErroConfirmacao] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function TeamInviteAcceptPage() {
     e.preventDefault();
     setErro(null);
     if (senha !== confirmar) {
-      setErro('As senhas não conferem.');
+      setErroConfirmacao('As senhas não conferem.');
       return;
     }
     setEnviando(true);
@@ -110,7 +112,9 @@ export function TeamInviteAcceptPage() {
         </label>
         <label>
           Confirmar senha
-          <PasswordInput value={confirmar} onChange={e => setConfirmar(e.target.value)} autoComplete="new-password" minLength={6} required />
+          <PasswordInput value={confirmar} onChange={e => { setConfirmar(e.target.value); setErroConfirmacao(null); }}
+            aria-invalid={Boolean(erroConfirmacao)} autoComplete="new-password" minLength={6} required />
+          <CampoErro mensagem={erroConfirmacao} />
         </label>
         <button type="submit" disabled={enviando}>
           {enviando ? 'Entrando...' : 'Aceitar convite'}

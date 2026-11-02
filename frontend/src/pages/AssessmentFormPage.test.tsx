@@ -60,7 +60,7 @@ describe('AssessmentFormPage', () => {
       titulo: 'Back-end Java', stack: 'Java', nivel: 'junior', totalPerguntas: 8,
       descricaoVaga: null, perguntasFixas: ['Fale de um projeto seu.'],
     });
-    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/empresa/testes/novo-1', { replace: true }));
+    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/empresa/testes/novo-1', { replace: true, state: { sucesso: 'Teste criado.' } }));
   });
 
   it('edição: carrega os dados e salva com PUT', async () => {

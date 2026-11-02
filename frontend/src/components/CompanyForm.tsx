@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { CampoErro } from './CampoErro';
 import { formatCnpj, isValidCnpj, onlyDigitsCnpj } from '../lib/cnpj';
 
 // Nome + CNPJ (opcional) da empresa. Usado pra criar uma empresa nova (quem
@@ -27,13 +28,14 @@ export function CompanyForm({
   const [cnpj, setCnpj] = useState(cnpjInicial ? formatCnpj(cnpjInicial) : '');
   const [descricao, setDescricao] = useState(descricaoInicial ?? '');
   const [erro, setErro] = useState<string | null>(null);
+  const [erroCnpj, setErroCnpj] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErro(null);
     if (cnpj !== '' && !isValidCnpj(cnpj)) {
-      setErro('CNPJ inválido. Confira os números ou deixe o campo em branco.');
+      setErroCnpj('CNPJ inválido. Confira os números ou deixe o campo em branco.');
       return;
     }
     setSalvando(true);
@@ -65,11 +67,13 @@ export function CompanyForm({
           type="text"
           inputMode="numeric"
           value={cnpj}
-          onChange={e => setCnpj(formatCnpj(e.target.value))}
+          onChange={e => { setCnpj(formatCnpj(e.target.value)); setErroCnpj(null); }}
           placeholder="00.000.000/0000-00"
           maxLength={18}
           readOnly={somenteLeitura}
+          aria-invalid={Boolean(erroCnpj)}
         />
+        <CampoErro mensagem={erroCnpj} />
       </label>
       {comDescricao && (
         <label>

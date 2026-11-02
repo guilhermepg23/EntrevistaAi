@@ -40,13 +40,13 @@ describe('ResumeReviewPage', () => {
     renderWithProviders(<ResumeReviewPage />, { auth: { token: 'tok', nome: 'Ana' } });
 
     expect(screen.getByRole('heading', { name: 'Análise de currículo' })).toBeInTheDocument();
-    expect(await screen.findByText('Nenhuma análise ainda.')).toBeInTheDocument();
+    expect(await screen.findByText(/^Nenhuma análise ainda\./)).toBeInTheDocument();
   });
 
   it('o botão fica desabilitado até anexar um PDF', async () => {
     const user = userEvent.setup();
     renderWithProviders(<ResumeReviewPage />, { auth: { token: 'tok', nome: 'Ana' } });
-    await screen.findByText('Nenhuma análise ainda.');
+    await screen.findByText(/^Nenhuma análise ainda\./);
 
     expect(screen.getByRole('button', { name: 'Analisar currículo' })).toBeDisabled();
     await anexarPdf(user);
@@ -57,7 +57,7 @@ describe('ResumeReviewPage', () => {
     const user = userEvent.setup();
     vi.mocked(interviewApi.reviewResume).mockResolvedValue(makeReview());
     renderWithProviders(<ResumeReviewPage />, { auth: { token: 'tok', nome: 'Ana' } });
-    await screen.findByText('Nenhuma análise ainda.');
+    await screen.findByText(/^Nenhuma análise ainda\./);
 
     const pdf = await anexarPdf(user);
     await user.click(screen.getByRole('button', { name: 'Analisar currículo' }));
@@ -73,7 +73,7 @@ describe('ResumeReviewPage', () => {
     const user = userEvent.setup();
     vi.mocked(interviewApi.reviewResume).mockRejectedValue(new Error('PDF ilegível'));
     renderWithProviders(<ResumeReviewPage />, { auth: { token: 'tok', nome: 'Ana' } });
-    await screen.findByText('Nenhuma análise ainda.');
+    await screen.findByText(/^Nenhuma análise ainda\./);
 
     await anexarPdf(user);
     await user.click(screen.getByRole('button', { name: 'Analisar currículo' }));

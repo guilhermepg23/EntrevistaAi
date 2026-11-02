@@ -95,6 +95,7 @@ describe('AssessmentDetailPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Cancelar convite' }));
 
     expect(assessmentApi.cancelInvite).toHaveBeenCalledWith('as-1', 'ci-1');
+    expect(await screen.findByText('Convite cancelado.')).toBeInTheDocument();
   });
 
   describe('resultados', () => {

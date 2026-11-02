@@ -145,7 +145,10 @@ export function AssessmentFormPage() {
     try {
       const teste = id ? await assessmentApi.update(id, dados) : await assessmentApi.create(dados);
       apagarRascunho(chaveRascunho);
-      navigate(`/empresa/testes/${teste.id}`, { replace: true });
+      navigate(`/empresa/testes/${teste.id}`, {
+        replace: true,
+        state: { sucesso: id ? 'Teste atualizado.' : 'Teste criado.' },
+      });
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao salvar o teste');
       setSalvando(false);

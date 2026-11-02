@@ -6,6 +6,7 @@ import { ErroCarga } from '../components/ErroCarga';
 import { Carregando } from '../components/HintServidor';
 import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
+import { duracaoEstimada } from '../lib/duracao';
 import type { CandidateAssessmentInvite } from '../types/interview';
 
 // Ainda dá pra agir: convite não aceito, ou teste começado e não terminado.
@@ -53,7 +54,7 @@ export function CandidateInvitesPage() {
             <span className="teste-empresa-nome">{convite.nomeEmpresa}</span>
             <span className="convite-card-titulo">{convite.titulo}</span>
             <span className="historico-progresso">
-              {convite.stack} · {nivelLabel[convite.nivel] ?? convite.nivel} · {convite.totalPerguntas} perguntas
+              {convite.stack} · {nivelLabel[convite.nivel] ?? convite.nivel} · {convite.totalPerguntas} perguntas · {duracaoEstimada(convite.totalPerguntas)}
               {!convite.interviewId && ` · vale até ${formatarData(convite.expiraEm)}`}
             </span>
           </div>

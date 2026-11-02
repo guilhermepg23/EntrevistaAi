@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { HintServidor } from '../components/HintServidor';
+import { CampoErro } from '../components/CampoErro';
 import { PasswordInput } from '../components/PasswordInput';
 
 export function ResetPasswordPage() {
@@ -12,6 +13,7 @@ export function ResetPasswordPage() {
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  const [erroConfirmacao, setErroConfirmacao] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [concluido, setConcluido] = useState(false);
 
@@ -20,7 +22,7 @@ export function ResetPasswordPage() {
     setErro(null);
 
     if (senha !== confirmarSenha) {
-      setErro('As senhas não conferem.');
+      setErroConfirmacao('As senhas não conferem.');
       return;
     }
 
@@ -79,11 +81,13 @@ export function ResetPasswordPage() {
               Confirmar nova senha
               <PasswordInput
                 value={confirmarSenha}
-                onChange={e => setConfirmarSenha(e.target.value)}
+                onChange={e => { setConfirmarSenha(e.target.value); setErroConfirmacao(null); }}
+              aria-invalid={Boolean(erroConfirmacao)}
                 autoComplete="new-password"
                 minLength={6}
                 required
               />
+              <CampoErro mensagem={erroConfirmacao} />
             </label>
             <button type="submit" disabled={carregando}>
               {carregando ? 'Salvando...' : 'Salvar nova senha'}

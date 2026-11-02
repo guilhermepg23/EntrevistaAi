@@ -152,7 +152,7 @@ export function ResumeReviewPage() {
         <h2>Análises anteriores</h2>
         {carregandoHistorico && <Carregando texto="Carregando..." />}
         {erroHistorico && <ErroCarga mensagem={erroHistorico} onTentar={carregarHistorico} />}
-        {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma análise ainda.</p>}
+        {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma análise ainda. Envie seu currículo em PDF nesta página para ver a primeira.</p>}
         <ul className="historico-lista">
           {historico.map(review => (
             <li key={review.id}>
