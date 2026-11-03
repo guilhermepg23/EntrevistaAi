@@ -49,17 +49,22 @@ describe('AssessmentFormPage', () => {
     const user = userEvent.setup();
     renderNovo();
 
-    await user.type(screen.getByLabelText('Título'), ' Back-end Java ');
-    await user.type(screen.getByLabelText('Stack'), 'Java');
+    // Colar em vez de digitar: digitar tecla a tecla ~45 caracteres estourava os 5s do teste sob carga.
+    const colar = async (label: string, texto: string) => {
+      await user.click(screen.getByLabelText(label));
+      await user.paste(texto);
+    };
+    await colar('Título', ' Back-end Java ');
+    await colar('Stack', 'Java');
     await user.click(screen.getByRole('button', { name: '+ Adicionar pergunta' }));
-    await user.type(screen.getByLabelText('Pergunta fixa 1'), 'Fale de um projeto seu.');
+    await colar('Pergunta fixa 1', 'Fale de um projeto seu.');
     await user.click(screen.getByRole('button', { name: '+ Adicionar pergunta' }));
     await user.click(screen.getByRole('button', { name: 'Criar teste' }));
 
-    expect(assessmentApi.create).toHaveBeenCalledWith({
+    await waitFor(() => expect(assessmentApi.create).toHaveBeenCalledWith({
       titulo: 'Back-end Java', stack: 'Java', nivel: 'junior', totalPerguntas: 8,
       descricaoVaga: null, perguntasFixas: ['Fale de um projeto seu.'],
-    });
+    }));
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/empresa/testes/novo-1', { replace: true, state: { sucesso: 'Teste criado.' } }));
   });
 
