@@ -19,6 +19,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import com.guilherme.entrevistaia.entity.TamanhoEmpresa;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +36,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -94,6 +97,35 @@ class CompanyControllerTest {
                 .with(authentication(auth(recrutador))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.logoId").value(logoId.toString()));
+    }
+
+    @Test
+    void patchPerfil_repassaOsCamposEDevolveOPerfil() throws Exception {
+        acme.setSite("https://acme.com");
+        acme.setTamanho(TamanhoEmpresa.ATE_10);
+        when(companyService.atualizarPerfil(any(), eq("acme.com"), eq("Varejo"), eq(TamanhoEmpresa.ATE_10), eq(null)))
+            .thenReturn(acme);
+
+        mockMvc.perform(patch("/company/perfil").with(authentication(auth(recrutador)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"site": "acme.com", "setor": "Varejo", "tamanho": "ATE_10"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.perfil.site").value("https://acme.com"))
+            .andExpect(jsonPath("$.perfil.tamanho").value("ATE_10"));
+    }
+
+    @Test
+    void patchPerfil_tamanhoForaDaListaDa400() throws Exception {
+        mockMvc.perform(patch("/company/perfil").with(authentication(auth(recrutador)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"tamanho": "GIGANTE"}
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("INVALID_REQUEST_BODY"));
+        verifyNoInteractions(companyService);
     }
 
     @Test

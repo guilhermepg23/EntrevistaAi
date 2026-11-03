@@ -66,3 +66,32 @@ Cada etapa é publicada e conferida pelo usuário na Vercel antes da seguinte.
 - **Testes:** os testes do back (238, com Testcontainers e a V7 aplicada) e do front (247) passam.
 - **API local:** passou no smoke, que cobre upload, leitura pública, recusa de SVG, troca e remoção.
 - **Não testado:** a redução da imagem pelo canvas não roda no jsdom, então só vai ser vista no navegador.
+
+Publicada no commit c39a2d5 e **validada pelo usuário na Vercel** em 2026-11-03.
+
+### Etapa 2: implementada em 2026-11-03
+
+**Backend:**
+- **Migration V8:** adiciona `site`, `setor`, `tamanho` (com check) e `cidade` em `companies`, mais o enum `TamanhoEmpresa`.
+- **Rota do perfil:** `PATCH /company/perfil`, só para ADMIN. Vazio ou null apaga o campo.
+- **Validação do site:** `normalizarSite` aceita só http(s) com host de verdade. Sem esquema, o site ganha `https://`. São recusados `javascript:`, `data:`, `ftp:`, `localhost` e endereços com usuário e senha (erro `COMPANY_SITE_INVALID`).
+- **Respostas:** o `CompanyProfileResponse` vai aninhado em `CompanyResponse.perfil` e em `CandidateAssessmentInviteResponse.perfilEmpresa`.
+
+**Front:**
+- **Configurações:** `PerfilEmpresaForm` ganhou a seção "Perfil público". O recrutador comum só vê os dados, e o erro do site aparece junto do campo.
+- **Convite:** o bloco "Sobre a empresa" do `ConviteDescricoes` mostra setor, tamanho, cidade e o site, que abre em outra aba com `rel="noopener noreferrer nofollow"`. O bloco aparece mesmo quando só o perfil foi preenchido.
+
+**Verificação:**
+- **Testes:** os testes do back (244, com a V8 aplicada no Testcontainers) e do front (253) passam.
+- **API local:** passou no smoke, com a V8 aplicada também no Postgres local.
+
+## Fechamento: v1.2.0 em 2026-11-03
+
+O usuário pediu, em 2026-11-03, que tudo o que foi feito até aqui virasse a nova versão, para voltar o foco à área do candidato. A **v1.2.0** saiu com:
+- os blocos de qualidade 1 a 3;
+- a etapa 1 (logo da empresa);
+- a etapa 2 (perfil público).
+
+A versão foi atualizada no pom e no package.json, e o README ganhou a seção da v1.2.
+
+**Adiado** (sem data): etapa 3 (foto dos recrutadores), etapa 4 (cor da marca) e etapa 5 (chatbot de suporte). As decisões acima continuam valendo quando forem retomadas.

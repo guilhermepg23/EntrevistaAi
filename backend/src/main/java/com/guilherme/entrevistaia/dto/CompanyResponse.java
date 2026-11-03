@@ -16,10 +16,12 @@ public record CompanyResponse(
     OffsetDateTime criadoEm,
     PapelEmpresa meuPapel,
     long totalMembros,
-    UUID logoId
+    UUID logoId,
+    CompanyProfileResponse perfil
 ) {
     public static CompanyResponse from(Company company, PapelEmpresa meuPapel, long totalMembros) {
         return new CompanyResponse(company.getId(), company.getNome(), company.getCnpj(),
-            company.getDescricao(), company.getCriadoEm(), meuPapel, totalMembros, company.getLogoId());
+            company.getDescricao(), company.getCriadoEm(), meuPapel, totalMembros, company.getLogoId(),
+            CompanyProfileResponse.from(company));
     }
 }

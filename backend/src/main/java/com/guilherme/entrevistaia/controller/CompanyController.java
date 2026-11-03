@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.controller;
 
+import com.guilherme.entrevistaia.dto.CompanyProfileRequest;
 import com.guilherme.entrevistaia.dto.CompanyRequest;
 import com.guilherme.entrevistaia.dto.CompanyResponse;
 import com.guilherme.entrevistaia.dto.CreateTeamInviteRequest;
@@ -59,6 +60,16 @@ public class CompanyController {
     public ResponseEntity<CompanyResponse> update(@RequestBody @Valid CompanyRequest request,
                                                   @AuthenticationPrincipal User user) {
         Company company = companyService.atualizarEmpresa(user, request.nome(), request.cnpj(), request.descricao());
+        return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
+            companyService.totalMembros(company)));
+    }
+
+    // PATCH /company/perfil — ADMIN edita site, setor, tamanho e cidade.
+    @PatchMapping("/perfil")
+    public ResponseEntity<CompanyResponse> updateProfile(@RequestBody @Valid CompanyProfileRequest request,
+                                                         @AuthenticationPrincipal User user) {
+        Company company = companyService.atualizarPerfil(user, request.site(), request.setor(),
+            request.tamanho(), request.cidade());
         return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
             companyService.totalMembros(company)));
     }

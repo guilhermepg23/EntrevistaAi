@@ -6,6 +6,7 @@ import com.guilherme.entrevistaia.dto.TeamInviteResponse;
 import com.guilherme.entrevistaia.entity.Company;
 import com.guilherme.entrevistaia.entity.CompanyInvite;
 import com.guilherme.entrevistaia.entity.PapelEmpresa;
+import com.guilherme.entrevistaia.entity.TamanhoEmpresa;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.CompanyRuleException;
@@ -25,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -135,6 +138,50 @@ public class CompanyService {
         companyRepository.save(company);
         log.info("[COMPANY_UPDATED] companyId={} por={}", company.getId(), admin.getId());
         return company;
+    }
+
+    // PATCH /company/perfil — só ADMIN. Vazio ou null apaga o campo.
+    @Transactional
+    public Company atualizarPerfil(User principal, String site, String setor,
+                                   TamanhoEmpresa tamanho, String cidade) {
+        User admin = exigirAdmin(principal);
+        Company company = admin.getCompany();
+        company.setSite(normalizarSite(site));
+        company.setSetor(vazioViraNull(setor));
+        company.setTamanho(tamanho);
+        company.setCidade(vazioViraNull(cidade));
+        companyRepository.save(company);
+        log.info("[COMPANY_PROFILE_UPDATED] companyId={} por={}", company.getId(), admin.getId());
+        return company;
+    }
+
+    // O site vira link no convite: só http(s), com um host de verdade. Sem
+    // esquema ("acme.com.br") ganha https://. Recusa javascript:, data: e afins.
+    static String normalizarSite(String site) {
+        String s = vazioViraNull(site);
+        if (s == null) {
+            return null;
+        }
+        if (!s.matches("(?i)^[a-z][a-z0-9+.-]*://.*")) {
+            s = "https://" + s;
+        }
+        try {
+            URI uri = new URI(s);
+            String esquema = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+            String host = uri.getHost();
+            if (!(esquema.equals("http") || esquema.equals("https"))
+                || host == null || !host.contains(".") || host.startsWith(".") || host.endsWith(".")
+                || uri.getUserInfo() != null) {
+                throw CompanyRuleException.siteInvalido();
+            }
+            return s;
+        } catch (URISyntaxException e) {
+            throw CompanyRuleException.siteInvalido();
+        }
+    }
+
+    private static String vazioViraNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 
     // PUT /company/logo — só ADMIN. Salva a imagem nova antes de apagar a

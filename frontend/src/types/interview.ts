@@ -177,6 +177,17 @@ export interface Company {
   totalMembros: number;
   // Logo (GET /images/{id}); null sem logo. Respostas antigas não trazem o campo.
   logoId?: string | null;
+  perfil?: PerfilEmpresa;
+}
+
+export type TamanhoEmpresa = 'ATE_10' | 'DE_11_A_50' | 'DE_51_A_200' | 'DE_201_A_1000' | 'MAIS_DE_1000';
+
+// Perfil público da empresa (v1.2): o candidato vê no convite. Tudo opcional.
+export interface PerfilEmpresa {
+  site: string | null;
+  setor: string | null;
+  tamanho: TamanhoEmpresa | null;
+  cidade: string | null;
 }
 
 // GET /company/members — `voce` marca a linha do próprio usuário logado.
@@ -320,6 +331,7 @@ export interface CandidateAssessmentInvite {
   interviewId: string | null;
   interviewStatus: InterviewStatus | null;
   logoEmpresaId?: string | null;
+  perfilEmpresa?: PerfilEmpresa | null;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API).

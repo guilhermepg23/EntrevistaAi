@@ -5,6 +5,7 @@ import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
 import { LogoEmpresa } from '../components/LogoEmpresa';
 import { LogoUpload } from '../components/LogoUpload';
+import { PerfilEmpresaForm } from '../components/PerfilEmpresaForm';
 import { ErroCarga } from '../components/ErroCarga';
 import { Carregando } from '../components/HintServidor';
 import { formatarData } from '../lib/datas';
@@ -60,6 +61,20 @@ export function CompanySettingsPage() {
             setCompany(await companyApi.update(nome, cnpj, descricao));
             setSalvo(true);
           }}
+        />
+      </section>
+
+      <section className="conta-secao">
+        <h2>Perfil público</h2>
+        <p className="painel-texto">
+          {ehAdmin
+            ? 'Os candidatos veem estes dados no convite do teste, junto com o texto "Sobre a empresa".'
+            : 'Só administradores editam o perfil público.'}
+        </p>
+        <PerfilEmpresaForm
+          inicial={company.perfil}
+          somenteLeitura={!ehAdmin}
+          onSalvar={async perfil => setCompany(await companyApi.updatePerfil(perfil))}
         />
       </section>
 

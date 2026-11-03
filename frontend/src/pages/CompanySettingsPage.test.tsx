@@ -4,11 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CompanySettingsPage } from './CompanySettingsPage';
 import { renderWithProviders } from '../test-utils';
 import { companyApi } from '../api/companyApi';
+import { ApiError } from '../api/client';
 import { ImagemInvalida, prepararImagem } from '../lib/imagem';
 import type { Company } from '../types/interview';
 
 vi.mock('../api/companyApi', () => ({
-  companyApi: { get: vi.fn(), update: vi.fn(), uploadLogo: vi.fn(), removeLogo: vi.fn() },
+  companyApi: { get: vi.fn(), update: vi.fn(), updatePerfil: vi.fn(), uploadLogo: vi.fn(), removeLogo: vi.fn() },
 }));
 
 // O jsdom não tem canvas: a redução da imagem fica de fora, só o fluxo da tela é testado.
@@ -29,6 +30,7 @@ describe('CompanySettingsPage', () => {
   beforeEach(() => {
     vi.mocked(companyApi.get).mockReset().mockResolvedValue(acme);
     vi.mocked(companyApi.update).mockReset();
+    vi.mocked(companyApi.updatePerfil).mockReset();
     vi.mocked(companyApi.uploadLogo).mockReset();
     vi.mocked(companyApi.removeLogo).mockReset();
     vi.mocked(prepararImagem).mockReset();
@@ -60,6 +62,52 @@ describe('CompanySettingsPage', () => {
     expect(screen.getByText('Só administradores editam os dados da empresa.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enviar logo' })).not.toBeInTheDocument();
     expect(screen.getByText('Só administradores trocam a logo.')).toBeInTheDocument();
+  });
+
+  describe('perfil público', () => {
+    it('admin salva o perfil; vazio vai como null', async () => {
+      const user = userEvent.setup();
+      vi.mocked(companyApi.get).mockResolvedValue({
+        ...acme, perfil: { site: null, setor: 'Varejo', tamanho: null, cidade: null },
+      });
+      vi.mocked(companyApi.updatePerfil).mockImplementation(async p => ({ ...acme, perfil: p }));
+      render();
+
+      expect(await screen.findByLabelText('Setor (opcional)')).toHaveValue('Varejo');
+      await user.type(screen.getByLabelText('Site (opcional)'), 'acme.com.br');
+      await user.selectOptions(screen.getByLabelText('Tamanho (opcional)'), 'ATE_10');
+      await user.clear(screen.getByLabelText('Setor (opcional)'));
+      await user.click(screen.getByRole('button', { name: 'Salvar perfil' }));
+
+      expect(companyApi.updatePerfil).toHaveBeenCalledWith({
+        site: 'acme.com.br', setor: null, tamanho: 'ATE_10', cidade: null,
+      });
+      expect(await screen.findByText('Perfil público atualizado.')).toBeInTheDocument();
+    });
+
+    it('site recusado pelo servidor aparece junto do campo', async () => {
+      const user = userEvent.setup();
+      vi.mocked(companyApi.updatePerfil).mockRejectedValue(
+        new ApiError('Site inválido. Use um endereço como https://suaempresa.com.br.', 400, 'COMPANY_SITE_INVALID'),
+      );
+      render();
+
+      const site = await screen.findByLabelText('Site (opcional)');
+      await user.type(site, 'javascript:alert(1)');
+      await user.click(screen.getByRole('button', { name: 'Salvar perfil' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Site inválido');
+      expect(screen.getByLabelText(/Site \(opcional\)/)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('recrutador comum vê o perfil sem poder editar', async () => {
+      vi.mocked(companyApi.get).mockResolvedValue({ ...acme, meuPapel: 'RECRUTADOR' });
+      render();
+
+      expect(await screen.findByLabelText('Site (opcional)')).toHaveAttribute('readonly');
+      expect(screen.getByLabelText('Tamanho (opcional)')).toBeDisabled();
+      expect(screen.queryByRole('button', { name: 'Salvar perfil' })).not.toBeInTheDocument();
+    });
   });
 
   describe('logo', () => {

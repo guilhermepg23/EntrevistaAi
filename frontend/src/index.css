@@ -1435,6 +1435,35 @@ input[aria-invalid='true'] {
   color: var(--color-primary);
 }
 
+/* Perfil público da empresa dentro de "Sobre a empresa" (v1.2). */
+.perfil-empresa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0.5rem 0 0;
+}
+
+.perfil-empresa div { min-width: 0; }
+
+.perfil-empresa dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.perfil-empresa dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.perfil-empresa a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 .convite-descricoes p {
   margin: 0.45rem 0 0;
   font-size: 0.88rem;

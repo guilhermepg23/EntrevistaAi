@@ -1,6 +1,8 @@
 package com.guilherme.entrevistaia.controller;
 
 import com.guilherme.entrevistaia.dto.CandidateAssessmentInviteResponse;
+import com.guilherme.entrevistaia.dto.CompanyProfileResponse;
+import com.guilherme.entrevistaia.entity.TamanhoEmpresa;
 import com.guilherme.entrevistaia.entity.Company;
 import com.guilherme.entrevistaia.entity.PapelEmpresa;
 import com.guilherme.entrevistaia.entity.TipoConta;
@@ -115,13 +117,16 @@ class AssessmentControllerTest {
         UUID inviteId = UUID.randomUUID();
         when(assessmentService.conviteParaAceitar("abc")).thenReturn(new CandidateAssessmentInviteResponse(
             inviteId, "cand@x.com", "Acme", "Fintech de pagamentos.", "Backend Java", "Java", "pleno", 5,
-            "API de pagamentos em Java.", OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null, null));
+            "API de pagamentos em Java.", OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null, null,
+            new CompanyProfileResponse("https://acme.com", "Pagamentos", TamanhoEmpresa.DE_51_A_200, "São Paulo")));
 
         mockMvc.perform(get("/auth/assessment-invites/abc"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.inviteId").value(inviteId.toString()))
             .andExpect(jsonPath("$.nomeEmpresa").value("Acme"))
             .andExpect(jsonPath("$.descricaoEmpresa").value("Fintech de pagamentos."))
+            .andExpect(jsonPath("$.perfilEmpresa.site").value("https://acme.com"))
+            .andExpect(jsonPath("$.perfilEmpresa.tamanho").value("DE_51_A_200"))
             .andExpect(jsonPath("$.descricaoVaga").value("API de pagamentos em Java."));
     }
 

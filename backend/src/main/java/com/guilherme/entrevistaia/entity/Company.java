@@ -38,6 +38,20 @@ public class Company {
     @Column(name = "logo_id")
     private UUID logoId;
 
+    // Perfil público (v1.2), todo opcional. O site é sempre http(s), já
+    // normalizado pelo CompanyService (vira link no convite).
+    private String site;
+
+    @Column(length = 80)
+    private String setor;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TamanhoEmpresa tamanho;
+
+    @Column(length = 120)
+    private String cidade;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -55,4 +69,16 @@ public class Company {
 
     public UUID getLogoId() { return logoId; }
     public void setLogoId(UUID logoId) { this.logoId = logoId; }
+
+    public String getSite() { return site; }
+    public void setSite(String site) { this.site = site; }
+
+    public String getSetor() { return setor; }
+    public void setSetor(String setor) { this.setor = setor; }
+
+    public TamanhoEmpresa getTamanho() { return tamanho; }
+    public void setTamanho(TamanhoEmpresa tamanho) { this.tamanho = tamanho; }
+
+    public String getCidade() { return cidade; }
+    public void setCidade(String cidade) { this.cidade = cidade; }
 }

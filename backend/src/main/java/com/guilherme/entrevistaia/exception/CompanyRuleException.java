@@ -55,6 +55,11 @@ public class CompanyRuleException extends AppException {
             "Você não pode remover a si mesmo da equipe.", HttpStatus.CONFLICT);
     }
 
+    public static CompanyRuleException siteInvalido() {
+        return new CompanyRuleException("COMPANY_SITE_INVALID",
+            "Site inválido. Use um endereço como https://suaempresa.com.br.", HttpStatus.BAD_REQUEST);
+    }
+
     public static CompanyRuleException conviteInvalido() {
         return new CompanyRuleException("COMPANY_INVITE_INVALID",
             "Este convite não é válido: pode ter expirado, sido cancelado ou já usado.",

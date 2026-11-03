@@ -175,6 +175,33 @@ tipo no Spring Security: conta do tipo errado recebe 403 `ACCESS_DENIED_ACCOUNT_
 
 Histórico das etapas e decisões em [docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md).
 
+## v1.2: qualidade e identidade da empresa
+
+- **Qualidade** (três blocos, saídos de uma auditoria de rapidez, uso, confiança,
+  acessibilidade e falhas):
+  - **Nada se perde:** rascunho da resposta e do formulário de teste salvo no navegador;
+    erro de rede com "Tentar de novo"; depois do login, volta para a página pedida;
+    página 404.
+  - **Acessibilidade:** contraste ≥ 4,5:1, `role="alert"`/`status`, alvos de toque de
+    40 px e aviso de "servidor acordando" no cold start.
+  - **Erros e avisos:** erros mostrados junto do campo e confirmações de sucesso; o
+    app avisa quando há uma versão nova publicada.
+- **Logo da empresa:** o ADMIN envia a logo em Configurações. O front reduz a imagem
+  para 512 px e a converte em WebP antes do envio.
+  - **Armazenamento:** o backend guarda a imagem no Postgres (tabela `imagens`, até
+    300 KB) e confere o tipo pelos bytes. Aceita PNG, JPEG e WebP, mas não SVG.
+  - **Leitura:** pública, em `GET /images/{id}`, com cache de 1 ano. O id muda a cada
+    troca.
+  - **Onde aparece:** no header do modo empresa, no convite, na aba Convites, no teste e
+    no aceite do convite de equipe.
+- **Perfil público:** site, setor, tamanho e cidade, editados pelo ADMIN
+  (`PATCH /company/perfil`) e mostrados ao candidato em "Sobre a empresa".
+  - **Validação do site:** o backend aceita só endereços http(s).
+  - **Recusados:** `javascript:`, `data:`, `localhost` e endereços com usuário e senha.
+- **Banco:** migrations V7 (imagens e logo) e V8 (perfil).
+
+Plano e decisões em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md).
+
 ## Deploy
 
 Publicado e validado ponta a ponta em produção:
@@ -205,12 +232,14 @@ Publicado e validado ponta a ponta em produção:
 
 ## Próximos passos
 
-A v1.1.0 (modo empresa) está concluída; o histórico fica em
-[docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md). Próximos passos:
+A v1.2.0 está concluída. A próxima versão volta o foco para a área do candidato.
 
-1. **Assinatura**: limitar ou cobrar os treinos (`origem=TREINO`) e escolher o provedor de
+Pendências:
+1. **Adiado da v1.2:** foto dos recrutadores, cor da marca e chatbot de suporte. O plano
+   está em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md).
+2. **Assinatura:** limitar ou cobrar os treinos (`origem=TREINO`) e escolher o provedor de
    pagamento.
-2. **SMTP no Render**, para os convites e a recuperação de senha chegarem por email.
+3. **SMTP no Render:** para os convites e a recuperação de senha chegarem por email.
 
 ## Como rodar tudo localmente (um comando)
 

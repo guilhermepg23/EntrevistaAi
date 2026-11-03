@@ -1,7 +1,15 @@
 import type {
   AssessmentInviteStatus, Dificuldade, InterviewStatus, NivelDominio, NivelPercebido, PapelEmpresa,
-  Recomendacao, TipoConta, VeredictoCurriculo,
+  Recomendacao, TamanhoEmpresa, TipoConta, VeredictoCurriculo,
 } from './types/interview';
+
+export const tamanhoEmpresaLabel: Record<TamanhoEmpresa, string> = {
+  ATE_10: 'Até 10 pessoas',
+  DE_11_A_50: '11 a 50 pessoas',
+  DE_51_A_200: '51 a 200 pessoas',
+  DE_201_A_1000: '201 a 1.000 pessoas',
+  MAIS_DE_1000: 'Mais de 1.000 pessoas',
+};
 
 // Traduz os valores de enum que vêm crus da API (sempre em maiúsculas, ver
 // types/interview.ts) para o rótulo exibido na tela — mantém os componentes

@@ -1,4 +1,4 @@
-import type { Company, CreatedTeamInvite, PapelEmpresa, TeamInvite, TeamMember } from '../types/interview';
+import type { Company, CreatedTeamInvite, PapelEmpresa, PerfilEmpresa, TeamInvite, TeamMember } from '../types/interview';
 import { API_BASE, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
 
 // Modo empresa (rotas /company/**, só recrutador). Quais ações exigem ADMIN é
@@ -22,6 +22,14 @@ export const companyApi = {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ nome, cnpj, descricao }),
+    }).then(res => handleResponse<Company>(res)),
+
+  // Campo vazio apaga o salvo. Site inválido = 400 COMPANY_SITE_INVALID.
+  updatePerfil: (perfil: PerfilEmpresa) =>
+    apiFetch(`${API_BASE}/company/perfil`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify(perfil),
     }).then(res => handleResponse<Company>(res)),
 
   // A imagem já vem reduzida (lib/imagem.prepararImagem). Só ADMIN.

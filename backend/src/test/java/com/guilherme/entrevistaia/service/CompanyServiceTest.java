@@ -6,6 +6,7 @@ import com.guilherme.entrevistaia.entity.CompanyInvite;
 import com.guilherme.entrevistaia.entity.Imagem;
 import com.guilherme.entrevistaia.exception.ImageRuleException;
 import com.guilherme.entrevistaia.entity.PapelEmpresa;
+import com.guilherme.entrevistaia.entity.TamanhoEmpresa;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.exception.CompanyRuleException;
@@ -100,6 +101,51 @@ class CompanyServiceTest {
         assertThatThrownBy(() -> service.atualizarEmpresa(comum, "Outra", null, "x"))
             .isInstanceOf(CompanyRuleException.class);
         assertThat(acme.getNome()).isEqualTo("Acme");
+    }
+
+    // ----------------------------------------------------------- perfil
+
+    @Test
+    void atualizarPerfil_salvaComTrimEVazioApaga() {
+        service.atualizarPerfil(admin, " https://acme.com.br ", " Pagamentos ", TamanhoEmpresa.DE_11_A_50, " Recife ");
+        assertThat(acme.getSite()).isEqualTo("https://acme.com.br");
+        assertThat(acme.getSetor()).isEqualTo("Pagamentos");
+        assertThat(acme.getTamanho()).isEqualTo(TamanhoEmpresa.DE_11_A_50);
+        assertThat(acme.getCidade()).isEqualTo("Recife");
+
+        service.atualizarPerfil(admin, "  ", "", null, null);
+        assertThat(acme.getSite()).isNull();
+        assertThat(acme.getSetor()).isNull();
+        assertThat(acme.getTamanho()).isNull();
+        assertThat(acme.getCidade()).isNull();
+    }
+
+    @Test
+    void atualizarPerfil_recrutadorComumNaoEdita() {
+        User comum = membro("Bia", PapelEmpresa.RECRUTADOR, acme);
+
+        assertThatThrownBy(() -> service.atualizarPerfil(comum, null, "x", null, null))
+            .isInstanceOf(CompanyRuleException.class);
+        assertThat(acme.getSetor()).isNull();
+    }
+
+    @Test
+    void normalizarSite_semEsquemaGanhaHttps() {
+        assertThat(CompanyService.normalizarSite("acme.com.br")).isEqualTo("https://acme.com.br");
+        assertThat(CompanyService.normalizarSite("http://acme.com/vagas?x=1")).isEqualTo("http://acme.com/vagas?x=1");
+        assertThat(CompanyService.normalizarSite("HTTPS://Acme.com")).isEqualTo("HTTPS://Acme.com");
+    }
+
+    @Test
+    void normalizarSite_recusaEsquemaPerigosoOuHostInvalido() {
+        for (String ruim : List.of("javascript:alert(1)", "javascript://acme.com/%0aalert(1)", "data:text/html,oi",
+                                   "ftp://acme.com", "https://localhost", "acme", "https://usuario:senha@acme.com",
+                                   "https://acme .com", "https://.com")) {
+            assertThatThrownBy(() -> CompanyService.normalizarSite(ruim))
+                .as(ruim)
+                .isInstanceOf(CompanyRuleException.class)
+                .extracting("errorCode").isEqualTo("COMPANY_SITE_INVALID");
+        }
     }
 
     // ------------------------------------------------------------- logo
