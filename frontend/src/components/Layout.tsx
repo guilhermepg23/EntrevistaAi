@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { limparRascunhos } from '../lib/rascunho';
 import { AvisoNovaVersao } from './AvisoNovaVersao';
+import { LogoEmpresa } from './LogoEmpresa';
 
 // Rotas onde "Voltar" não faz sentido: a home é a raiz de quem está logado, e
 // o login é pra onde o ProtectedRoute manda quem não está — voltar dali só
@@ -79,6 +80,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {modoEmpresa && (
               <span className="selo-empresa">
                 Modo empresa
+                {company && <LogoEmpresa logoId={company.logoId} nome={company.nome} tamanho="pequena" />}
                 {company && <span className="selo-empresa-nome">{company.nome}</span>}
               </span>
             )}

@@ -125,7 +125,7 @@ class AuthControllerTest {
     @Test
     void teamInvite_ehPublicoEMostraAEmpresa() throws Exception {
         when(companyService.conviteParaAceitar("tok")).thenReturn(new PublicTeamInviteResponse(
-            "novo@empresa.com", "Acme", "Ana", OffsetDateTime.now().plusDays(3)));
+            "novo@empresa.com", "Acme", "Ana", OffsetDateTime.now().plusDays(3), null));
 
         mockMvc.perform(get("/auth/team-invites/tok"))
             .andExpect(status().isOk())

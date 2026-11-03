@@ -3,6 +3,8 @@ import { Navigate } from 'react-router-dom';
 import { companyApi } from '../api/companyApi';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
+import { LogoEmpresa } from '../components/LogoEmpresa';
+import { LogoUpload } from '../components/LogoUpload';
 import { ErroCarga } from '../components/ErroCarga';
 import { Carregando } from '../components/HintServidor';
 import { formatarData } from '../lib/datas';
@@ -27,6 +29,18 @@ export function CompanySettingsPage() {
         <p className="painel-sobretitulo">Configurações da empresa</p>
         <h1>{company.nome}</h1>
       </div>
+
+      <section className="conta-secao">
+        <h2>Logo</h2>
+        {ehAdmin ? (
+          <LogoUpload company={company} onAtualizada={setCompany} />
+        ) : (
+          <div className="logo-upload">
+            <LogoEmpresa logoId={company.logoId} nome={company.nome} tamanho="grande" />
+            <p className="painel-texto">Só administradores trocam a logo.</p>
+          </div>
+        )}
+      </section>
 
       <section className="conta-secao">
         <h2>Dados da empresa</h2>

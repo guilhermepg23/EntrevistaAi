@@ -13,10 +13,13 @@ import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.service.CompanyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,6 +59,23 @@ public class CompanyController {
     public ResponseEntity<CompanyResponse> update(@RequestBody @Valid CompanyRequest request,
                                                   @AuthenticationPrincipal User user) {
         Company company = companyService.atualizarEmpresa(user, request.nome(), request.cnpj(), request.descricao());
+        return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
+            companyService.totalMembros(company)));
+    }
+
+    // PUT /company/logo (multipart, campo "arquivo") — ADMIN troca a logo.
+    // PNG, JPEG ou WebP, até 300 KB (o front já reduz antes de enviar).
+    @PutMapping(value = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CompanyResponse> updateLogo(@RequestParam("arquivo") MultipartFile arquivo,
+                                                      @AuthenticationPrincipal User user) throws IOException {
+        Company company = companyService.trocarLogo(user, arquivo.getBytes());
+        return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
+            companyService.totalMembros(company)));
+    }
+
+    @DeleteMapping("/logo")
+    public ResponseEntity<CompanyResponse> removeLogo(@AuthenticationPrincipal User user) {
+        Company company = companyService.removerLogo(user);
         return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
             companyService.totalMembros(company)));
     }

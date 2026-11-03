@@ -115,7 +115,7 @@ class AssessmentControllerTest {
         UUID inviteId = UUID.randomUUID();
         when(assessmentService.conviteParaAceitar("abc")).thenReturn(new CandidateAssessmentInviteResponse(
             inviteId, "cand@x.com", "Acme", "Fintech de pagamentos.", "Backend Java", "Java", "pleno", 5,
-            "API de pagamentos em Java.", OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null));
+            "API de pagamentos em Java.", OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null, null));
 
         mockMvc.perform(get("/auth/assessment-invites/abc"))
             .andExpect(status().isOk())

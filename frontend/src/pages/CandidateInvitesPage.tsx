@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
+import { LogoEmpresa } from '../components/LogoEmpresa';
 import { Carregando } from '../components/HintServidor';
 import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
@@ -50,6 +51,7 @@ export function CandidateInvitesPage() {
     return (
       <li key={convite.inviteId} className="painel-card convite-card">
         <div className="convite-card-topo">
+          <LogoEmpresa logoId={convite.logoEmpresaId} nome={convite.nomeEmpresa} />
           <div className="teste-empresa-info">
             <span className="teste-empresa-nome">{convite.nomeEmpresa}</span>
             <span className="convite-card-titulo">{convite.titulo}</span>

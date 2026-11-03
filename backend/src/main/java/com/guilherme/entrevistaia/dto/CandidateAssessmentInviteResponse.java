@@ -25,7 +25,8 @@ public record CandidateAssessmentInviteResponse(
     OffsetDateTime expiraEm,
     String status,
     UUID interviewId,
-    String interviewStatus
+    String interviewStatus,
+    UUID logoEmpresaId
 ) {
     public static CandidateAssessmentInviteResponse from(AssessmentInvite invite) {
         Assessment a = invite.getAssessment();
@@ -35,7 +36,8 @@ public record CandidateAssessmentInviteResponse(
             a.getExpiraEm(),
             AssessmentInviteResponse.status(invite),
             invite.getInterview() != null ? invite.getInterview().getId() : null,
-            invite.getInterview() != null ? invite.getInterview().getStatus().name() : null
+            invite.getInterview() != null ? invite.getInterview().getStatus().name() : null,
+            a.getCompany().getLogoId()
         );
     }
 }

@@ -33,6 +33,11 @@ public class Company {
 
     private OffsetDateTime criadoEm;
 
+    // Logo da empresa (v1.2), opcional: id de uma Imagem, servida em
+    // GET /images/{id}. Só o id, sem relação JPA, para não carregar os bytes.
+    @Column(name = "logo_id")
+    private UUID logoId;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -47,4 +52,7 @@ public class Company {
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }
+
+    public UUID getLogoId() { return logoId; }
+    public void setLogoId(UUID logoId) { this.logoId = logoId; }
 }

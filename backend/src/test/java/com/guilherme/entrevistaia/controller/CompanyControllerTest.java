@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -76,6 +79,28 @@ class CompanyControllerTest {
         mockMvc.perform(get("/company").with(authentication(auth(candidato))))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.errorCode").value("ACCESS_DENIED_ACCOUNT_TYPE"));
+        verifyNoInteractions(companyService);
+    }
+
+    @Test
+    void putLogo_enviaOsBytesEDevolveOLogoId() throws Exception {
+        UUID logoId = UUID.randomUUID();
+        acme.setLogoId(logoId);
+        byte[] bytes = {1, 2, 3};
+        when(companyService.trocarLogo(any(), eq(bytes))).thenReturn(acme);
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/company/logo")
+                .file(new MockMultipartFile("arquivo", "logo.webp", "image/webp", bytes))
+                .with(authentication(auth(recrutador))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.logoId").value(logoId.toString()));
+    }
+
+    @Test
+    void putLogo_semLoginNaoPassa() throws Exception {
+        mockMvc.perform(multipart(HttpMethod.PUT, "/company/logo")
+                .file(new MockMultipartFile("arquivo", new byte[]{1})))
+            .andExpect(status().isForbidden());
         verifyNoInteractions(companyService);
     }
 

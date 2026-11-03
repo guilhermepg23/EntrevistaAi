@@ -124,6 +124,13 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
     }
 
+    @ExceptionHandler(ImageRuleException.class)
+    public ResponseEntity<ErrorResponse> handleImageRule(ImageRuleException ex) {
+        log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(ex.getStatus())
+            .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    }
+
     @ExceptionHandler(AssessmentRuleException.class)
     public ResponseEntity<ErrorResponse> handleAssessmentRule(AssessmentRuleException ex) {
         log.info("[{}] {}", ex.getErrorCode(), ex.getMessage());

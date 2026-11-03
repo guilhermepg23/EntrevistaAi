@@ -12,7 +12,8 @@ import java.util.UUID;
 // quebrando fora da transação) e desacopla o formato da API do schema do banco.
 //
 // origem (TREINO / CONVITE) é o que o front usa pra separar o histórico e
-// esconder o feedback. nomeEmpresa e tituloTeste só vêm num CONVITE.
+// esconder o feedback. nomeEmpresa, tituloTeste e logoEmpresaId só vêm num
+// CONVITE (logoEmpresaId fica null se a empresa não tem logo).
 public record InterviewResponse(
     UUID id,
     String stack,
@@ -23,7 +24,8 @@ public record InterviewResponse(
     OffsetDateTime criadoEm,
     String origem,
     String nomeEmpresa,
-    String tituloTeste
+    String tituloTeste,
+    UUID logoEmpresaId
 ) {
     public static InterviewResponse from(Interview interview) {
         // perguntasRespondidas não é uma coluna do banco: é calculado aqui,
@@ -37,7 +39,8 @@ public record InterviewResponse(
             interview.getStatus().name(), interview.getTotalPerguntas(),
             (int) respondidas, interview.getCriadoEm(), interview.getOrigem().name(),
             assessment != null ? assessment.getCompany().getNome() : null,
-            assessment != null ? assessment.getTitulo() : null
+            assessment != null ? assessment.getTitulo() : null,
+            assessment != null ? assessment.getCompany().getLogoId() : null
         );
     }
 }

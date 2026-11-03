@@ -5,6 +5,7 @@ import { authApi } from '../api/authApi';
 import { ApiError } from '../api/client';
 import { ErroCarga } from '../components/ErroCarga';
 import { CampoErro } from '../components/CampoErro';
+import { LogoEmpresa } from '../components/LogoEmpresa';
 import { Carregando } from '../components/HintServidor';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
@@ -90,7 +91,10 @@ export function TeamInviteAcceptPage() {
   return (
     <div className="auth-page modo-empresa">
       <form className="auth-form" onSubmit={handleSubmit}>
-        <p className="selo-empresa selo-empresa-claro">Convite de equipe</p>
+        <div className="convite-empresa-cabecalho">
+          <LogoEmpresa logoId={convite.logoId} nome={convite.nomeEmpresa} />
+          <p className="selo-empresa selo-empresa-claro">Convite de equipe</p>
+        </div>
         <h1>Entrar na equipe da {convite.nomeEmpresa}</h1>
         <p className="auth-intro">
           {convite.convidadoPor ? `${convite.convidadoPor} convidou você` : 'Você foi convidado'} para

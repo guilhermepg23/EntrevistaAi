@@ -73,6 +73,8 @@ public class SecurityConfig {
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/interviews/public/**").permitAll()
+                // Logo da empresa: aparece no convite de teste, aberto antes do login.
+                .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                 // Rotas por tipo de conta (ver TipoConta / UserAuthorities). A
                 // ordem importa: o Spring usa a PRIMEIRA regra que casa, por isso
                 // o permitAll de /interviews/public/** fica acima. Entrevista e

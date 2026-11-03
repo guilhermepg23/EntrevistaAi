@@ -3,6 +3,8 @@ package com.guilherme.entrevistaia.service;
 import com.guilherme.entrevistaia.dto.CreatedTeamInviteResponse;
 import com.guilherme.entrevistaia.entity.Company;
 import com.guilherme.entrevistaia.entity.CompanyInvite;
+import com.guilherme.entrevistaia.entity.Imagem;
+import com.guilherme.entrevistaia.exception.ImageRuleException;
 import com.guilherme.entrevistaia.entity.PapelEmpresa;
 import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
@@ -51,6 +53,7 @@ class CompanyServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private TeamInviteMailer mailer;
+    @Mock private ImageService imageService;
 
     private CompanyService service;
     private Company acme;
@@ -60,7 +63,7 @@ class CompanyServiceTest {
     void setUp() {
         service = new CompanyService(companyRepository, inviteRepository, assessmentRepository,
             assessmentInviteRepository, userRepository,
-            passwordEncoder, mailer, "https://app.exemplo.com/");
+            passwordEncoder, mailer, imageService, "https://app.exemplo.com/");
         acme = new Company();
         acme.setId(UUID.randomUUID());
         acme.setNome("Acme");
@@ -97,6 +100,55 @@ class CompanyServiceTest {
         assertThatThrownBy(() -> service.atualizarEmpresa(comum, "Outra", null, "x"))
             .isInstanceOf(CompanyRuleException.class);
         assertThat(acme.getNome()).isEqualTo("Acme");
+    }
+
+    // ------------------------------------------------------------- logo
+
+    @Test
+    void trocarLogo_salvaANovaEApagaAAntiga() {
+        UUID antiga = UUID.randomUUID();
+        acme.setLogoId(antiga);
+        Imagem nova = new Imagem();
+        nova.setId(UUID.randomUUID());
+        byte[] bytes = {1, 2, 3};
+        when(imageService.salvar(bytes)).thenReturn(nova);
+
+        service.trocarLogo(admin, bytes);
+
+        assertThat(acme.getLogoId()).isEqualTo(nova.getId());
+        verify(imageService).apagar(antiga);
+    }
+
+    @Test
+    void trocarLogo_imagemRecusadaMantemALogoAtual() {
+        UUID atual = UUID.randomUUID();
+        acme.setLogoId(atual);
+        when(imageService.salvar(any())).thenThrow(ImageRuleException.formatoInvalido());
+
+        assertThatThrownBy(() -> service.trocarLogo(admin, new byte[]{9}))
+            .isInstanceOf(ImageRuleException.class);
+        assertThat(acme.getLogoId()).isEqualTo(atual);
+        verify(imageService, never()).apagar(any());
+    }
+
+    @Test
+    void trocarLogo_recrutadorComumNaoTroca() {
+        User comum = membro("Bia", PapelEmpresa.RECRUTADOR, acme);
+
+        assertThatThrownBy(() -> service.trocarLogo(comum, new byte[]{1}))
+            .isInstanceOf(CompanyRuleException.class);
+        verify(imageService, never()).salvar(any());
+    }
+
+    @Test
+    void removerLogo_desvinculaEApaga() {
+        UUID atual = UUID.randomUUID();
+        acme.setLogoId(atual);
+
+        service.removerLogo(admin);
+
+        assertThat(acme.getLogoId()).isNull();
+        verify(imageService).apagar(atual);
     }
 
     // ---------------------------------------------------------- fundação

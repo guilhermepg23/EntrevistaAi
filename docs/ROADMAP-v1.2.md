@@ -46,3 +46,23 @@ Pedido em 2026-11-03. É a próxima versão depois da v1.1.0. Os blocos de quali
    - capturas.
 
 Cada etapa é publicada e conferida pelo usuário na Vercel antes da seguinte.
+
+## Andamento
+
+### Etapa 1: implementada em 2026-11-03
+
+**Backend:**
+- **Migration V7:** cria a tabela `imagens` e a coluna `companies.logo_id`, com FK `on delete set null`.
+- **Imagens:** `ImageService` detecta o tipo pelos primeiros bytes (PNG, JPEG ou WebP) e recusa qualquer coisa acima de 300 KB. `GET /images/{id}` é público e responde com `max-age` de 1 ano e `immutable`.
+- **Rotas da logo:** `PUT /company/logo` (multipart, campo `arquivo`) e `DELETE /company/logo`, só para ADMIN. Ao trocar, a imagem nova é salva antes de a antiga ser apagada.
+- **Respostas:** o `logoId` foi para `CompanyResponse` e `PublicTeamInviteResponse`, e o `logoEmpresaId` para `CandidateAssessmentInviteResponse` e `InterviewResponse`.
+
+**Front:**
+- **Imagem e logo:** `lib/imagem.ts` reduz a imagem para 512 px sem cortar e converte para WebP, baixando a qualidade se passar do limite. `LogoEmpresa` mostra a logo, ou a inicial do nome quando não há logo ou ela falha ao carregar.
+- **Configurações:** `LogoUpload` fica em Configurações da empresa.
+- **Onde a logo aparece:** no selo do header, no convite do teste, na aba Convites, no banner do teste e no aceite do convite de equipe.
+
+**Verificação:**
+- **Testes:** os testes do back (238, com Testcontainers e a V7 aplicada) e do front (247) passam.
+- **API local:** passou no smoke, que cobre upload, leitura pública, recusa de SVG, troca e remoção.
+- **Não testado:** a redução da imagem pelo canvas não roda no jsdom, então só vai ser vista no navegador.

@@ -1,5 +1,5 @@
 import type { Company, CreatedTeamInvite, PapelEmpresa, TeamInvite, TeamMember } from '../types/interview';
-import { API_BASE, apiFetch, authHeaders, handleResponse } from './client';
+import { API_BASE, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
 
 // Modo empresa (rotas /company/**, só recrutador). Quais ações exigem ADMIN é
 // regra do backend; um RECRUTADOR que tentar recebe 403 COMPANY_ADMIN_REQUIRED.
@@ -22,6 +22,23 @@ export const companyApi = {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ nome, cnpj, descricao }),
+    }).then(res => handleResponse<Company>(res)),
+
+  // A imagem já vem reduzida (lib/imagem.prepararImagem). Só ADMIN.
+  uploadLogo: (imagem: Blob) => {
+    const form = new FormData();
+    form.append('arquivo', imagem, 'logo');
+    return apiFetch(`${API_BASE}/company/logo`, {
+      method: 'PUT',
+      headers: authHeadersMultipart(),
+      body: form,
+    }).then(res => handleResponse<Company>(res));
+  },
+
+  removeLogo: () =>
+    apiFetch(`${API_BASE}/company/logo`, {
+      method: 'DELETE',
+      headers: authHeaders(),
     }).then(res => handleResponse<Company>(res)),
 
   members: () =>

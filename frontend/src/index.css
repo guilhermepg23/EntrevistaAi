@@ -1725,7 +1725,76 @@ input[aria-invalid='true'] {
   font-size: 0.88rem;
 }
 
+/* ------------------------------------------------ logo da empresa (v1.2) */
+
+.logo-empresa {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+}
+
+.logo-empresa-pequena { width: 22px; height: 22px; border-radius: 6px; }
+.logo-empresa-media { width: 44px; height: 44px; }
+.logo-empresa-grande { width: 96px; height: 96px; border-radius: var(--radius); }
+
+.logo-empresa-inicial {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #0f766e;
+  background: #ccfbf1;
+  border-color: transparent;
+}
+
+.logo-empresa-pequena.logo-empresa-inicial { font-size: 0.72rem; }
+.logo-empresa-media.logo-empresa-inicial { font-size: 1.2rem; }
+.logo-empresa-grande.logo-empresa-inicial { font-size: 2.4rem; }
+
+/* No header escuro do modo empresa a inicial ganha um fundo claro. */
+.selo-empresa .logo-empresa { border-color: transparent; }
+
+.convite-empresa-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.convite-card-topo > .teste-empresa-info {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.logo-upload {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
+}
+
+.logo-upload-acoes {
+  flex: 1;
+  min-width: 14rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.logo-upload-acoes .hint-campo { margin: 0; }
+
+.logo-upload-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .teste-empresa-banner-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.05em;

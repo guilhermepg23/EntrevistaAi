@@ -53,6 +53,7 @@ public class CompanyService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TeamInviteMailer mailer;
+    private final ImageService imageService;
     private final String frontendBaseUrl;
 
     public CompanyService(CompanyRepository companyRepository,
@@ -62,7 +63,9 @@ public class CompanyService {
                           UserRepository userRepository,
                           PasswordEncoder passwordEncoder,
                           TeamInviteMailer mailer,
+                          ImageService imageService,
                           @Value("${app.frontend-base-url}") String frontendBaseUrl) {
+        this.imageService = imageService;
         this.companyRepository = companyRepository;
         this.inviteRepository = inviteRepository;
         this.assessmentRepository = assessmentRepository;
@@ -134,6 +137,35 @@ public class CompanyService {
         return company;
     }
 
+    // PUT /company/logo — só ADMIN. Salva a imagem nova antes de apagar a
+    // antiga: se a nova for recusada, a logo atual continua.
+    @Transactional
+    public Company trocarLogo(User principal, byte[] conteudo) {
+        User admin = exigirAdmin(principal);
+        Company company = admin.getCompany();
+        UUID antiga = company.getLogoId();
+        company.setLogoId(imageService.salvar(conteudo).getId());
+        companyRepository.save(company);
+        imageService.apagar(antiga);
+        log.info("[COMPANY_LOGO_UPDATED] companyId={} por={}", company.getId(), admin.getId());
+        return company;
+    }
+
+    // DELETE /company/logo — só ADMIN. Sem logo, não faz nada.
+    @Transactional
+    public Company removerLogo(User principal) {
+        User admin = exigirAdmin(principal);
+        Company company = admin.getCompany();
+        UUID antiga = company.getLogoId();
+        if (antiga != null) {
+            company.setLogoId(null);
+            companyRepository.save(company);
+            imageService.apagar(antiga);
+            log.info("[COMPANY_LOGO_REMOVED] companyId={} por={}", company.getId(), admin.getId());
+        }
+        return company;
+    }
+
     // ------------------------------------------------------------- equipe
 
     @Transactional(readOnly = true)
@@ -198,6 +230,7 @@ public class CompanyService {
             inviteRepository.deleteByCompany(company);
             assessmentRepository.deleteByCompany(company);
             companyRepository.delete(company);
+            imageService.apagar(company.getLogoId());
             log.info("[COMPANY_DELETED_WITH_LAST_MEMBER] companyId={}", company.getId());
             return;
         }
@@ -280,7 +313,8 @@ public class CompanyService {
     public PublicTeamInviteResponse conviteParaAceitar(String rawToken) {
         CompanyInvite invite = conviteValido(rawToken);
         return new PublicTeamInviteResponse(invite.getEmail(), invite.getCompany().getNome(),
-            invite.getCriadoPor() != null ? invite.getCriadoPor().getNome() : null, invite.getExpiraEm());
+            invite.getCriadoPor() != null ? invite.getCriadoPor().getNome() : null, invite.getExpiraEm(),
+            invite.getCompany().getLogoId());
     }
 
     // POST /auth/team-invites/{token}/accept — público. Cria a conta do

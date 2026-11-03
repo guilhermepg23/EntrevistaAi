@@ -8,6 +8,7 @@ import { formatarData } from '../lib/datas';
 import { duracaoEstimada } from '../lib/duracao';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
+import { LogoEmpresa } from '../components/LogoEmpresa';
 import { Carregando, HintServidor } from '../components/HintServidor';
 import { nivelLabel } from '../labels';
 import type { CandidateAssessmentInvite } from '../types/interview';
@@ -95,7 +96,10 @@ export function AssessmentInvitePage() {
   return (
     <div className="auth-page">
       <div className="auth-form convite-teste">
-        <p className="convite-teste-empresa">Teste de {convite.nomeEmpresa}</p>
+        <div className="convite-empresa-cabecalho">
+          <LogoEmpresa logoId={convite.logoEmpresaId} nome={convite.nomeEmpresa} />
+          <p className="convite-teste-empresa">Teste de {convite.nomeEmpresa}</p>
+        </div>
         <h1>{convite.titulo}</h1>
         <dl className="convite-teste-dados">
           <div><dt>Stack</dt><dd>{convite.stack}</dd></div>

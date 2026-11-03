@@ -70,6 +70,7 @@ export interface Interview {
   // Só num CONVITE.
   nomeEmpresa?: string | null;
   tituloTeste?: string | null;
+  logoEmpresaId?: string | null;
 }
 
 export type OrigemEntrevista = 'TREINO' | 'CONVITE';
@@ -174,6 +175,8 @@ export interface Company {
   criadoEm: string | null;
   meuPapel: PapelEmpresa;
   totalMembros: number;
+  // Logo (GET /images/{id}); null sem logo. Respostas antigas não trazem o campo.
+  logoId?: string | null;
 }
 
 // GET /company/members — `voce` marca a linha do próprio usuário logado.
@@ -209,6 +212,7 @@ export interface PublicTeamInvite {
   nomeEmpresa: string;
   convidadoPor: string | null;
   expiraEm: string;
+  logoId?: string | null;
 }
 
 // ------------------------------------------- testes de empresa (etapa 3)
@@ -315,6 +319,7 @@ export interface CandidateAssessmentInvite {
   status: AssessmentInviteStatus;
   interviewId: string | null;
   interviewStatus: InterviewStatus | null;
+  logoEmpresaId?: string | null;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API).
