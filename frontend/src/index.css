@@ -1652,6 +1652,193 @@ input[aria-invalid='true'] {
   transition: width 0.3s ease;
 }
 
+.historico-nota {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* Evolução das notas (v1.3) */
+
+.evolucao {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.evolucao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.evolucao-cabecalho h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.evolucao-filtro {
+  width: auto;
+  min-height: 40px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.evolucao-numeros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 0.6rem;
+}
+
+.evolucao-numeros div {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+}
+
+.evolucao-numeros dt {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.evolucao-numeros dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.evolucao-numeros small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.evolucao-tendencia,
+.evolucao-dica {
+  margin: 0 0 0.6rem;
+  font-size: 0.83rem;
+  color: var(--color-text-muted);
+}
+
+.evolucao-tendencia {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.evolucao-grafico {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0.4rem;
+}
+
+.evolucao-grafico svg {
+  display: block;
+  overflow: visible;
+}
+
+.evolucao-grade {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.evolucao-eixo {
+  fill: var(--color-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.evolucao-guia {
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.evolucao-linha {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.evolucao-ponto {
+  fill: var(--color-primary);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.evolucao-alvo {
+  fill: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.evolucao-alvo:focus-visible {
+  fill: var(--color-primary-light);
+  fill-opacity: 0.6;
+}
+
+.evolucao-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 120px;
+  padding: 0.45rem 0.65rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.evolucao-tooltip strong {
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.evolucao-tabela summary {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 0.35rem 0;
+}
+
+.evolucao-tabela table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+  margin-top: 0.4rem;
+}
+
+.evolucao-tabela th,
+.evolucao-tabela td {
+  text-align: left;
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.evolucao-tabela th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
 /* Interview chat */
 
 .interview-toolbar {

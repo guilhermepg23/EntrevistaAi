@@ -291,6 +291,47 @@ class InterviewControllerTest {
             .andExpect(jsonPath("$[0].id").value(interview.getId().toString()));
     }
 
+    // A evolução das notas usa a nota do relatório do treino; sem relatório
+    // ainda, vem null (o front pede para abrir o relatório).
+    @Test
+    void history_trazANotaDoRelatorioEADataDeTermino() throws Exception {
+        Interview comRelatorio = novaInterview(UUID.randomUUID(), InterviewStatus.FINALIZADA, 5);
+        comRelatorio.setFinalizadoEm(OffsetDateTime.parse("2026-11-01T10:00:00Z"));
+        FeedbackReport report = new FeedbackReport();
+        report.setNotaGeral(7);
+        comRelatorio.setReport(report);
+        Interview semRelatorio = novaInterview(UUID.randomUUID(), InterviewStatus.FINALIZADA, 5);
+        when(interviewService.listByUser(user)).thenReturn(List.of(comRelatorio, semRelatorio));
+
+        mockMvc.perform(get("/interviews").with(authentication(auth())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].notaGeral").value(7))
+            .andExpect(jsonPath("$[0].finalizadoEm").exists())
+            .andExpect(jsonPath("$[1].notaGeral").doesNotExist());
+    }
+
+    // O candidato nunca vê a nota de um teste de empresa, nem pelo histórico.
+    @Test
+    void history_naoMostraANotaDeTesteDeEmpresa() throws Exception {
+        Company company = new Company();
+        company.setNome("Acme");
+        Assessment assessment = new Assessment();
+        assessment.setCompany(company);
+        assessment.setTitulo("Back-end");
+        Interview convite = novaInterview(UUID.randomUUID(), InterviewStatus.FINALIZADA, 5);
+        convite.setOrigem(OrigemEntrevista.CONVITE);
+        convite.setAssessment(assessment);
+        FeedbackReport report = new FeedbackReport();
+        report.setNotaGeral(9);
+        convite.setReport(report);
+        when(interviewService.listByUser(user)).thenReturn(List.of(convite));
+
+        mockMvc.perform(get("/interviews").with(authentication(auth())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].origem").value("CONVITE"))
+            .andExpect(jsonPath("$[0].notaGeral").doesNotExist());
+    }
+
     @Test
     void abandon_deveRetornar200ComEntrevistaAbandonada() throws Exception {
         UUID interviewId = UUID.randomUUID();

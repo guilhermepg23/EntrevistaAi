@@ -71,6 +71,10 @@ export interface Interview {
   nomeEmpresa?: string | null;
   tituloTeste?: string | null;
   logoEmpresaId?: string | null;
+  finalizadoEm?: string | null;
+  // Nota geral do relatório (0 a 10). Só num treino que já tem relatório:
+  // ele é gerado quando o candidato o abre. Num CONVITE é sempre null.
+  notaGeral?: number | null;
 }
 
 export type OrigemEntrevista = 'TREINO' | 'CONVITE';

@@ -62,6 +62,18 @@ describe('HomePage', () => {
     expect(screen.getByText('3/10 perguntas')).toBeInTheDocument();
   });
 
+  it('mostra a nota de cada treino e a evolução; sem relatório, pede para abri-lo', async () => {
+    vi.mocked(interviewApi.history).mockResolvedValue([
+      makeInterview({ id: 'a', notaGeral: 7, finalizadoEm: '2026-10-02T10:00:00Z' }),
+      makeInterview({ id: 'b', notaGeral: null, stack: 'Go' }),
+    ]);
+    renderWithProviders(<HomePage />);
+
+    expect(await screen.findByText('Nota 7/10')).toBeInTheDocument();
+    expect(screen.getByText('Abra o relatório para ver a nota')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sua evolução' })).toBeInTheDocument();
+  });
+
   it('mostra "Nenhuma entrevista ainda." quando o histórico volta vazio', async () => {
     renderWithProviders(<HomePage />);
     expect(await screen.findByText(/^Nenhuma entrevista ainda\./)).toBeInTheDocument();

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ErroCarga } from '../components/ErroCarga';
+import { EvolucaoNotas } from '../components/EvolucaoNotas';
 import { Carregando, HintServidor } from '../components/HintServidor';
 import { conviteEmAberto } from './CandidateInvitesPage';
 import type { Interview } from '../types/interview';
@@ -156,6 +157,9 @@ export function HomePage() {
           <ErroCarga mensagem={erroHistorico} onTentar={() => setTentativaHistorico(t => t + 1)} />
         )}
         {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma entrevista ainda. Preencha o formulário nesta página para começar o primeiro treino.</p>}
+        {!carregandoHistorico && !erroHistorico && (
+          <EvolucaoNotas treinos={historico} onAbrir={id => navigate(`/interview/${id}/report`)} />
+        )}
         <ul className="historico-lista">
           {historico.map(interview => (
             <li key={interview.id}>
@@ -182,8 +186,15 @@ export function HomePage() {
                     style={{ width: `${(interview.perguntasRespondidas / interview.totalPerguntas) * 100}%` }}
                   />
                 </span>
-                <span className="historico-progresso">
-                  {interview.perguntasRespondidas}/{interview.totalPerguntas} perguntas
+                <span className="historico-item-row">
+                  <span className="historico-progresso">
+                    {interview.perguntasRespondidas}/{interview.totalPerguntas} perguntas
+                  </span>
+                  {interview.notaGeral != null ? (
+                    <span className="historico-nota">Nota {interview.notaGeral}/10</span>
+                  ) : interview.status === 'FINALIZADA' && (
+                    <span className="historico-progresso">Abra o relatório para ver a nota</span>
+                  )}
                 </span>
               </button>
             </li>
