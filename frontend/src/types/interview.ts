@@ -79,6 +79,22 @@ export interface Interview {
 
 export type OrigemEntrevista = 'TREINO' | 'CONVITE';
 
+// GET /interviews/pontos-fracos (v1.3, ideia 2): temas que se repetem nos
+// pontos fracos dos últimos treinos (até 10), agrupados pela IA.
+export interface TemaRecorrente {
+  tema: string;
+  descricao: string;
+  ocorrencias: number;
+  interviewIds: string[];
+}
+
+export interface PontosFracosRecorrentes {
+  treinosAnalisados: number;
+  temas: TemaRecorrente[];
+  // null quando nenhum tema se repete.
+  proximoTreino: { stack: string; nivel: string; totalPerguntas: number; focoPratica: string } | null;
+}
+
 // Item de GET /interviews/{id}/transcript — pergunta + resposta (se já
 // respondida) num só objeto, usado pra revisar a entrevista inteira na tela
 // de relatório (ver InterviewReportPage).

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interviewApi';
 import { ErroCarga } from '../components/ErroCarga';
 import { EvolucaoNotas } from '../components/EvolucaoNotas';
+import { PontosFracosRecorrentes } from '../components/PontosFracosRecorrentes';
 import { Carregando, HintServidor } from '../components/HintServidor';
 import { conviteEmAberto } from './CandidateInvitesPage';
 import type { Interview } from '../types/interview';
@@ -158,7 +159,10 @@ export function HomePage() {
         )}
         {!carregandoHistorico && !erroHistorico && historico.length === 0 && <p>Nenhuma entrevista ainda. Preencha o formulário nesta página para começar o primeiro treino.</p>}
         {!carregandoHistorico && !erroHistorico && (
-          <EvolucaoNotas treinos={historico} onAbrir={id => navigate(`/interview/${id}/report`)} />
+          <>
+            <EvolucaoNotas treinos={historico} onAbrir={id => navigate(`/interview/${id}/report`)} />
+            <PontosFracosRecorrentes treinos={historico} onComecar={id => navigate(`/interview/${id}`)} />
+          </>
         )}
         <ul className="historico-lista">
           {historico.map(interview => (

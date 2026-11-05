@@ -1,4 +1,4 @@
-import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
+import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PontosFracosRecorrentes, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
 import { API_BASE, ErroDeRede, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
 
 // Faz o parse manual de UM evento SSE já isolado (texto entre duas quebras de
@@ -35,6 +35,12 @@ export const interviewApi = {
     apiFetch(`${API_BASE}/interviews`, {
       headers: authHeaders(),
     }).then(res => handleResponse<Interview[]>(res)),
+
+  // Pode levar alguns segundos quando há relatório novo (a IA reagrupa).
+  pontosFracos: () =>
+    apiFetch(`${API_BASE}/interviews/pontos-fracos`, {
+      headers: authHeaders(),
+    }).then(res => handleResponse<PontosFracosRecorrentes>(res)),
 
   nextQuestion: (interviewId: string) =>
     apiFetch(`${API_BASE}/interviews/${interviewId}/next-question`, {

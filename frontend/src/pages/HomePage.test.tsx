@@ -15,7 +15,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('../api/interviewApi', () => ({
   interviewApi: {
     history: vi.fn(), start: vi.fn(), uploadResume: vi.fn(),
-    assessmentInvites: vi.fn(),
+    assessmentInvites: vi.fn(), pontosFracos: vi.fn(),
   },
 }));
 
@@ -47,6 +47,8 @@ describe('HomePage', () => {
     vi.mocked(interviewApi.start).mockReset();
     vi.mocked(interviewApi.uploadResume).mockReset().mockResolvedValue(undefined as never);
     vi.mocked(interviewApi.assessmentInvites).mockReset().mockResolvedValue([]);
+    vi.mocked(interviewApi.pontosFracos).mockReset()
+      .mockResolvedValue({ treinosAnalisados: 0, temas: [], proximoTreino: null });
   });
   afterEach(() => localStorage.clear());
 
@@ -134,6 +136,8 @@ describe('HomePage: convites de empresas', () => {
     navigateSpy.mockReset();
     vi.mocked(interviewApi.history).mockReset().mockResolvedValue([]);
     vi.mocked(interviewApi.assessmentInvites).mockReset().mockResolvedValue([]);
+    vi.mocked(interviewApi.pontosFracos).mockReset()
+      .mockResolvedValue({ treinosAnalisados: 0, temas: [], proximoTreino: null });
   });
   afterEach(() => localStorage.clear());
 
