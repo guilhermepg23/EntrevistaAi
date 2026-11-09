@@ -1,0 +1,47 @@
+name: Keep-alive (Supabase)
+
+# O Supabase free pausa o projeto depois de ~7 dias sem atividade no banco,
+# e aí o backend no Render não sobe (o Flyway não conecta). Este workflow
+# faz uma chamada que consulta o banco duas vezes por semana. É duas e não
+# uma porque o cron do GitHub pode atrasar horas, e um intervalo de 7 dias
+# exatos ficaria no limite.
+#
+# A chamada é um login com um email que não existe: o backend precisa
+# procurar o usuário no banco para responder 401. /health não serve, porque
+# não toca no banco.
+#
+# Atenção: o GitHub desliga workflows agendados depois de 60 dias sem
+# commits no repositório. Se isso acontecer, ele avisa por email e basta
+# reativar em Actions -> Keep-alive -> Enable workflow.
+
+on:
+  schedule:
+    - cron: "0 12 * * 1,4" # segunda e quinta, 12:00 UTC (09:00 em Brasília)
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Acorda o backend e consulta o banco
+        env:
+          BACKEND_URL: https://entrevista-ia-backend.onrender.com
+        run: |
+          # O web service free hiberna; o cold start leva de ~50s a alguns
+          # minutos. Tenta por até ~10 minutos.
+          for i in $(seq 1 20); do
+            code=$(curl -s -o body.txt -w "%{http_code}" --max-time 30 \
+              -H "Content-Type: application/json" \
+              -d '{"email":"keep-alive@teste.local","senha":"keep-alive-ping"}' \
+              "$BACKEND_URL/auth/login" || true)
+            echo "tentativa $i: HTTP $code"
+            if [ "$code" = "401" ]; then
+              echo "Banco respondeu (401 = usuário não encontrado)."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "O backend não respondeu 401 em ~10 minutos. Última resposta:"
+          cat body.txt || true
+          exit 1
