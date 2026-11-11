@@ -1,6 +1,9 @@
 package com.guilherme.entrevistaia.service;
 
+import com.guilherme.entrevistaia.entity.Imagem;
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
+import com.guilherme.entrevistaia.exception.ImageRuleException;
 import com.guilherme.entrevistaia.exception.CompanyRuleException;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
 import com.guilherme.entrevistaia.repository.PasswordResetTokenRepository;
@@ -33,6 +36,7 @@ class AccountServiceTest {
     @Mock private ResumeReviewRepository resumeReviewRepository;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private CompanyService companyService;
+    @Mock private ImageService imageService;
 
     private AccountService service;
     private User user;
@@ -40,7 +44,7 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         service = new AccountService(userRepository, passwordEncoder,
-            resumeReviewRepository, passwordResetTokenRepository, companyService);
+            resumeReviewRepository, passwordResetTokenRepository, companyService, imageService);
         user = new User();
         user.setId(UUID.randomUUID());
         user.setEmail("ana@teste.com");
@@ -100,5 +104,79 @@ class AccountServiceTest {
 
         verify(resumeReviewRepository, never()).deleteByUser(user);
         verify(userRepository, never()).delete(user);
+    }
+
+    // ---- foto (v1.2, etapa 3) ----
+
+    private Imagem imagem() {
+        Imagem i = new Imagem();
+        i.setId(UUID.randomUUID());
+        return i;
+    }
+
+    @Test
+    void trocarFoto_salvaANovaAntesDeApagarAAntiga() {
+        user.setTipo(TipoConta.RECRUTADOR);
+        UUID antiga = UUID.randomUUID();
+        user.setFotoId(antiga);
+        Imagem nova = imagem();
+        when(imageService.salvar(new byte[] {1, 2})).thenReturn(nova);
+
+        User out = service.trocarFoto(user, new byte[] {1, 2});
+
+        assertThat(out.getFotoId()).isEqualTo(nova.getId());
+        InOrder ordem = inOrder(imageService, userRepository);
+        ordem.verify(imageService).salvar(new byte[] {1, 2});
+        ordem.verify(userRepository).save(user);
+        ordem.verify(imageService).apagar(antiga);
+    }
+
+    @Test
+    void trocarFoto_imagemRecusadaMantemAAtual() {
+        user.setTipo(TipoConta.RECRUTADOR);
+        UUID atual = UUID.randomUUID();
+        user.setFotoId(atual);
+        when(imageService.salvar(new byte[] {9})).thenThrow(ImageRuleException.formatoInvalido());
+
+        assertThatThrownBy(() -> service.trocarFoto(user, new byte[] {9}))
+            .isInstanceOf(ImageRuleException.class);
+
+        assertThat(user.getFotoId()).isEqualTo(atual);
+        verify(imageService, never()).apagar(atual);
+    }
+
+    @Test
+    void trocarFoto_candidatoNaoTemFoto() {
+        user.setTipo(TipoConta.CANDIDATO);
+
+        assertThatThrownBy(() -> service.trocarFoto(user, new byte[] {1}))
+            .extracting("errorCode").isEqualTo("ACCOUNT_PHOTO_RECRUITER_ONLY");
+
+        verify(imageService, never()).salvar(new byte[] {1});
+    }
+
+    @Test
+    void removerFoto_desvinculaEApaga() {
+        user.setTipo(TipoConta.RECRUTADOR);
+        UUID antiga = UUID.randomUUID();
+        user.setFotoId(antiga);
+
+        User out = service.removerFoto(user);
+
+        assertThat(out.getFotoId()).isNull();
+        verify(userRepository).save(user);
+        verify(imageService).apagar(antiga);
+    }
+
+    @Test
+    void deleteAccount_apagaAFotoDepoisDoUsuario() {
+        UUID foto = UUID.randomUUID();
+        user.setFotoId(foto);
+
+        service.deleteAccount(user);
+
+        InOrder ordem = inOrder(userRepository, imageService);
+        ordem.verify(userRepository).delete(user);
+        ordem.verify(imageService).apagar(foto);
     }
 }

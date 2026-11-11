@@ -29,6 +29,11 @@ public class ImageRuleException extends AppException {
             "A imagem passa de " + maxKb + " KB.", HttpStatus.BAD_REQUEST);
     }
 
+    public static ImageRuleException fotoSoRecrutador() {
+        return new ImageRuleException("ACCOUNT_PHOTO_RECRUITER_ONLY",
+            "Só contas de recrutador têm foto.", HttpStatus.FORBIDDEN);
+    }
+
     public static ImageRuleException naoEncontrada() {
         return new ImageRuleException("RESOURCE_NOT_FOUND", "Imagem não encontrada.", HttpStatus.NOT_FOUND);
     }

@@ -2118,6 +2118,32 @@ p.convite-prazo-curto {
   min-width: 12rem;
 }
 
+/* Foto do recrutador (v1.2, etapa 3): redonda, cortada no centro. */
+.foto-usuario {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+}
+
+.foto-usuario-media { width: 40px; height: 40px; }
+.foto-usuario-grande { width: 96px; height: 96px; }
+
+.foto-usuario-inicial {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-color: transparent;
+}
+
+.foto-usuario-media.foto-usuario-inicial { font-size: 1.05rem; }
+.foto-usuario-grande.foto-usuario-inicial { font-size: 2.4rem; }
+
 .logo-upload {
   display: flex;
   align-items: flex-start;

@@ -9,6 +9,7 @@ import { Carregando } from '../components/HintServidor';
 import { useCompany } from '../hooks/useCompany';
 import { papelEmpresaLabel } from '../labels';
 import { formatarData, formatarDataHora } from '../lib/datas';
+import { FotoUsuario } from '../components/FotoUsuario';
 import type { CreatedTeamInvite, PapelEmpresa, TeamInvite, TeamMember } from '../types/interview';
 
 // Validade do convite: quem convida escolhe, de 2 a 7 dias (o backend recusa fora disso).
@@ -106,6 +107,7 @@ export function TeamPage() {
         <ul className="lista-equipe">
           {membros.map(membro => (
             <li key={membro.id} className="item-equipe">
+              <FotoUsuario fotoId={membro.fotoId} nome={membro.nome} />
               <div className="item-equipe-info">
                 <span className="item-equipe-nome">
                   {membro.nome}

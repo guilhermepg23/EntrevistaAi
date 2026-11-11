@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { PasswordInput } from '../components/PasswordInput';
 import { ErroCarga } from '../components/ErroCarga';
 import { CampoErro } from '../components/CampoErro';
+import { FotoUpload } from '../components/FotoUpload';
 import { Carregando } from '../components/HintServidor';
 import type { AccountDetails } from '../types/interview';
 import { papelEmpresaLabel, tipoContaLabel } from '../labels';
@@ -172,6 +173,13 @@ export function AccountPage() {
 
       {aba === 'config' && (
         <>
+          {detalhes.tipo === 'RECRUTADOR' && (
+            <section className="conta-secao">
+              <h2>Foto</h2>
+              <FotoUpload conta={detalhes} onAtualizada={setDetalhes} />
+            </section>
+          )}
+
           <section className="conta-secao">
             <h2>Editar nome</h2>
             <form onSubmit={salvarNome}>

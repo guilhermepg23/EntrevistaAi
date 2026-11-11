@@ -119,4 +119,16 @@ describe('TeamPage', () => {
 
     expect(await screen.findByText(/precisa de pelo menos um administrador/)).toBeInTheDocument();
   });
+
+  it('mostra a foto de quem tem e a inicial de quem não tem', async () => {
+    vi.mocked(companyApi.members).mockResolvedValue([{ ...ana, fotoId: 'img-ana' }, bia]);
+    const { container } = render();
+    await screen.findByText('Bia');
+
+    const fotos = container.querySelectorAll('.lista-equipe .foto-usuario');
+    expect(fotos).toHaveLength(2);
+    expect(fotos[0].tagName).toBe('IMG');
+    expect(fotos[0].getAttribute('src')).toMatch(/\/images\/img-ana$/);
+    expect(fotos[1]).toHaveTextContent('B');
+  });
 });

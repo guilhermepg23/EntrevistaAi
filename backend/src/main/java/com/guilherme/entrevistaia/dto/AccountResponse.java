@@ -5,6 +5,7 @@ import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 // Devolvido por GET /account e PATCH /account — os dados da conta do usuário
 // logado pra tela "Minha conta". O CPF vai mascarado (123.***.***-09): o valor
@@ -19,7 +20,9 @@ public record AccountResponse(
     // ficou sem empresa). Os dados da empresa em si (CNPJ etc.) ficam em
     // GET /company — "Minha conta" é sobre a pessoa.
     String nomeEmpresa,
-    PapelEmpresa papelEmpresa
+    PapelEmpresa papelEmpresa,
+    // Foto do recrutador (GET /images/{id}); null sem foto ou se candidato.
+    UUID fotoId
 ) {
     public static AccountResponse from(User user) {
         return new AccountResponse(
@@ -29,7 +32,8 @@ public record AccountResponse(
             user.getCriadoEm(),
             user.getTipo(),
             user.getCompany() != null ? user.getCompany().getNome() : null,
-            user.getPapelEmpresa()
+            user.getPapelEmpresa(),
+            user.getFotoId()
         );
     }
 

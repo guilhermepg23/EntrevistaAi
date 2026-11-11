@@ -95,3 +95,26 @@ O usuário pediu, em 2026-11-03, que tudo o que foi feito até aqui virasse a no
 A versão foi atualizada no pom e no package.json, e o README ganhou a seção da v1.2.
 
 **Adiado** (sem data): etapa 3 (foto dos recrutadores), etapa 4 (cor da marca) e etapa 5 (chatbot de suporte). As decisões acima continuam valendo quando forem retomadas.
+
+## Retomada dos adiados (2026-11-11)
+
+Depois de a ideia 4 da v1.3 (assinatura) ser adiada, o usuário pediu para terminar os adiados da v1.2, na ordem das etapas 3, 4 e 5.
+
+### Etapa 3: foto dos recrutadores, implementada em 2026-11-11
+
+**Decisão:** só conta de recrutador tem foto. Candidato não tem, para a foto não chegar à empresa junto com o teste (risco de viés na avaliação). O back recusa com 403 `ACCOUNT_PHOTO_RECRUITER_ONLY`.
+
+**Backend:**
+- **Migration V10:** `users.foto_id`, com FK para `imagens` `on delete set null`.
+- **Rotas:** `PUT /account/foto` (multipart, campo `arquivo`) e `DELETE /account/foto`. Como na logo, a imagem nova é salva antes de a antiga ser apagada.
+- **Exclusão de conta:** apaga a foto depois do usuário.
+- **Respostas:** `fotoId` em `AccountResponse` e em `TeamMemberResponse`.
+
+**Front:**
+- **`FotoUsuario`:** foto redonda (`object-fit: cover`), ou a inicial quando não há foto ou ela falha ao carregar.
+- **`FotoUpload`:** seção "Foto" na aba Configurações de Minha conta, só para recrutador. Reaproveita o `prepararImagem` da logo.
+- **Equipe:** cada membro aparece com a foto.
+
+**Verificação:** back com 272 testes (4 pulados, Docker desligado), com 5 novos no `AccountServiceTest` e 3 no `AccountControllerTest`. Front com 282 testes e build ok. A V10 ainda não rodou no Testcontainers.
+
+**Fora do escopo:** a foto no avatar do header, que hoje mostra a inicial a partir do nome guardado no login.

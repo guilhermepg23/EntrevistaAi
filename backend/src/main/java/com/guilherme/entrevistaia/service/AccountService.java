@@ -1,6 +1,8 @@
 package com.guilherme.entrevistaia.service;
 
+import com.guilherme.entrevistaia.entity.TipoConta;
 import com.guilherme.entrevistaia.entity.User;
+import com.guilherme.entrevistaia.exception.ImageRuleException;
 import com.guilherme.entrevistaia.exception.InvalidCredentialsException;
 import com.guilherme.entrevistaia.repository.PasswordResetTokenRepository;
 import com.guilherme.entrevistaia.repository.ResumeReviewRepository;
@@ -28,17 +30,20 @@ public class AccountService {
     private final ResumeReviewRepository resumeReviewRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final CompanyService companyService;
+    private final ImageService imageService;
 
     public AccountService(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            ResumeReviewRepository resumeReviewRepository,
                            PasswordResetTokenRepository passwordResetTokenRepository,
-                           CompanyService companyService) {
+                           CompanyService companyService,
+                           ImageService imageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.resumeReviewRepository = resumeReviewRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.companyService = companyService;
+        this.imageService = imageService;
     }
 
     // PATCH /account — por ora só o nome. Devolve o User já atualizado pro
@@ -66,6 +71,42 @@ public class AccountService {
         log.info("[ACCOUNT_PASSWORD_CHANGED] userId={}", user.getId());
     }
 
+    // PUT /account/foto — só recrutador (a foto aparece para a equipe; candidato
+    // não tem foto, para ela não chegar à empresa junto com o teste). Salva a
+    // imagem nova antes de apagar a antiga: se a nova for recusada, a atual fica.
+    @Transactional
+    public User trocarFoto(User principal, byte[] conteudo) {
+        User user = carregarRecrutador(principal);
+        UUID antiga = user.getFotoId();
+        user.setFotoId(imageService.salvar(conteudo).getId());
+        userRepository.save(user);
+        imageService.apagar(antiga);
+        log.info("[ACCOUNT_PHOTO_UPDATED] userId={}", user.getId());
+        return user;
+    }
+
+    // DELETE /account/foto — sem foto, não faz nada.
+    @Transactional
+    public User removerFoto(User principal) {
+        User user = carregarRecrutador(principal);
+        UUID antiga = user.getFotoId();
+        if (antiga != null) {
+            user.setFotoId(null);
+            userRepository.save(user);
+            imageService.apagar(antiga);
+            log.info("[ACCOUNT_PHOTO_REMOVED] userId={}", user.getId());
+        }
+        return user;
+    }
+
+    private User carregarRecrutador(User principal) {
+        User user = carregar(principal.getId());
+        if (user.getTipo() != TipoConta.RECRUTADOR) {
+            throw ImageRuleException.fotoSoRecrutador();
+        }
+        return user;
+    }
+
     // DELETE /account — apaga a conta e tudo que pendura nela. Interviews (com
     // perguntas, respostas, relatório e análise de currículo da entrevista) são
     // removidas por cascade do User; ResumeReview e PasswordResetToken têm FK
@@ -81,6 +122,7 @@ public class AccountService {
         resumeReviewRepository.deleteByUser(user);
         passwordResetTokenRepository.deleteByUser(user);
         userRepository.delete(user);
+        imageService.apagar(user.getFotoId());
         log.info("[ACCOUNT_DELETED] userId={}", user.getId());
     }
 

@@ -14,10 +14,12 @@ public record TeamMemberResponse(
     String email,
     PapelEmpresa papel,
     OffsetDateTime criadoEm,
-    boolean voce
+    boolean voce,
+    UUID fotoId
 ) {
     public static TeamMemberResponse from(User member, User logado) {
         return new TeamMemberResponse(member.getId(), member.getNome(), member.getEmail(),
-            member.getPapelEmpresa(), member.getCriadoEm(), member.getId().equals(logado.getId()));
+            member.getPapelEmpresa(), member.getCriadoEm(), member.getId().equals(logado.getId()),
+            member.getFotoId());
     }
 }

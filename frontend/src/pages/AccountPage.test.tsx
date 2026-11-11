@@ -5,7 +5,14 @@ import { AccountPage } from './AccountPage';
 import { ApiError } from '../api/client';
 import { renderWithProviders } from '../test-utils';
 import { accountApi } from '../api/accountApi';
+import { prepararImagem } from '../lib/imagem';
 import type { AccountDetails } from '../types/interview';
+
+// O jsdom não tem canvas: a redução da imagem fica de fora, só o fluxo da tela é testado.
+vi.mock('../lib/imagem', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/imagem')>();
+  return { ...actual, prepararImagem: vi.fn() };
+});
 
 const navigateSpy = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -14,7 +21,9 @@ vi.mock('react-router-dom', async (importOriginal) => {
 });
 
 vi.mock('../api/accountApi', () => ({
-  accountApi: { get: vi.fn(), updateNome: vi.fn(), changePassword: vi.fn(), remove: vi.fn() },
+  accountApi: {
+    get: vi.fn(), updateNome: vi.fn(), changePassword: vi.fn(), remove: vi.fn(), uploadFoto: vi.fn(), removeFoto: vi.fn(),
+  },
 }));
 
 const detalhes: AccountDetails = {
@@ -159,5 +168,43 @@ describe('AccountPage', () => {
 
     expect(await screen.findByText('Senha atual incorreta.')).toBeInTheDocument();
     expect(screen.queryByText('Email ou senha inválidos')).not.toBeInTheDocument();
+  });
+
+  describe('foto (só recrutador)', () => {
+    const recrutador: AccountDetails = {
+      ...detalhes, tipo: 'RECRUTADOR', cpfMascarado: null, nomeEmpresa: 'Acme', papelEmpresa: 'RECRUTADOR', fotoId: null,
+    };
+
+    it('candidato não vê a seção Foto', async () => {
+      const user = userEvent.setup();
+      render();
+      await screen.findByText('ana@teste.com');
+      await user.click(screen.getByRole('tab', { name: 'Configurações' }));
+
+      expect(screen.queryByRole('heading', { name: 'Foto' })).not.toBeInTheDocument();
+    });
+
+    it('recrutador envia a foto reduzida, que entra no lugar da inicial, e pode removê-la', async () => {
+      const user = userEvent.setup();
+      const reduzida = new Blob(['r'], { type: 'image/webp' });
+      vi.mocked(accountApi.get).mockResolvedValue(recrutador);
+      vi.mocked(prepararImagem).mockResolvedValue(reduzida);
+      vi.mocked(accountApi.uploadFoto).mockResolvedValue({ ...recrutador, fotoId: 'img-9' });
+      vi.mocked(accountApi.removeFoto).mockResolvedValue(recrutador);
+      const { container } = render();
+      await screen.findByText('ana@teste.com');
+      await user.click(screen.getByRole('tab', { name: 'Configurações' }));
+
+      await user.upload(screen.getByTestId('foto-arquivo'), new File(['x'], 'eu.png', { type: 'image/png' }));
+
+      expect(accountApi.uploadFoto).toHaveBeenCalledWith(reduzida);
+      expect(await screen.findByText('Foto atualizada.')).toBeInTheDocument();
+      expect(container.querySelector('img.foto-usuario')?.getAttribute('src')).toMatch(/\/images\/img-9$/);
+
+      await user.click(screen.getByRole('button', { name: 'Remover foto' }));
+      expect(await screen.findByText('Foto removida.')).toBeInTheDocument();
+      expect(container.querySelector('img.foto-usuario')).toBeNull();
+      expect(screen.getByRole('button', { name: 'Enviar foto' })).toBeInTheDocument();
+    });
   });
 });

@@ -177,6 +177,8 @@ export interface AccountDetails {
   // Os dados da empresa (CNPJ etc.) vêm de GET /company.
   nomeEmpresa: string | null;
   papelEmpresa: PapelEmpresa | null;
+  // Foto do recrutador (GET /images/{id}); null sem foto ou se candidato.
+  fotoId?: string | null;
 }
 
 // ---------------------------------------------------------- modo empresa
@@ -218,6 +220,7 @@ export interface TeamMember {
   papel: PapelEmpresa;
   criadoEm: string | null;
   voce: boolean;
+  fotoId?: string | null;
 }
 
 // Convite pendente (GET /company/invites). Sem o link: só existe na criação.

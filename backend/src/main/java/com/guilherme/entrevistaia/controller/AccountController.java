@@ -6,9 +6,13 @@ import com.guilherme.entrevistaia.dto.UpdateAccountRequest;
 import com.guilherme.entrevistaia.entity.User;
 import com.guilherme.entrevistaia.service.AccountService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 // Tela "Minha conta" do usuário logado. Todas as rotas exigem token (cai no
 // anyRequest().authenticated() do SecurityConfig, sem regra própria lá).
@@ -36,6 +40,19 @@ public class AccountController {
                                                    @AuthenticationPrincipal User user) {
         User atualizado = accountService.updateNome(user, request.nome());
         return ResponseEntity.ok(AccountResponse.from(atualizado));
+    }
+
+    // PUT /account/foto (multipart, campo "arquivo") — recrutador troca a
+    // própria foto. PNG, JPEG ou WebP, até 300 KB (o front já reduz antes).
+    @PutMapping(value = "/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AccountResponse> updateFoto(@RequestParam("arquivo") MultipartFile arquivo,
+                                                      @AuthenticationPrincipal User user) throws IOException {
+        return ResponseEntity.ok(AccountResponse.from(accountService.trocarFoto(user, arquivo.getBytes())));
+    }
+
+    @DeleteMapping("/foto")
+    public ResponseEntity<AccountResponse> removeFoto(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(AccountResponse.from(accountService.removerFoto(user)));
     }
 
     // POST /account/change-password — troca de senha estando logado (senha

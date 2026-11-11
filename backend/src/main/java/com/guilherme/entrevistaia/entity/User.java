@@ -52,6 +52,11 @@ public class User {
     // Null pros usuários anteriores a esta coluna.
     private OffsetDateTime criadoEm;
 
+    // Foto do recrutador (v1.2), opcional: id de uma Imagem, servida em
+    // GET /images/{id}. Só o id, sem relação JPA, igual à logo da empresa.
+    @Column(name = "foto_id")
+    private UUID fotoId;
+
     // Candidato ou recrutador — define as telas e as rotas que a conta acessa.
     // Default CANDIDATO: é o que todas as contas anteriores a esta coluna eram
     // (a migration V2 preenche o mesmo valor no banco).
@@ -91,6 +96,9 @@ public class User {
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }
+
+    public UUID getFotoId() { return fotoId; }
+    public void setFotoId(UUID fotoId) { this.fotoId = fotoId; }
 
     public TipoConta getTipo() { return tipo; }
     public void setTipo(TipoConta tipo) { this.tipo = tipo; }
