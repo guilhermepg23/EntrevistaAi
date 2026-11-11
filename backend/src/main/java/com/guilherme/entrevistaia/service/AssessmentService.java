@@ -33,8 +33,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 // Testes de entrevista da empresa e convites de candidatos (v1.1, etapa 3).
@@ -283,15 +286,44 @@ public class AssessmentService {
         return CandidateAssessmentInviteResponse.from(invite);
     }
 
-    // GET /interviews/invites — convites endereçados ao email do candidato:
-    // os pendentes e os já aceitos (pra retomar ou ver que terminou). Cancelados
-    // e vencidos sem aceite somem da lista.
+    // Convite vencido ou cancelado (sem aceite) fica na lista do candidato por
+    // este tempo depois do fim, pra ele entender o que houve; depois some.
+    static final Duration VENCIDOS_VISIVEIS_POR = Duration.ofDays(30);
+
+    // GET /interviews/invites — convites endereçados ao email do candidato, um
+    // por teste. Reconvidar cancela o convite pendente anterior, então o mesmo
+    // teste pode ter vários; vale o mais relevante: o aceito (pra retomar ou ver
+    // que terminou), senão o pendente, senão o mais recente dos vencidos ou
+    // cancelados, enquanto estiver dentro de VENCIDOS_VISIVEIS_POR. A lista
+    // segue do convite mais recente ao mais antigo.
     @Transactional(readOnly = true)
     public List<CandidateAssessmentInviteResponse> convitesDoCandidato(User principal) {
-        return inviteRepository.findByEmailIgnoreCaseOrderByCriadoEmDesc(principal.getEmail()).stream()
-            .filter(i -> i.getAceitoEm() != null || i.pendente())
+        List<AssessmentInvite> todos = inviteRepository.findByEmailIgnoreCaseOrderByCriadoEmDesc(principal.getEmail());
+        Map<UUID, AssessmentInvite> porTeste = new LinkedHashMap<>();
+        for (AssessmentInvite invite : todos) {
+            porTeste.merge(invite.getAssessment().getId(), invite,
+                (atual, outro) -> relevancia(outro) > relevancia(atual) ? outro : atual);
+        }
+        OffsetDateTime corte = OffsetDateTime.now().minus(VENCIDOS_VISIVEIS_POR);
+        return todos.stream()
+            .filter(i -> porTeste.get(i.getAssessment().getId()) == i)
+            .filter(i -> i.getAceitoEm() != null || i.pendente() || fimDoConvite(i).isAfter(corte))
             .map(CandidateAssessmentInviteResponse::from)
             .toList();
+    }
+
+    // Aceito > pendente > vencido/cancelado. No empate fica o primeiro visto,
+    // que é o mais recente (a lista vem por criadoEm desc).
+    private static int relevancia(AssessmentInvite i) {
+        if (i.getAceitoEm() != null) return 2;
+        return i.pendente() ? 1 : 0;
+    }
+
+    // Quando o convite deixou de valer: o cancelamento, ou a validade do teste.
+    // Teste arquivado antes da validade conta até a validade (não guardamos a
+    // data do arquivamento).
+    private static OffsetDateTime fimDoConvite(AssessmentInvite i) {
+        return i.getCanceladoEm() != null ? i.getCanceladoEm() : i.getAssessment().getExpiraEm();
     }
 
     // POST /interviews/invites/{inviteId}/accept — cria a entrevista do teste.

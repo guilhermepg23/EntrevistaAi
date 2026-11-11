@@ -352,6 +352,12 @@ export interface CandidateAssessmentInvite {
   interviewStatus: InterviewStatus | null;
   logoEmpresaId?: string | null;
   perfilEmpresa?: PerfilEmpresa | null;
+  // Andamento, só depois do aceite (null antes).
+  iniciadoEm?: string | null;
+  perguntasRespondidas?: number | null;
+  enviadoEm?: string | null;
+  // A empresa cancelou o convite antes do aceite (status CANCELADO).
+  canceladoEm?: string | null;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API).

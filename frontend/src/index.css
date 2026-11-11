@@ -1416,6 +1416,71 @@ input[aria-invalid='true'] {
   overflow-wrap: anywhere;
 }
 
+/* Prazo, andamento ou desfecho do convite (v1.3, ideia 3). */
+.convite-situacao {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.convite-prazo-curto {
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+p.convite-prazo-curto {
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.6rem;
+  align-self: flex-start;
+}
+
+.convite-andamento {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.convites-vencidos > summary {
+  cursor: pointer;
+  list-style-position: inside;
+  color: var(--color-text-muted);
+}
+
+.convites-vencidos > summary h2 {
+  display: inline;
+}
+
+.convites-vencidos[open] > summary {
+  margin-bottom: 0.75rem;
+}
+
+/* "Como funciona o teste" (topo da aba Convites e página do link). */
+.como-funciona {
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+}
+
+.como-funciona summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.como-funciona ul {
+  margin: 0.5rem 0 0.2rem;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
 /* "Sobre a empresa" e "Descrição da vaga" (aba Convites e página do link). */
 .convite-descricoes {
   display: flex;

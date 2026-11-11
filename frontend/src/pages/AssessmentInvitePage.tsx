@@ -6,6 +6,8 @@ import { ApiError } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { formatarData } from '../lib/datas';
 import { duracaoEstimada } from '../lib/duracao';
+import { prazoCurto, prazoLabel } from '../lib/prazos';
+import { ComoFuncionaTeste } from '../components/ComoFuncionaTeste';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
 import { LogoEmpresa } from '../components/LogoEmpresa';
@@ -73,7 +75,7 @@ export function AssessmentInvitePage() {
           <p className="erro" role="alert">{invalido}</p>
           <p className="auth-intro">
             Se você ainda não fez o teste, peça um novo link para a empresa. Testes que você
-            já começou aparecem na sua página inicial.
+            já começou continuam na aba Convites.
           </p>
           <p className="auth-switch"><Link to="/">Ir para o início</Link></p>
         </div>
@@ -106,14 +108,19 @@ export function AssessmentInvitePage() {
           <div><dt>Nível</dt><dd>{nivelLabel[convite.nivel] ?? convite.nivel}</dd></div>
           <div><dt>Perguntas</dt><dd>{convite.totalPerguntas}</dd></div>
           <div><dt>Duração</dt><dd>{duracaoEstimada(convite.totalPerguntas)}</dd></div>
-          <div><dt>Vale até</dt><dd>{formatarData(convite.expiraEm)}</dd></div>
+          <div>
+            <dt>Começar até</dt>
+            <dd className={prazoCurto(convite.expiraEm) ? 'convite-prazo-curto' : undefined}>
+              {formatarData(convite.expiraEm)}
+              {prazoCurto(convite.expiraEm) && ` (${prazoLabel(convite.expiraEm)})`}
+            </dd>
+          </div>
         </dl>
         <ConviteDescricoes convite={convite} abertos />
         <p className="auth-intro">
-          É uma entrevista com a IA, como um treino, mas as respostas vão para a empresa:
-          você não vê nota nem avaliação. O teste só pode ser feito uma vez, então
-          reserve um tempo antes de começar.
+          É uma entrevista com a IA, como um treino, mas as respostas vão para a empresa.
         </p>
+        <ComoFuncionaTeste totalPerguntas={convite.totalPerguntas} aberto />
 
         {erro && <p className="erro" role="alert">{erro}</p>}
 

@@ -353,7 +353,7 @@ class AssessmentServiceTest {
     }
 
     @Test
-    void convitesDoCandidato_deveMostrarPendentesEAceitosMasNaoCancelados() {
+    void convitesDoCandidato_deveMostrarSoOPendenteQuandoUmReconviteCancelouOAnterior() {
         Assessment a = testeDaAcme();
         AssessmentInvite pendente = convite(a, "cand@exemplo.com");
         AssessmentInvite cancelado = convite(a, "cand@exemplo.com");
@@ -364,6 +364,68 @@ class AssessmentServiceTest {
         List<CandidateAssessmentInviteResponse> lista = service.convitesDoCandidato(candidato);
 
         assertThat(lista).extracting(CandidateAssessmentInviteResponse::inviteId).containsExactly(pendente.getId());
+    }
+
+    @Test
+    void convitesDoCandidato_deveMostrarOAceitoMesmoComConviteMaisNovoDoMesmoTeste() {
+        Assessment a = testeDaAcme();
+        AssessmentInvite cancelado = convite(a, candidato.getEmail());
+        cancelado.setCanceladoEm(OffsetDateTime.now());
+        AssessmentInvite aceito = aceito(a, InterviewStatus.EM_ANDAMENTO, 2);
+        when(inviteRepository.findByEmailIgnoreCaseOrderByCriadoEmDesc(candidato.getEmail()))
+            .thenReturn(List.of(cancelado, aceito));
+
+        List<CandidateAssessmentInviteResponse> lista = service.convitesDoCandidato(candidato);
+
+        assertThat(lista).singleElement().satisfies(c -> {
+            assertThat(c.inviteId()).isEqualTo(aceito.getId());
+            assertThat(c.perguntasRespondidas()).isEqualTo(2);
+            assertThat(c.iniciadoEm()).isEqualTo(aceito.getAceitoEm());
+            assertThat(c.enviadoEm()).isNull();
+        });
+    }
+
+    @Test
+    void convitesDoCandidato_deveMostrarVencidosECanceladosRecentesEEsconderOsAntigos() {
+        Assessment venceuOntem = testeDaAcme();
+        venceuOntem.setExpiraEm(OffsetDateTime.now().minusDays(1));
+        Assessment venceuHaTempo = testeDaAcme();
+        venceuHaTempo.setExpiraEm(OffsetDateTime.now().minusDays(31));
+        Assessment cancelouRecente = testeDaAcme();
+        Assessment cancelouHaTempo = testeDaAcme();
+
+        AssessmentInvite vencido = convite(venceuOntem, "cand@exemplo.com");
+        AssessmentInvite vencidoAntigo = convite(venceuHaTempo, "cand@exemplo.com");
+        AssessmentInvite cancelado = convite(cancelouRecente, "cand@exemplo.com");
+        cancelado.setCanceladoEm(OffsetDateTime.now().minusDays(2));
+        AssessmentInvite canceladoAntigo = convite(cancelouHaTempo, "cand@exemplo.com");
+        canceladoAntigo.setCanceladoEm(OffsetDateTime.now().minusDays(40));
+        when(inviteRepository.findByEmailIgnoreCaseOrderByCriadoEmDesc("cand@exemplo.com"))
+            .thenReturn(List.of(vencido, vencidoAntigo, cancelado, canceladoAntigo));
+
+        List<CandidateAssessmentInviteResponse> lista = service.convitesDoCandidato(candidato);
+
+        assertThat(lista).extracting(CandidateAssessmentInviteResponse::inviteId)
+            .containsExactly(vencido.getId(), cancelado.getId());
+        assertThat(lista).extracting(CandidateAssessmentInviteResponse::status)
+            .containsExactly("EXPIRADO", "CANCELADO");
+        assertThat(lista.get(1).canceladoEm()).isEqualTo(cancelado.getCanceladoEm());
+    }
+
+    @Test
+    void convitesDoCandidato_deveTrazerQuandoOTesteFoiEnviado() {
+        Assessment a = testeDaAcme();
+        AssessmentInvite feito = aceito(a, InterviewStatus.FINALIZADA, 5);
+        OffsetDateTime fim = OffsetDateTime.now().minusHours(3);
+        feito.getInterview().setFinalizadoEm(fim);
+        when(inviteRepository.findByEmailIgnoreCaseOrderByCriadoEmDesc(candidato.getEmail()))
+            .thenReturn(List.of(feito));
+
+        CandidateAssessmentInviteResponse c = service.convitesDoCandidato(candidato).get(0);
+
+        assertThat(c.enviadoEm()).isEqualTo(fim);
+        assertThat(c.perguntasRespondidas()).isEqualTo(5);
+        assertThat(c.interviewStatus()).isEqualTo("FINALIZADA");
     }
 
     // ---- painel de resultados ----

@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CandidateInvitesPage } from './CandidateInvitesPage';
+import { CandidateInvitesPage, conviteEmAberto } from './CandidateInvitesPage';
 import { renderWithProviders } from '../test-utils';
 import { interviewApi } from '../api/interviewApi';
 import type { CandidateAssessmentInvite } from '../types/interview';
@@ -88,5 +88,85 @@ describe('CandidateInvitesPage', () => {
     expect(screen.getByText('Enviado à empresa')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Continuar teste' }));
     expect(navigateSpy).toHaveBeenCalledWith('/interview/int-a');
+  });
+
+  it('mostra "Como funciona o teste" quando há convites', async () => {
+    vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([makeInvite()]);
+    renderWithProviders(<CandidateInvitesPage />);
+
+    expect(await screen.findByText('Como funciona o teste')).toBeInTheDocument();
+    expect(screen.getByText(/depois de começado, o teste não vence/)).toBeInTheDocument();
+  });
+
+  describe('prazos', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-11-11T10:00:00'));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('destaca o prazo curto e ordena do prazo mais próximo', async () => {
+      vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+        makeInvite({ inviteId: 'longe', titulo: 'Teste longe', expiraEm: '2026-12-20T18:00:00' }),
+        makeInvite({ inviteId: 'perto', titulo: 'Teste perto', expiraEm: '2026-11-12T18:00:00' }),
+      ]);
+      renderWithProviders(<CandidateInvitesPage />);
+
+      await screen.findByText('Teste perto');
+      const titulos = screen.getAllByText(/^Teste (perto|longe)$/).map(e => e.textContent);
+      expect(titulos).toEqual(['Teste perto', 'Teste longe']);
+
+      const amanha = screen.getByText('vence amanhã');
+      expect(amanha.closest('p')).toHaveClass('convite-prazo-curto');
+      expect(screen.getByText('vale até 20/12/2026').closest('p')).not.toHaveClass('convite-prazo-curto');
+    });
+
+    it('teste começado mostra o andamento e que não vence mais', async () => {
+      vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+        makeInvite({
+          status: 'ACEITO', interviewId: 'int-a', interviewStatus: 'EM_ANDAMENTO',
+          iniciadoEm: '2026-11-05T09:00:00', perguntasRespondidas: 3,
+        }),
+      ]);
+      renderWithProviders(<CandidateInvitesPage />);
+
+      expect(await screen.findByText(/3 de 8 respondidas · começado em 05\/11\/2026 · sem prazo para terminar/)).toBeInTheDocument();
+      expect(screen.queryByText(/Prazo para começar/)).not.toBeInTheDocument();
+    });
+
+    it('teste feito mostra quando foi enviado; encerrado mostra quanto foi respondido', async () => {
+      vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+        makeInvite({ inviteId: 'f', status: 'ACEITO', interviewId: 'int-f', interviewStatus: 'FINALIZADA', enviadoEm: '2026-11-06T15:00:00', perguntasRespondidas: 8 }),
+        makeInvite({ inviteId: 'e', status: 'ACEITO', interviewId: 'int-e', interviewStatus: 'ABANDONADA', enviadoEm: '2026-11-07T15:00:00', perguntasRespondidas: 3 }),
+      ]);
+      renderWithProviders(<CandidateInvitesPage />);
+
+      expect(await screen.findByText(/^Enviado à empresa em 06\/11\/2026\./)).toBeInTheDocument();
+      expect(screen.getByText(/Você encerrou o teste em 07\/11\/2026, com 3 de 8 respondidas/)).toBeInTheDocument();
+    });
+
+    it('vencidos e cancelados ficam numa seção à parte, sem botão de começar', async () => {
+      vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+        makeInvite({ inviteId: 'v', titulo: 'Teste vencido', status: 'EXPIRADO', expiraEm: '2026-11-10T00:00:00' }),
+        makeInvite({ inviteId: 'c', titulo: 'Teste cancelado', status: 'CANCELADO', canceladoEm: '2026-11-08T12:00:00' }),
+      ]);
+      renderWithProviders(<CandidateInvitesPage />);
+
+      expect(await screen.findByText('Vencidos (2)')).toBeInTheDocument();
+      expect(screen.queryByText(/Para fazer/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Começar teste' })).not.toBeInTheDocument();
+      expect(screen.getByText(/Venceu em 10\/11\/2026\. Se ainda quiser/)).toBeInTheDocument();
+      expect(screen.getByText(/Cancelado pela empresa em 08\/11\/2026/)).toBeInTheDocument();
+    });
+  });
+});
+
+describe('conviteEmAberto', () => {
+  it('pendente e em andamento contam; vencido, cancelado e feito não', () => {
+    expect(conviteEmAberto(makeInvite())).toBe(true);
+    expect(conviteEmAberto(makeInvite({ status: 'ACEITO', interviewId: 'x', interviewStatus: 'EM_ANDAMENTO' }))).toBe(true);
+    expect(conviteEmAberto(makeInvite({ status: 'EXPIRADO' }))).toBe(false);
+    expect(conviteEmAberto(makeInvite({ status: 'CANCELADO' }))).toBe(false);
+    expect(conviteEmAberto(makeInvite({ status: 'ACEITO', interviewId: 'x', interviewStatus: 'FINALIZADA' }))).toBe(false);
   });
 });

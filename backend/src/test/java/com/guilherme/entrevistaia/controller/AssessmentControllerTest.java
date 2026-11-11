@@ -118,7 +118,8 @@ class AssessmentControllerTest {
         when(assessmentService.conviteParaAceitar("abc")).thenReturn(new CandidateAssessmentInviteResponse(
             inviteId, "cand@x.com", "Acme", "Fintech de pagamentos.", "Backend Java", "Java", "pleno", 5,
             "API de pagamentos em Java.", OffsetDateTime.now().plusMonths(3), "PENDENTE", null, null, null,
-            new CompanyProfileResponse("https://acme.com", "Pagamentos", TamanhoEmpresa.DE_51_A_200, "São Paulo")));
+            new CompanyProfileResponse("https://acme.com", "Pagamentos", TamanhoEmpresa.DE_51_A_200, "São Paulo"),
+            null, null, null, null));
 
         mockMvc.perform(get("/auth/assessment-invites/abc"))
             .andExpect(status().isOk())

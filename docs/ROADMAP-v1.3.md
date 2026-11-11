@@ -62,3 +62,25 @@ Pedido em 2026-11-03, depois do fechamento da v1.2.0. O foco volta ao candidato.
 **Front:** `PontosFracosRecorrentes` na HomePage, abaixo de "Sua evolução". Só aparece com 2 treinos ou mais com relatório. Mostra os temas com "em X de N treinos", a descrição e o botão "Treinar esses pontos", que cria o treino com o foco e abre a entrevista. Erro da análise tem "Tentar de novo".
 
 **Verificação:** back com 260 testes (o de integração rodou com Docker e aplicou a V9), front com 269, build ok. Falta ver o prompt contra a OpenAI de verdade e a tela no navegador.
+
+## Decisões da ideia 3
+
+- **Prazo é só para começar:** o backend já funcionava assim (o aceite exige o teste aberto; responder não). Agora isso fica explícito para o candidato, no cartão do teste começado e em "Como funciona o teste".
+- **Vencidos e cancelados aparecem:** o usuário escolheu mostrá-los numa seção "Vencidos", recolhida no fim da aba, em vez de sumirem. Ficam lá por 30 dias depois do fim (o cancelamento ou a validade do teste; teste arquivado conta até a validade, porque a data do arquivamento não é guardada).
+- **Um convite por teste:** reconvidar cancela o convite pendente anterior, então a lista mostra só o mais relevante de cada teste: o aceito, senão o pendente, senão o mais recente dos vencidos.
+- **Prazo curto:** "vence hoje", "vence amanhã" e "vence em N dias" (até 7 dias; depois, a data). Destaque em amarelo com 3 dias ou menos. "Para fazer" mostra primeiro os testes começados, depois os pendentes pelo prazo mais próximo.
+- **Sem migração:** os campos novos saem do que já existe (`aceitoEm`, `canceladoEm`, `finalizadoEm` e as respostas).
+
+### Ideia 3: implementada em 2026-11-11
+
+**Backend:** `CandidateAssessmentInviteResponse` ganhou `iniciadoEm`, `perguntasRespondidas`, `enviadoEm` e `canceladoEm`. `convitesDoCandidato` escolhe um convite por teste e mantém os vencidos por 30 dias. Testes novos no `AssessmentServiceTest`.
+
+**Front:**
+- **`ComoFuncionaTeste`:** recolhido no topo da aba Convites e aberto na página do link (no lugar do parágrafo antigo). Explica: uma vez só, sem cronômetro, dá para pausar, sair encerra, texto ou voz, e o resultado é da empresa.
+- **Cartões:** prazo para começar (com destaque), barra de andamento com "3 de 8 respondidas · começado em ... · sem prazo para terminar", e "Enviado à empresa em ..." ou "Você encerrou o teste em ..., com X de N respondidas".
+- **Vencidos:** seção recolhida, com o motivo e a orientação de pedir um novo convite.
+- **`conviteEmAberto`:** passou a exigir status `PENDENTE`, para o aviso da HomePage não contar vencidos.
+- **Página do link:** "Começar até" com o aviso de prazo curto. O texto de convite indisponível aponta para a aba Convites, e não mais para a página inicial.
+- **`lib/prazos`:** dias de calendário no fuso do navegador, com testes.
+
+**Verificação:** back com 264 testes (4 pulados, Docker desligado), front com 279, build ok. Não foi visto no navegador.
