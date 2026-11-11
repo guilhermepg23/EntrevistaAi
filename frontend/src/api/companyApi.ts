@@ -32,6 +32,14 @@ export const companyApi = {
       body: JSON.stringify(perfil),
     }).then(res => handleResponse<Company>(res)),
 
+  // "#rrggbb", ou null para remover. Só ADMIN.
+  updateCorMarca: (corMarca: string | null) =>
+    apiFetch(`${API_BASE}/company/cor-marca`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ corMarca }),
+    }).then(res => handleResponse<Company>(res)),
+
   // A imagem já vem reduzida (lib/imagem.prepararImagem). Só ADMIN.
   uploadLogo: (imagem: Blob) => {
     const form = new FormData();

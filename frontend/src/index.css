@@ -2075,6 +2075,85 @@ p.convite-prazo-curto {
   font-size: 0.88rem;
 }
 
+/* ------------------------------------------- cor da marca (v1.2, etapa 4) */
+/* lib/cor.propsMarca põe a classe .com-marca e as variáveis da paleta, que já
+   passam no contraste. Só nas telas que o candidato vê da empresa. */
+.teste-empresa-banner.com-marca {
+  background: var(--marca-fundo);
+  border-color: var(--marca-borda);
+  border-left: 4px solid var(--marca-acento);
+}
+
+.com-marca .teste-empresa-banner-rotulo,
+.com-marca .convite-teste-empresa,
+.convite-card.com-marca .teste-empresa-nome {
+  color: var(--marca-acento);
+}
+
+.convite-teste.com-marca {
+  border-top: 4px solid var(--marca-acento);
+}
+
+.convite-card.com-marca {
+  border-left: 4px solid var(--marca-acento);
+}
+
+.cor-marca-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cor-marca-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+}
+
+.cor-marca-campos label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.cor-marca-campos input[type='text'] {
+  width: 9rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.cor-marca-seletor input[type='color'] {
+  width: 3.25rem;
+  height: 2.5rem;
+  padding: 0.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.cor-marca-form .hint-campo { margin: 0; }
+
+.cor-marca-previa {
+  max-width: 32rem;
+}
+
+.cor-marca-atual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.cor-marca-amostra {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
 /* ------------------------------------------------ logo da empresa (v1.2) */
 
 .logo-empresa {

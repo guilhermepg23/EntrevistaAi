@@ -118,3 +118,19 @@ Depois de a ideia 4 da v1.3 (assinatura) ser adiada, o usuário pediu para termi
 **Verificação:** back com 272 testes (4 pulados, Docker desligado), com 5 novos no `AccountServiceTest` e 3 no `AccountControllerTest`. Front com 282 testes e build ok. A V10 ainda não rodou no Testcontainers.
 
 **Fora do escopo:** a foto no avatar do header, que hoje mostra a inicial a partir do nome guardado no login.
+
+### Etapa 4: cor da marca, implementada em 2026-11-11
+
+**Backend:**
+- **Migration V11:** `companies.cor_marca` (`varchar(7)`, com check `^#[0-9a-f]{6}$`).
+- **Rota:** `PATCH /company/cor-marca`, só para ADMIN, com corpo `{"corMarca": "#rrggbb"}`. Vazio ou null remove a cor. `normalizarCor` aceita maiúsculas e a falta do `#` e recusa o resto (`COMPANY_COLOR_INVALID`, 400).
+- **Respostas:** `corMarca` em `CompanyResponse`, e `corMarcaEmpresa` em `CandidateAssessmentInviteResponse` e `InterviewResponse` (só num CONVITE).
+
+**Front:**
+- **`lib/cor.ts`:** contraste do WCAG e `paletaMarca`, que devolve acento, fundo (8% da cor sobre o branco) e borda (30%). O acento é escurecido aos poucos até ter 4,5:1 sobre o fundo tingido, e portanto também sobre o branco. `propsMarca` liga a classe `.com-marca` e as variáveis CSS; sem cor válida, nada muda.
+- **Onde aparece:** no banner do teste (fundo tingido, borda esquerda e rótulo), no link do convite (borda superior e nome da empresa) e nos cartões da aba Convites (borda esquerda e nome), menos nos vencidos. Os botões continuam com a cor do app.
+- **Configurações:** `CorMarcaForm` tem o seletor de cor do navegador, o campo com o código, a prévia do banner e um aviso quando a cor vai aparecer escurecida. O recrutador comum só vê a cor atual.
+
+**Decisão:** a cor é só destaque. Ela não pinta botões nem fundos inteiros, para o candidato continuar reconhecendo o app e para cores muito claras ou saturadas não atrapalharem a leitura.
+
+**Verificação:** back com 276 testes (4 pulados, Docker desligado), front com 299 e build ok. O contraste foi testado com seis cores, incluindo amarelo, verde-limão e branco. A captura no Edge headless conferiu o banner e o cartão com essas cores. A V11 ainda não rodou no Testcontainers (Docker desligado).

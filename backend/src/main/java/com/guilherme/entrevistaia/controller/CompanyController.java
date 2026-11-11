@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.controller;
 
+import com.guilherme.entrevistaia.dto.CompanyColorRequest;
 import com.guilherme.entrevistaia.dto.CompanyProfileRequest;
 import com.guilherme.entrevistaia.dto.CompanyRequest;
 import com.guilherme.entrevistaia.dto.CompanyResponse;
@@ -70,6 +71,15 @@ public class CompanyController {
                                                          @AuthenticationPrincipal User user) {
         Company company = companyService.atualizarPerfil(user, request.site(), request.setor(),
             request.tamanho(), request.cidade());
+        return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
+            companyService.totalMembros(company)));
+    }
+
+    // PATCH /company/cor-marca — ADMIN define ou remove a cor da marca.
+    @PatchMapping("/cor-marca")
+    public ResponseEntity<CompanyResponse> updateCorMarca(@RequestBody CompanyColorRequest request,
+                                                          @AuthenticationPrincipal User user) {
+        Company company = companyService.atualizarCorMarca(user, request.corMarca());
         return ResponseEntity.ok(CompanyResponse.from(company, PapelEmpresa.ADMIN,
             companyService.totalMembros(company)));
     }

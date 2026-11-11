@@ -13,7 +13,8 @@ import java.util.UUID;
 //
 // origem (TREINO / CONVITE) é o que o front usa pra separar o histórico e
 // esconder o feedback. nomeEmpresa, tituloTeste e logoEmpresaId só vêm num
-// CONVITE (logoEmpresaId fica null se a empresa não tem logo).
+// CONVITE (logoEmpresaId fica null se a empresa não tem logo), assim como
+// corMarcaEmpresa (null sem cor da marca).
 //
 // notaGeral: nota do relatório, só num TREINO que já tem relatório (ele é
 // gerado quando o candidato o abre). Num CONVITE é sempre null: o candidato
@@ -31,7 +32,8 @@ public record InterviewResponse(
     String tituloTeste,
     UUID logoEmpresaId,
     OffsetDateTime finalizadoEm,
-    Integer notaGeral
+    Integer notaGeral,
+    String corMarcaEmpresa
 ) {
     public static InterviewResponse from(Interview interview) {
         // perguntasRespondidas não é uma coluna do banco: é calculado aqui,
@@ -48,7 +50,8 @@ public record InterviewResponse(
             assessment != null ? assessment.getTitulo() : null,
             assessment != null ? assessment.getCompany().getLogoId() : null,
             interview.getFinalizadoEm(),
-            !interview.deConvite() && interview.getReport() != null ? interview.getReport().getNotaGeral() : null
+            !interview.deConvite() && interview.getReport() != null ? interview.getReport().getNotaGeral() : null,
+            assessment != null ? assessment.getCompany().getCorMarca() : null
         );
     }
 }

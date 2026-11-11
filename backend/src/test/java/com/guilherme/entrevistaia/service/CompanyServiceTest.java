@@ -130,6 +130,35 @@ class CompanyServiceTest {
     }
 
     @Test
+    void atualizarCorMarca_normalizaEVazioRemove() {
+        service.atualizarCorMarca(admin, " #0F766E ");
+        assertThat(acme.getCorMarca()).isEqualTo("#0f766e");
+
+        service.atualizarCorMarca(admin, "");
+        assertThat(acme.getCorMarca()).isNull();
+    }
+
+    @Test
+    void atualizarCorMarca_recrutadorComumNaoEdita() {
+        User comum = membro("Bia", PapelEmpresa.RECRUTADOR, acme);
+
+        assertThatThrownBy(() -> service.atualizarCorMarca(comum, "#123456"))
+            .isInstanceOf(CompanyRuleException.class);
+        assertThat(acme.getCorMarca()).isNull();
+    }
+
+    @Test
+    void normalizarCor_aceitaSemCerquilhaERecusaOResto() {
+        assertThat(CompanyService.normalizarCor("abcdef")).isEqualTo("#abcdef");
+        assertThat(CompanyService.normalizarCor(null)).isNull();
+        for (String ruim : List.of("#abc", "#12345g", "red", "#1234567", "rgb(0,0,0)", "#12 456")) {
+            assertThatThrownBy(() -> CompanyService.normalizarCor(ruim))
+                .as(ruim)
+                .extracting("errorCode").isEqualTo("COMPANY_COLOR_INVALID");
+        }
+    }
+
+    @Test
     void normalizarSite_semEsquemaGanhaHttps() {
         assertThat(CompanyService.normalizarSite("acme.com.br")).isEqualTo("https://acme.com.br");
         assertThat(CompanyService.normalizarSite("http://acme.com/vagas?x=1")).isEqualTo("http://acme.com/vagas?x=1");

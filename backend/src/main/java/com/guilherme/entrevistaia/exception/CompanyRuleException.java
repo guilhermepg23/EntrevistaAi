@@ -55,6 +55,11 @@ public class CompanyRuleException extends AppException {
             "Você não pode remover a si mesmo da equipe.", HttpStatus.CONFLICT);
     }
 
+    public static CompanyRuleException corInvalida() {
+        return new CompanyRuleException("COMPANY_COLOR_INVALID",
+            "Cor inválida. Use o formato #RRGGBB, como #0f766e.", HttpStatus.BAD_REQUEST);
+    }
+
     public static CompanyRuleException siteInvalido() {
         return new CompanyRuleException("COMPANY_SITE_INVALID",
             "Site inválido. Use um endereço como https://suaempresa.com.br.", HttpStatus.BAD_REQUEST);

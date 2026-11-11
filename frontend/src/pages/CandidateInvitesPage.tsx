@@ -10,6 +10,7 @@ import { nivelLabel } from '../labels';
 import { formatarData } from '../lib/datas';
 import { duracaoEstimada } from '../lib/duracao';
 import { prazoCurto, prazoLabel } from '../lib/prazos';
+import { propsMarca } from '../lib/cor';
 import type { CandidateAssessmentInvite } from '../types/interview';
 
 // Ainda dá pra agir: convite pendente, ou teste começado e não terminado.
@@ -145,7 +146,7 @@ export function CandidateInvitesPage() {
 
   function cartao(convite: CandidateAssessmentInvite) {
     return (
-      <li key={convite.inviteId} className="painel-card convite-card">
+      <li key={convite.inviteId} {...propsMarca(conviteVencido(convite) ? null : convite.corMarcaEmpresa, 'painel-card convite-card')}>
         <div className="convite-card-topo">
           <LogoEmpresa logoId={convite.logoEmpresaId} nome={convite.nomeEmpresa} />
           <div className="teste-empresa-info">

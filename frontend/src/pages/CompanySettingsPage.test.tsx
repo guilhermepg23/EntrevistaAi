@@ -9,7 +9,7 @@ import { ImagemInvalida, prepararImagem } from '../lib/imagem';
 import type { Company } from '../types/interview';
 
 vi.mock('../api/companyApi', () => ({
-  companyApi: { get: vi.fn(), update: vi.fn(), updatePerfil: vi.fn(), uploadLogo: vi.fn(), removeLogo: vi.fn() },
+  companyApi: { get: vi.fn(), update: vi.fn(), updatePerfil: vi.fn(), uploadLogo: vi.fn(), removeLogo: vi.fn(), updateCorMarca: vi.fn() },
 }));
 
 // O jsdom não tem canvas: a redução da imagem fica de fora, só o fluxo da tela é testado.
@@ -33,6 +33,7 @@ describe('CompanySettingsPage', () => {
     vi.mocked(companyApi.updatePerfil).mockReset();
     vi.mocked(companyApi.uploadLogo).mockReset();
     vi.mocked(companyApi.removeLogo).mockReset();
+    vi.mocked(companyApi.updateCorMarca).mockReset();
     vi.mocked(prepararImagem).mockReset();
   });
   afterEach(() => localStorage.clear());
@@ -152,6 +153,58 @@ describe('CompanySettingsPage', () => {
       expect(await screen.findByText('Logo removida.')).toBeInTheDocument();
       expect(container.querySelector('img.logo-empresa')).toBeNull();
       expect(screen.getByRole('button', { name: 'Enviar logo' })).toBeInTheDocument();
+    });
+  });
+
+  describe('cor da marca', () => {
+    it('admin digita a cor, vê o aviso de ajuste e salva normalizada', async () => {
+      const user = userEvent.setup();
+      vi.mocked(companyApi.updateCorMarca).mockResolvedValue({ ...acme, corMarca: '#ffeb3b' });
+      render();
+
+      const campo = await screen.findByLabelText('Código da cor');
+      await user.clear(campo);
+      await user.type(campo, '#FFEB3B');
+
+      expect(screen.getByText(/clara demais para texto/)).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar cor' }));
+
+      expect(companyApi.updateCorMarca).toHaveBeenCalledWith('#ffeb3b');
+      expect(await screen.findByText('Cor da marca salva.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Remover cor' })).toBeInTheDocument();
+    });
+
+    it('cor inválida não deixa salvar', async () => {
+      const user = userEvent.setup();
+      render();
+
+      const campo = await screen.findByLabelText('Código da cor');
+      await user.clear(campo);
+      await user.type(campo, '#12');
+
+      expect(campo).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByText('Use o formato #RRGGBB, como #0f766e.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Salvar cor' })).toBeDisabled();
+    });
+
+    it('admin remove a cor', async () => {
+      const user = userEvent.setup();
+      vi.mocked(companyApi.get).mockResolvedValue({ ...acme, corMarca: '#1e3a8a' });
+      vi.mocked(companyApi.updateCorMarca).mockResolvedValue({ ...acme, corMarca: null });
+      render();
+
+      await user.click(await screen.findByRole('button', { name: 'Remover cor' }));
+
+      expect(companyApi.updateCorMarca).toHaveBeenCalledWith(null);
+      expect(await screen.findByText('Cor da marca removida.')).toBeInTheDocument();
+    });
+
+    it('recrutador comum só vê a cor atual', async () => {
+      vi.mocked(companyApi.get).mockResolvedValue({ ...acme, meuPapel: 'RECRUTADOR', corMarca: '#1e3a8a' });
+      render();
+
+      expect(await screen.findByText('#1e3a8a')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Código da cor')).not.toBeInTheDocument();
     });
   });
 });

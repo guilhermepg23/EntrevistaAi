@@ -4,6 +4,7 @@ import { companyApi } from '../api/companyApi';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyForm } from '../components/CompanyForm';
 import { LogoEmpresa } from '../components/LogoEmpresa';
+import { CorMarcaForm } from '../components/CorMarcaForm';
 import { LogoUpload } from '../components/LogoUpload';
 import { PerfilEmpresaForm } from '../components/PerfilEmpresaForm';
 import { ErroCarga } from '../components/ErroCarga';
@@ -41,6 +42,16 @@ export function CompanySettingsPage() {
             <p className="painel-texto">Só administradores trocam a logo.</p>
           </div>
         )}
+      </section>
+
+      <section className="conta-secao">
+        <h2>Cor da marca</h2>
+        {!ehAdmin && <p className="painel-texto">Só administradores trocam a cor da marca.</p>}
+        <CorMarcaForm
+          company={company}
+          somenteLeitura={!ehAdmin}
+          onSalvar={async cor => setCompany(await companyApi.updateCorMarca(cor))}
+        />
       </section>
 
       <section className="conta-secao">

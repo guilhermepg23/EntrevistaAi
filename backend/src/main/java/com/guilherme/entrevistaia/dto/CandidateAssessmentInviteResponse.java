@@ -36,7 +36,8 @@ public record CandidateAssessmentInviteResponse(
     OffsetDateTime iniciadoEm,
     Integer perguntasRespondidas,
     OffsetDateTime enviadoEm,
-    OffsetDateTime canceladoEm
+    OffsetDateTime canceladoEm,
+    String corMarcaEmpresa
 ) {
     public static CandidateAssessmentInviteResponse from(AssessmentInvite invite) {
         Assessment a = invite.getAssessment();
@@ -55,7 +56,8 @@ public record CandidateAssessmentInviteResponse(
             interview != null ? invite.getAceitoEm() : null,
             respondidas,
             interview != null ? interview.getFinalizadoEm() : null,
-            invite.getCanceladoEm()
+            invite.getCanceladoEm(),
+            a.getCompany().getCorMarca()
         );
     }
 }

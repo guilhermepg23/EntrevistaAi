@@ -129,6 +129,20 @@ class CompanyControllerTest {
     }
 
     @Test
+    void patchCorMarca_devolveACorSalva() throws Exception {
+        acme.setCorMarca("#0f766e");
+        when(companyService.atualizarCorMarca(any(), eq("#0F766E"))).thenReturn(acme);
+
+        mockMvc.perform(patch("/company/cor-marca").with(authentication(auth(recrutador)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"corMarca": "#0F766E"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.corMarca").value("#0f766e"));
+    }
+
+    @Test
     void putLogo_semLoginNaoPassa() throws Exception {
         mockMvc.perform(multipart(HttpMethod.PUT, "/company/logo")
                 .file(new MockMultipartFile("arquivo", new byte[]{1})))

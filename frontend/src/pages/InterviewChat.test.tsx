@@ -174,6 +174,23 @@ describe('InterviewChat em teste de empresa (origem CONVITE)', () => {
     expect(interviewApi.getResume).not.toHaveBeenCalled();
   });
 
+  it('com cor da marca, o banner ganha a paleta da empresa', async () => {
+    vi.mocked(interviewApi.get).mockResolvedValue({ ...convite, corMarcaEmpresa: '#ffeb3b' });
+    renderChat();
+
+    const banner = (await screen.findByText('Teste de Acme')).closest('.teste-empresa-banner') as HTMLElement;
+    expect(banner).toHaveClass('com-marca');
+    // Amarelo é claro demais para texto: o acento sai escurecido.
+    expect(banner.style.getPropertyValue('--marca-acento')).not.toBe('#ffeb3b');
+  });
+
+  it('sem cor da marca, o banner fica com o visual padrão', async () => {
+    renderChat();
+
+    const banner = (await screen.findByText('Teste de Acme')).closest('.teste-empresa-banner') as HTMLElement;
+    expect(banner).not.toHaveClass('com-marca');
+  });
+
   it('ao terminar, não oferece relatório: avisa que foi para a empresa e volta ao início', async () => {
     const user = userEvent.setup();
     stubHook({ status: 'finished' });

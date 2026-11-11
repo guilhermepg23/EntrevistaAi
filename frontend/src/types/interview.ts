@@ -71,6 +71,7 @@ export interface Interview {
   nomeEmpresa?: string | null;
   tituloTeste?: string | null;
   logoEmpresaId?: string | null;
+  corMarcaEmpresa?: string | null;
   finalizadoEm?: string | null;
   // Nota geral do relatório (0 a 10). Só num treino que já tem relatório:
   // ele é gerado quando o candidato o abre. Num CONVITE é sempre null.
@@ -200,6 +201,8 @@ export interface Company {
   // Logo (GET /images/{id}); null sem logo. Respostas antigas não trazem o campo.
   logoId?: string | null;
   perfil?: PerfilEmpresa;
+  // Cor da marca ("#rrggbb"), usada nas telas do candidato; null sem cor.
+  corMarca?: string | null;
 }
 
 export type TamanhoEmpresa = 'ATE_10' | 'DE_11_A_50' | 'DE_51_A_200' | 'DE_201_A_1000' | 'MAIS_DE_1000';
@@ -361,6 +364,7 @@ export interface CandidateAssessmentInvite {
   enviadoEm?: string | null;
   // A empresa cancelou o convite antes do aceite (status CANCELADO).
   canceladoEm?: string | null;
+  corMarcaEmpresa?: string | null;
 }
 
 // Item do histórico exibido no chat (view model, não vem direto da API).

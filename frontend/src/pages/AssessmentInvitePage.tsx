@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { formatarData } from '../lib/datas';
 import { duracaoEstimada } from '../lib/duracao';
 import { prazoCurto, prazoLabel } from '../lib/prazos';
+import { propsMarca } from '../lib/cor';
 import { ComoFuncionaTeste } from '../components/ComoFuncionaTeste';
 import { ConviteDescricoes } from '../components/ConviteDescricoes';
 import { ErroCarga } from '../components/ErroCarga';
@@ -97,7 +98,7 @@ export function AssessmentInvitePage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-form convite-teste">
+      <div {...propsMarca(convite.corMarcaEmpresa, 'auth-form convite-teste')}>
         <div className="convite-empresa-cabecalho">
           <LogoEmpresa logoId={convite.logoEmpresaId} nome={convite.nomeEmpresa} />
           <p className="convite-teste-empresa">Teste de {convite.nomeEmpresa}</p>

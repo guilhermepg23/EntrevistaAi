@@ -52,6 +52,11 @@ public class Company {
     @Column(length = 120)
     private String cidade;
 
+    // Cor da marca (v1.2), opcional: "#rrggbb", já normalizada pelo CompanyService.
+    // O front escurece a cor se ela não tiver contraste suficiente.
+    @Column(name = "cor_marca", length = 7)
+    private String corMarca;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -81,4 +86,7 @@ public class Company {
 
     public String getCidade() { return cidade; }
     public void setCidade(String cidade) { this.cidade = cidade; }
+
+    public String getCorMarca() { return corMarca; }
+    public void setCorMarca(String corMarca) { this.corMarca = corMarca; }
 }

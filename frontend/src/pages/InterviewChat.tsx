@@ -6,6 +6,7 @@ import { nivelPercebidoLabel } from '../labels';
 import { ChatBubble, IaAvatar } from '../components/ChatBubble';
 import { AnswerInput } from '../components/AnswerInput';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { propsMarca } from '../lib/cor';
 import { LogoEmpresa } from '../components/LogoEmpresa';
 
 export function InterviewChat({
@@ -118,7 +119,7 @@ export function InterviewChat({
       )}
 
       {testeEmpresa && (
-        <div className="teste-empresa-banner">
+        <div {...propsMarca(interview?.corMarcaEmpresa, 'teste-empresa-banner')}>
           <span className="teste-empresa-banner-rotulo">
             <LogoEmpresa logoId={interview?.logoEmpresaId} nome={interview?.nomeEmpresa ?? 'empresa'} tamanho="pequena" />
             Teste de {interview?.nomeEmpresa ?? 'empresa'}

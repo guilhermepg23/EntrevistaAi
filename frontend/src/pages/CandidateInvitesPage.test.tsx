@@ -161,6 +161,21 @@ describe('CandidateInvitesPage', () => {
   });
 });
 
+describe('CandidateInvitesPage com cor da marca', () => {
+  beforeEach(() => vi.mocked(interviewApi.assessmentInvites).mockReset());
+
+  it('o cartão em aberto ganha a cor da empresa; o vencido não', async () => {
+    vi.mocked(interviewApi.assessmentInvites).mockResolvedValue([
+      makeInvite({ inviteId: 'a', titulo: 'Teste aberto', corMarcaEmpresa: '#1e3a8a' }),
+      makeInvite({ inviteId: 'v', titulo: 'Teste vencido', status: 'EXPIRADO', corMarcaEmpresa: '#1e3a8a' }),
+    ]);
+    renderWithProviders(<CandidateInvitesPage />);
+
+    expect((await screen.findByText('Teste aberto')).closest('li')).toHaveClass('com-marca');
+    expect(screen.getByText('Teste vencido').closest('li')).not.toHaveClass('com-marca');
+  });
+});
+
 describe('conviteEmAberto', () => {
   it('pendente e em andamento contam; vencido, cancelado e feito não', () => {
     expect(conviteEmAberto(makeInvite())).toBe(true);

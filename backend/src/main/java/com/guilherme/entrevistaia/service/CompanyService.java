@@ -155,6 +155,31 @@ public class CompanyService {
         return company;
     }
 
+    // PATCH /company/cor-marca — só ADMIN. Vazio ou null remove a cor.
+    @Transactional
+    public Company atualizarCorMarca(User principal, String cor) {
+        User admin = exigirAdmin(principal);
+        Company company = admin.getCompany();
+        company.setCorMarca(normalizarCor(cor));
+        companyRepository.save(company);
+        log.info("[COMPANY_COLOR_UPDATED] companyId={} por={} cor={}", company.getId(), admin.getId(), company.getCorMarca());
+        return company;
+    }
+
+    // "#0F766E" ou "0f766e" -> "#0f766e". Só hex de 6 dígitos (o que o seletor
+    // de cor do navegador produz); o resto é recusado.
+    static String normalizarCor(String cor) {
+        String c = vazioViraNull(cor);
+        if (c == null) {
+            return null;
+        }
+        c = (c.startsWith("#") ? c : "#" + c).toLowerCase(java.util.Locale.ROOT);
+        if (!c.matches("^#[0-9a-f]{6}$")) {
+            throw CompanyRuleException.corInvalida();
+        }
+        return c;
+    }
+
     // O site vira link no convite: só http(s), com um host de verdade. Sem
     // esquema ("acme.com.br") ganha https://. Recusa javascript:, data: e afins.
     static String normalizarSite(String site) {

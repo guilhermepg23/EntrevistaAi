@@ -17,11 +17,12 @@ public record CompanyResponse(
     PapelEmpresa meuPapel,
     long totalMembros,
     UUID logoId,
-    CompanyProfileResponse perfil
+    CompanyProfileResponse perfil,
+    String corMarca
 ) {
     public static CompanyResponse from(Company company, PapelEmpresa meuPapel, long totalMembros) {
         return new CompanyResponse(company.getId(), company.getNome(), company.getCnpj(),
             company.getDescricao(), company.getCriadoEm(), meuPapel, totalMembros, company.getLogoId(),
-            CompanyProfileResponse.from(company));
+            CompanyProfileResponse.from(company), company.getCorMarca());
     }
 }
