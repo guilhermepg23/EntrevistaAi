@@ -84,3 +84,7 @@ Pedido em 2026-11-03, depois do fechamento da v1.2.0. O foco volta ao candidato.
 - **`lib/prazos`:** dias de calendário no fuso do navegador, com testes.
 
 **Verificação:** back com 264 testes (4 pulados, Docker desligado), front com 279, build ok. Não foi visto no navegador.
+
+## Ideia 4: adiada (2026-11-11)
+
+O usuário preferiu ver outras coisas antes de ter uma assinatura. Nada foi decidido: o modelo (grátis com limite e Pro, créditos ou só limite), o provedor (Mercado Pago, Stripe ou Asaas), o que conta no limite e o tamanho do limite continuam em aberto. Hoje não há nenhum limite de uso dos treinos.
