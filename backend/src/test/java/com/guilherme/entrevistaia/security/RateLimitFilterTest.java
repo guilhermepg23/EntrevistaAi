@@ -33,6 +33,8 @@ class RateLimitFilterTest {
         assertThat(bloqueada.getStatus()).isEqualTo(429);
         assertThat(bloqueada.getContentAsString()).contains("RATE_LIMITED");
         assertThat(bloqueada.getHeader("Retry-After")).isEqualTo("60");
+        assertThat(bloqueada.getCharacterEncoding()).isEqualTo("UTF-8");
+        assertThat(bloqueada.getContentAsString(java.nio.charset.StandardCharsets.UTF_8)).contains("requisições");
 
         // A 4ª não chega a passar adiante na cadeia.
         verify(chain, times(3)).doFilter(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
@@ -58,6 +60,18 @@ class RateLimitFilterTest {
         // Estourou o bucket auth, mas o bucket ai ainda tem cota.
         assertThat(passar(filter, "POST", "/auth/login", "9.9.9.9", chain).getStatus()).isEqualTo(429);
         assertThat(passar(filter, "POST", "/resume-reviews", "9.9.9.9", chain).getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void chatbotDeSuporteTemBucketProprio() throws Exception {
+        RateLimitFilter filter = new RateLimitFilter(100, 100, 2);
+        FilterChain chain = mock(FilterChain.class);
+
+        assertThat(passar(filter, "POST", "/support/chat", "7.7.7.7", chain).getStatus()).isEqualTo(200);
+        assertThat(passar(filter, "POST", "/support/chat", "7.7.7.7", chain).getStatus()).isEqualTo(200);
+        assertThat(passar(filter, "POST", "/support/chat", "7.7.7.7", chain).getStatus()).isEqualTo(429);
+        // Estourar o suporte não tira a cota da entrevista.
+        assertThat(passar(filter, "POST", "/interviews", "7.7.7.7", chain).getStatus()).isEqualTo(200);
     }
 
     @Test

@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -50,15 +51,22 @@ public class OpenAiStreamingClient {
     // quem chamou poder fazer o parse definitivo sem precisar re-montar tudo
     // a partir dos deltas de novo.
     public String streamChatCompletion(String systemPrompt, String userPrompt, Consumer<String> onDelta) {
-        Map<String, Object> body = Map.of(
-            "model", model,
-            "messages", List.of(
-                Map.of("role", "system", "content", systemPrompt),
-                Map.of("role", "user", "content", userPrompt)
-            ),
-            "stream", true,
-            "temperature", 0.7
-        );
+        return streamChat(List.of(
+            Map.of("role", "system", "content", systemPrompt),
+            Map.of("role", "user", "content", userPrompt)
+        ), 0.7, null, onDelta);
+    }
+
+    // Variante com a conversa inteira (system + turnos anteriores + mensagem
+    // nova), usada pelo chatbot de suporte. maxTokens null = sem teto.
+    public String streamChat(List<Map<String, String>> messages, double temperature, Integer maxTokens,
+                              Consumer<String> onDelta) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("model", model);
+        body.put("messages", messages);
+        body.put("stream", true);
+        body.put("temperature", temperature);
+        if (maxTokens != null) body.put("max_tokens", maxTokens);
 
         String jsonBody;
         try {

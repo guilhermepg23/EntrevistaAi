@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,12 +39,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final int authPorMinuto;
     private final int aiPorMinuto;
+    private final int suportePorMinuto;
     private final ConcurrentHashMap<String, Janela> contadores = new ConcurrentHashMap<>();
 
+    @Autowired
     public RateLimitFilter(@Value("${app.rate-limit.auth-per-minute:60}") int authPorMinuto,
-                            @Value("${app.rate-limit.ai-per-minute:40}") int aiPorMinuto) {
+                            @Value("${app.rate-limit.ai-per-minute:40}") int aiPorMinuto,
+                            @Value("${app.rate-limit.support-per-minute:10}") int suportePorMinuto) {
         this.authPorMinuto = authPorMinuto;
         this.aiPorMinuto = aiPorMinuto;
+        this.suportePorMinuto = suportePorMinuto;
+    }
+
+    RateLimitFilter(int authPorMinuto, int aiPorMinuto) {
+        this(authPorMinuto, aiPorMinuto, 10);
     }
 
     @Override
@@ -52,12 +61,18 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String bucket = bucketDe(request);
         if (bucket != null) {
-            int limite = bucket.equals("auth") ? authPorMinuto : aiPorMinuto;
+            int limite = switch (bucket) {
+                case "auth" -> authPorMinuto;
+                case "suporte" -> suportePorMinuto;
+                default -> aiPorMinuto;
+            };
             String chave = bucket + "|" + clientIp(request);
             if (!permitir(chave, limite)) {
                 log.warn("[RATE_LIMITED] bucket={} ip={} path={}", bucket, clientIp(request), request.getRequestURI());
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                // Sem isso o servlet escreve em ISO-8859-1 e o front lê "requisi��es".
+                response.setCharacterEncoding("UTF-8");
                 response.setHeader("Retry-After", "60");
                 response.getWriter().write(
                     "{\"errorCode\":\"RATE_LIMITED\",\"message\":\"Muitas requisições. Tente de novo em um minuto.\"}");
@@ -83,6 +98,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (path.startsWith("/interviews/") && path.endsWith("/resume") && metodo.equals("POST")) return "ai";
         if (path.equals("/interviews/transcribe")) return "ai";
         if (path.startsWith("/interviews/questions/") && path.endsWith("/answer")) return "ai";
+        // Chatbot de suporte: bucket próprio e mais apertado. Dúvida de uso não
+        // precisa de rajada, e assim o bot não gasta a cota da entrevista.
+        if (path.equals("/support/chat")) return "suporte";
 
         return null;
     }

@@ -131,4 +131,35 @@ describe('Layout', () => {
     expect(await screen.findByText('em /login')).toBeInTheDocument();
     expect(lerRascunho('teste:novo')).toBeNull();
   });
+
+  describe('botão de ajuda', () => {
+    it('aparece para quem está logado', () => {
+      renderWithProviders(<Layout><p>x</p></Layout>, { route: '/', auth });
+      expect(screen.getByRole('button', { name: 'Ajuda' })).toBeInTheDocument();
+    });
+
+    it('não aparece sem login', () => {
+      renderWithProviders(<Layout><p>x</p></Layout>, { route: '/login' });
+      expect(screen.queryByRole('button', { name: 'Ajuda' })).not.toBeInTheDocument();
+    });
+
+    it('some durante a entrevista, mas volta no relatório', () => {
+      const { unmount } = renderWithProviders(<Layout><p>x</p></Layout>, { route: '/interview/abc', auth });
+      expect(screen.queryByRole('button', { name: 'Ajuda' })).not.toBeInTheDocument();
+      unmount();
+      renderWithProviders(<Layout><p>x</p></Layout>, { route: '/interview/abc/report', auth });
+      expect(screen.getByRole('button', { name: 'Ajuda' })).toBeInTheDocument();
+    });
+
+    it('a conversa é apagada ao sair da conta', async () => {
+      salvarRascunho('ajuda-chat', [{ papel: 'user', texto: 'oi' }]);
+      const user = userEvent.setup();
+      renderWithProviders(<Layout><p>x</p></Layout>, { route: '/', auth });
+
+      await user.click(screen.getByRole('button', { name: 'Guilherme' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Sair' }));
+
+      expect(lerRascunho('ajuda-chat')).toBeNull();
+    });
+  });
 });

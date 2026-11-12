@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { limparRascunhos } from '../lib/rascunho';
+import { AjudaChat } from './AjudaChat';
 import { AvisoNovaVersao } from './AvisoNovaVersao';
 import { LogoEmpresa } from './LogoEmpresa';
 
@@ -11,6 +12,10 @@ import { LogoEmpresa } from './LogoEmpresa';
 // o login é pra onde o ProtectedRoute manda quem não está — voltar dali só
 // criaria loop.
 const SEM_VOLTAR = new Set(['/', '/login']);
+
+// A entrevista em si (não o relatório): ali o botão de ajuda cobriria o campo
+// de resposta, e a atenção da pessoa está na pergunta.
+const ROTA_ENTREVISTA = /^\/interview\/[^/]+\/?$/;
 
 function BackButton() {
   const navigate = useNavigate();
@@ -66,9 +71,11 @@ export function Layout({ children }: { children: ReactNode }) {
   // .modo-empresa no CSS), o selo com o nome da empresa e um menu próprio —
   // de propósito bem diferente do candidato, pra ninguém confundir os dois.
   const modoEmpresa = isAuthenticated && tipo === 'RECRUTADOR';
+  const mostrarAjuda = isAuthenticated && !ROTA_ENTREVISTA.test(location.pathname);
+  const classes = ['app-shell', modoEmpresa && 'modo-empresa', mostrarAjuda && 'com-ajuda'].filter(Boolean).join(' ');
 
   return (
-    <div className={modoEmpresa ? 'app-shell modo-empresa' : 'app-shell'}>
+    <div className={classes}>
       <div className="app-topo">
         <header className="app-header">
           <div className="header-left">
@@ -138,6 +145,8 @@ export function Layout({ children }: { children: ReactNode }) {
         <AvisoNovaVersao />
       </div>
       <main className="app-main">{children}</main>
+      {/* key: trocar de conta na mesma aba recomeça a conversa do zero. */}
+      {mostrarAjuda && <AjudaChat key={tipo} tipo={tipo} />}
     </div>
   );
 }

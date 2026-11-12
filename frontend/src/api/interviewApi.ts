@@ -1,19 +1,6 @@
 import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PontosFracosRecorrentes, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
-import { API_BASE, ErroDeRede, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
-
-// Faz o parse manual de UM evento SSE já isolado (texto entre duas quebras de
-// linha duplas), extraindo "event:" e "data:" — não usamos EventSource porque
-// ele não permite mandar o header Authorization (a única forma de autenticar
-// nesta API), então o streaming é lido via fetch + ReadableStream mesmo.
-function parseSseEvent(raw: string): { event: string; data: string } {
-  let event = 'message';
-  const dataLines: string[] = [];
-  for (const line of raw.split('\n')) {
-    if (line.startsWith('event:')) event = line.slice(6).trim();
-    else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
-  }
-  return { event, data: dataLines.join('\n') };
-}
+import { API_BASE, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
+import { lerEventosSse } from './sse';
 
 export const interviewApi = {
   start: (
@@ -59,29 +46,15 @@ export const interviewApi = {
       return handleResponse<Question>(res);
     }
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let questionFinal: Question | null = null;
-    let erroRecebido: string | null = null;
+    // "as": atribuídas dentro do callback, que o TypeScript não acompanha.
+    let questionFinal = null as Question | null;
+    let erroRecebido = null as string | null;
 
-    while (true) {
-      const { done, value } = await reader.read().catch(() => { throw new ErroDeRede(); });
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      let sepIndex: number;
-      while ((sepIndex = buffer.indexOf('\n\n')) !== -1) {
-        const rawEvent = buffer.slice(0, sepIndex);
-        buffer = buffer.slice(sepIndex + 2);
-        if (!rawEvent.trim()) continue;
-
-        const { event, data } = parseSseEvent(rawEvent);
-        if (event === 'delta') onDelta(data);
-        else if (event === 'done') questionFinal = JSON.parse(data);
-        else if (event === 'error') erroRecebido = data;
-      }
-    }
+    await lerEventosSse(res.body, ({ event, data }) => {
+      if (event === 'delta') onDelta(data);
+      else if (event === 'done') questionFinal = JSON.parse(data);
+      else if (event === 'error') erroRecebido = data;
+    });
 
     if (erroRecebido) throw new Error(erroRecebido);
     if (!questionFinal) throw new Error('Conexão encerrada antes da pergunta terminar.');

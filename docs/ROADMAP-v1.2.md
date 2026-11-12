@@ -134,3 +134,31 @@ Depois de a ideia 4 da v1.3 (assinatura) ser adiada, o usuário pediu para termi
 **Decisão:** a cor é só destaque. Ela não pinta botões nem fundos inteiros, para o candidato continuar reconhecendo o app e para cores muito claras ou saturadas não atrapalharem a leitura.
 
 **Verificação:** back com 276 testes (4 pulados, Docker desligado), front com 299 e build ok. O contraste foi testado com seis cores, incluindo amarelo, verde-limão e branco. A captura no Edge headless conferiu o banner e o cartão com essas cores. A V11 ainda não rodou no Testcontainers (Docker desligado).
+
+### Etapa 5: chatbot de suporte, implementada em 2026-11-12
+
+**Backend:**
+- **Rota:** `POST /support/chat`, com qualquer conta logada (candidato ou recrutador). Corpo: `{"mensagem", "historico": [{"papel": "user"|"assistant", "texto"}]}`. A mensagem tem até 1000 caracteres, e o histórico até 10 mensagens de até 4000 caracteres cada. Fora disso, 400 `VALIDATION_ERROR`. O papel `system` é recusado, para o cliente não reescrever as regras.
+- **Streaming (SSE):** `delta` com `{"t": "..."}`, `done` com `{}` e `error` com `{"message": "..."}`. A falha da IA vira uma mensagem genérica, sem detalhe interno. O pedaço vai dentro de um JSON porque, em texto cru, o `data:` perde o espaço inicial dos tokens e as quebras de linha (o `trim()` do parser do front; ver `interviewApi.test`).
+- **IA:** `OpenAiStreamingClient.streamChat` recebe a conversa inteira, com `max_tokens`. `OpenAiSupportChat` usa temperatura 0.3 e teto de 450 tokens.
+- **Base de ajuda:** `resources/ajuda/geral.md`, `candidato.md` e `recrutador.md`, lidos no boot pelo `SupportPromptBuilder` (um arquivo faltando derruba a subida). Cada tipo de conta recebe a parte comum e a sua. As regras do prompt dizem que o bot não vê dados da conta, não inventa telas nem prazos e recusa assuntos fora do app.
+- **Rate limit:** bucket `suporte` no `RateLimitFilter`, com 10 por minuto (`RATE_LIMIT_SUPPORT_PER_MINUTE`), separado da cota da entrevista.
+  - **Mudança de plano:** o limite é por IP, como os outros buckets, e não por usuário. O filtro roda antes da autenticação.
+
+**Front:**
+- **`api/sse.ts`:** leitura de SSE comum, agora usada pela pergunta da entrevista e pelo suporte. O comportamento da pergunta não mudou.
+- **`api/supportApi.ts`:** manda só as últimas 10 mensagens.
+- **`AjudaChat`:** botão flutuante "Ajuda" em toda tela logada, menos na entrevista em andamento (`/interview/:id`); o relatório tem o botão.
+  - **Painel:** sugestões por tipo de conta, Enter envia e Shift+Enter quebra a linha. Tem "Limpar conversa", e no erro aparece "Tentar de novo", que reenvia a mesma pergunta. O 429 vira "espere um minuto".
+  - **Conversa:** fica no `sessionStorage` com o prefixo dos rascunhos, então é apagada no "Sair".
+  - **Acessibilidade:** é um diálogo modal com fundo; o foco fica preso, Esc e clique fora fecham e devolvem o foco ao botão. A resposta é anunciada inteira, por `aria-live`, quando termina.
+- Usa as variáveis de cor do app, então segue o verde-petróleo no modo empresa.
+
+**Verificação:** back com 290 testes (Docker ligado, 0 pulados; a V10 e a V11 rodaram no Testcontainers) e front com 320. Os testes cobrem a ordem das mensagens, a recusa do papel `system`, os limites, o erro sem detalhe interno, o bucket separado e o foco preso.
+
+**Teste contra a OpenAI real (backend local):**
+- **O que passou:** o bot responde com os caminhos certos, para recrutador e candidato. Quando a pergunta depende de dados da conta, ele indica a tela; recusa assuntos fora do app e pedidos para revelar o prompt; usa o histórico; e o rate limit barrou na 11ª pergunta do minuto.
+- **Dois ajustes saíram daí:**
+  - **Prompt:** ao recusar, o bot indicava o "treino de entrevista" também ao recrutador, que não tem essa função. A sugestão agora vai só para o candidato.
+  - **Base de ajuda:** passou a dizer que o app é gratuito, porque a pergunta sobre assinatura mandava procurar preços.
+- **Bug antigo corrigido:** o 429 do `RateLimitFilter` saía em ISO-8859-1 ("requisi��es"). Agora sai em UTF-8.

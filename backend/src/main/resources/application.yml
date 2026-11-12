@@ -106,6 +106,8 @@ app:
     # transcrição, avaliação, análise de currículo). Ver security/RateLimitFilter.
     auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:60}
     ai-per-minute: ${RATE_LIMIT_AI_PER_MINUTE:40}
+    # Chatbot de suporte (POST /support/chat), com cota própria.
+    support-per-minute: ${RATE_LIMIT_SUPPORT_PER_MINUTE:10}
 
 openai:
   api-key: ${OPENAI_API_KEY:}

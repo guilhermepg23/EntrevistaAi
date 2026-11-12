@@ -3350,3 +3350,255 @@ p.convite-prazo-curto {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Texto só para leitor de tela. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Chatbot de ajuda (v1.2 etapa 5) ----------
+   Botão flutuante no canto inferior direito e painel acima dele. Usa as
+   variáveis de cor do app, então segue o verde-petróleo no modo empresa. */
+.ajuda-botao {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.1rem 0.6rem 0.7rem;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+}
+
+.ajuda-botao-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  font-weight: 700;
+}
+
+.ajuda-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(23, 25, 35, 0.18);
+}
+
+.ajuda-painel {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5rem;
+  z-index: 31;
+  width: min(380px, calc(100vw - 2rem));
+  height: min(560px, calc(100vh - 7rem));
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.ajuda-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem 0.7rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ajuda-cabecalho h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.ajuda-cabecalho-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ajuda-limpar,
+.ajuda-fechar {
+  background: transparent;
+  color: var(--color-text-muted);
+  box-shadow: none;
+  min-height: 40px;
+}
+
+.ajuda-limpar {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.ajuda-fechar {
+  min-width: 40px;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.ajuda-limpar:hover:not(:disabled),
+.ajuda-fechar:hover:not(:disabled) {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  box-shadow: none;
+  transform: none;
+}
+
+.ajuda-conversa {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ajuda-boas-vindas p {
+  margin: 0 0 0.8rem;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.ajuda-sugestoes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ajuda-sugestoes button {
+  width: 100%;
+  text-align: left;
+  background: var(--color-primary-light);
+  color: var(--color-primary-hover);
+  box-shadow: none;
+  min-height: 40px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.ajuda-msg {
+  max-width: 88%;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ajuda-msg-voce {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: white;
+}
+
+.ajuda-msg-bot {
+  align-self: flex-start;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.ajuda-digitando {
+  color: var(--color-text-muted);
+}
+
+.ajuda-digitando::after {
+  content: '...';
+}
+
+.ajuda-erro {
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: 0.9rem;
+}
+
+.ajuda-erro p {
+  margin: 0 0 0.5rem;
+}
+
+.ajuda-erro button {
+  min-height: 40px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.88rem;
+}
+
+.ajuda-form {
+  border-top: 1px solid var(--color-border);
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ajuda-form textarea {
+  resize: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+
+.ajuda-form-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.ajuda-contador {
+  margin-right: auto;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.ajuda-form button {
+  min-height: 40px;
+  padding: 0.45rem 1.1rem;
+}
+
+/* Celular: painel ocupa a largura toda, acima do botão. */
+@media (max-width: 600px) {
+  .ajuda-botao {
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .ajuda-painel {
+    right: 0.5rem;
+    left: 0.5rem;
+    bottom: 4.5rem;
+    width: auto;
+    height: min(560px, calc(100vh - 6rem));
+  }
+}
+
+/* Espaço no fim da página para o botão flutuante não cobrir o último botão. */
+.com-ajuda .app-main {
+  padding-bottom: 6rem;
+}
