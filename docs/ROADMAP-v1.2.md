@@ -162,3 +162,22 @@ Depois de a ideia 4 da v1.3 (assinatura) ser adiada, o usuário pediu para termi
   - **Prompt:** ao recusar, o bot indicava o "treino de entrevista" também ao recrutador, que não tem essa função. A sugestão agora vai só para o candidato.
   - **Base de ajuda:** passou a dizer que o app é gratuito, porque a pergunta sobre assinatura mandava procurar preços.
 - **Bug antigo corrigido:** o 429 do `RateLimitFilter` saía em ISO-8859-1 ("requisi��es"). Agora sai em UTF-8.
+
+### Ajustes depois do teste do usuário (2026-11-13)
+
+O usuário testou na Vercel e levantou três pontos:
+
+- **"O chatbot não aparece":** o bundle publicado tem o chatbot (`ajuda-botao` e `/support/chat` conferidos no JS e no CSS da Vercel). Provável aba antiga; pedido Ctrl+F5. Sem mudança de código.
+- **Cor da marca no modo empresa:** a ideia do usuário é cada empresa ter a própria identidade visual, então a cor agora vale também para a equipe, e não só para o candidato.
+  - **`varsModoEmpresa` (`lib/cor.ts`):** troca os tokens de `.modo-empresa` (primary, hover, light, gradiente, header escuro e o destaque claro do header) por uma paleta tirada da cor. Testes de contraste para cores claras, saturadas, branco e preto: botão com texto branco, texto sobre o fundo claro, texto branco no header e destaque no header, todos com 4,5:1 ou mais.
+  - **CSS:** os teals fixos do header, do selo, do avatar e do painel viraram tokens (`--color-empresa-destaque`, `--color-empresa-destaque-fundo`). Sem cor, o visual continua o verde-petróleo de antes.
+  - **`Layout`:** aplica as variáveis inline no `.app-shell` quando o recrutador tem cor; ela atualiza na hora ao salvar, pelo `setCompany` do contexto.
+- **Cadastro com 3 caminhos:** "recrutador" sozinho dava a entender que cada recrutador cria a conta ali (ou que todos usam o login da empresa). O modelo já era de contas individuais, pelo convite de equipe; faltava a tela explicar isso.
+  - **Opções:** "Sou candidato", "Quero cadastrar minha empresa" (cria a empresa e vira ADMIN) e "Sou recrutador de uma empresa já cadastrada". A última não tem formulário: explica que cada recrutador tem a própria conta e que se entra pelo convite em Equipe.
+  - **Base de ajuda do chatbot** (`geral.md` e `recrutador.md`) atualizada com os 3 caminhos e com a cor no modo empresa.
+
+## Para depois: verificação da empresa (anotado em 2026-11-13)
+
+Hoje qualquer pessoa pode criar uma "empresa" com qualquer nome: o CNPJ é opcional e só tem os dígitos verificadores conferidos. Alguém poderia se passar por uma empresa real e convidar candidatos. O usuário pediu para não mexer agora, para não atrapalhar os testes enquanto o app está em construção.
+
+Ideias para quando for retomar (nada decidido): CNPJ obrigatório e consultado numa base pública (situação ativa e razão social), selo "empresa verificada" para o candidato, e um único cadastro por CNPJ.

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
+import { varsModoEmpresa } from '../lib/cor';
 import { limparRascunhos } from '../lib/rascunho';
 import { AjudaChat } from './AjudaChat';
 import { AvisoNovaVersao } from './AvisoNovaVersao';
@@ -67,15 +68,17 @@ export function Layout({ children }: { children: ReactNode }) {
     navigate('/login');
   }
 
-  // Modo empresa: o recrutador vê outra paleta (verde-petróleo, ver
-  // .modo-empresa no CSS), o selo com o nome da empresa e um menu próprio —
-  // de propósito bem diferente do candidato, pra ninguém confundir os dois.
+  // Modo empresa: o recrutador vê outra paleta (a cor da marca da empresa ou,
+  // sem ela, o verde-petróleo de .modo-empresa no CSS), o selo com o nome da
+  // empresa e um menu próprio — de propósito bem diferente do candidato, pra
+  // ninguém confundir os dois.
   const modoEmpresa = isAuthenticated && tipo === 'RECRUTADOR';
   const mostrarAjuda = isAuthenticated && !ROTA_ENTREVISTA.test(location.pathname);
   const classes = ['app-shell', modoEmpresa && 'modo-empresa', mostrarAjuda && 'com-ajuda'].filter(Boolean).join(' ');
+  const estiloMarca = modoEmpresa ? varsModoEmpresa(company?.corMarca) : undefined;
 
   return (
-    <div className={classes}>
+    <div className={classes} style={estiloMarca}>
       <div className="app-topo">
         <header className="app-header">
           <div className="header-left">

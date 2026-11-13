@@ -8,7 +8,10 @@ Quem quer os dois papéis precisa de duas contas, com emails diferentes.
 Hoje o app é gratuito para os dois tipos de conta: não há planos pagos nem assinatura.
 
 ## Cadastro e login
-- O cadastro pede nome, email, senha (com confirmação) e o tipo de conta ("Sou candidato" ou recrutador). O candidato informa também o CPF, que é validado. O recrutador não informa CPF, mas informa o nome da empresa (o CNPJ é opcional).
+- O cadastro começa pela escolha de um de três caminhos:
+  - **"Sou candidato":** pede nome, email, CPF (validado) e senha com confirmação.
+  - **"Quero cadastrar minha empresa":** cria a empresa e faz de você o administrador dela. Pede nome, email, nome da empresa, CNPJ (opcional) e senha com confirmação, sem CPF.
+  - **"Sou recrutador de uma empresa já cadastrada":** não tem cadastro nessa tela. Cada recrutador tem a própria conta, com email e senha próprios; ninguém usa o login da empresa. Peça ao administrador da sua empresa um convite em "Equipe" e crie a conta pelo link do convite.
 - Cada email e cada CPF só podem ter uma conta.
 - Esqueceu a senha: na tela de login, clique em "Esqueceu sua senha?" e informe o email. Se houver conta, chega um link para criar uma senha nova. O link vale 30 minutos e funciona uma vez só. A mensagem é a mesma exista a conta ou não, por segurança.
 - Depois de um tempo a sessão expira. O app avisa e pede login de novo. Depois do login, ele volta para a página em que você estava.

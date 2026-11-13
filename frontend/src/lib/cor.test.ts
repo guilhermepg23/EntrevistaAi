@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONTRASTE_MINIMO, contraste, corValida, escurecerAteContraste, paletaMarca, propsMarca } from './cor';
+import { CONTRASTE_MINIMO, contraste, corValida, escurecerAteContraste, paletaMarca, propsMarca, varsModoEmpresa } from './cor';
 
 describe('cor da marca', () => {
   it('calcula o contraste do WCAG', () => {
@@ -36,4 +36,22 @@ describe('cor da marca', () => {
     expect(comCor.className).toBe('x com-marca');
     expect(comCor.style).toHaveProperty('--marca-acento');
   });
+});
+
+describe('cor da marca no modo empresa', () => {
+  it('sem cor válida, não troca nada (fica o verde-petróleo do CSS)', () => {
+    expect(varsModoEmpresa(null)).toBeUndefined();
+    expect(varsModoEmpresa('#abc')).toBeUndefined();
+  });
+
+  it.each(['#ffeb3b', '#00ff00', '#ffffff', '#87ceeb', '#e11d48', '#1e3a8a', '#000000'])(
+    'com %s: botão com texto branco, header escuro com texto branco e destaque legível',
+    hex => {
+      const v = varsModoEmpresa(hex) as Record<string, string>;
+      expect(contraste(v['--color-primary'], '#ffffff')).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
+      expect(contraste(v['--color-primary'], v['--color-primary-light'])).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
+      expect(contraste('#ffffff', v['--color-empresa-header'])).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
+      expect(contraste(v['--color-empresa-destaque'], v['--color-empresa-header'])).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
+    },
+  );
 });

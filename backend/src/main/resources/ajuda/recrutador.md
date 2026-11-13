@@ -1,9 +1,9 @@
 # Conta de recrutador (modo empresa)
 
-O modo empresa tem cores próprias (verde-petróleo) e, no topo, o selo com o nome e a logo da empresa. O menu do topo tem Painel, Testes, Equipe e Empresa.
+O modo empresa tem cores próprias (a cor da marca da empresa ou, se ela não tiver uma, verde-petróleo) e, no topo, o selo com o nome e a logo da empresa. O menu do topo tem Painel, Testes, Equipe e Empresa.
 
 ## Empresa e papéis
-- Cada recrutador pertence a uma empresa. Quem se cadastra como recrutador sem convite cria a empresa no próprio cadastro (nome obrigatório, CNPJ opcional) e vira administrador.
+- Cada recrutador pertence a uma empresa e tem a própria conta; ninguém compartilha o login da empresa. Quem escolhe "Quero cadastrar minha empresa" no cadastro cria a empresa (nome obrigatório, CNPJ opcional) e vira administrador. Os outros recrutadores entram pelo convite de equipe.
 - Recrutador removido da equipe fica sem empresa; o Painel mostra o formulário para criar uma empresa nova.
 - **Papéis:** ADMIN (administrador) ou RECRUTADOR. Os dois criam testes, convidam candidatos e veem resultados. Só o ADMIN edita os dados da empresa, a logo, o perfil público e a cor da marca, e só ele gerencia a equipe.
 - A empresa pode ter vários administradores, mas sempre precisa de pelo menos um.
@@ -20,7 +20,7 @@ No menu "Empresa" (ou em "Configurações da empresa", no menu do seu nome). Só
 - **Dados da empresa:** nome, CNPJ e o texto "Sobre a empresa", que o candidato vê no convite.
 - **Logo:** PNG, JPEG ou WebP (SVG não). O app reduz a imagem antes de enviar. A logo aparece no topo do modo empresa, no convite, na aba Convites do candidato e no teste.
 - **Perfil público:** site, setor, tamanho e cidade, todos opcionais. Aparecem para o candidato em "Sobre a empresa". O site precisa ser um endereço http ou https.
-- **Cor da marca:** escolha a cor pelo seletor ou digite o código (por exemplo #1a73e8). A cor serve de destaque no convite e no teste que o candidato vê; os botões continuam com as cores do app. Se a cor for clara demais para ler, o app usa uma versão mais escura dela, e a prévia avisa quando isso acontece. O modo empresa não muda de cor.
+- **Cor da marca:** escolha a cor pelo seletor ou digite o código (por exemplo #1a73e8). A cor vira a cor do modo empresa para toda a equipe (topo, botões, links e o painel) e serve de destaque no convite e no teste que o candidato vê. Se a cor for clara demais para ler, o app usa uma versão mais escura dela, e a prévia avisa quando isso acontece. "Remover cor" volta o modo empresa ao verde-petróleo.
 
 ## Foto
 Cada recrutador pode pôr a própria foto em Minha conta, na aba Configurações, seção "Foto". Ela aparece na tela Equipe. Dá para trocar ou remover a qualquer momento.

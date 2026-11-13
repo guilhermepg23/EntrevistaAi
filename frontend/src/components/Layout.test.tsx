@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './Layout';
+import { companyApi } from '../api/companyApi';
 import { ProtectedRoute } from './ProtectedRoute';
 import { lerRascunho, salvarRascunho } from '../lib/rascunho';
 import { renderWithProviders } from '../test-utils';
@@ -63,6 +64,25 @@ describe('Layout', () => {
     expect(screen.getByRole('link', { name: 'Equipe' })).toHaveAttribute('href', '/empresa/equipe');
     expect(screen.getByRole('link', { name: 'Empresa' })).toHaveAttribute('href', '/empresa/configuracoes');
     expect(screen.queryByRole('link', { name: 'Analisar currículo' })).not.toBeInTheDocument();
+  });
+
+  it('recrutador: sem cor da marca, fica o verde-petróleo do CSS (nada inline)', async () => {
+    const { container } = renderWithProviders(<Layout><p>página</p></Layout>, { auth: { ...auth, tipo: 'RECRUTADOR' } });
+
+    await screen.findByText('Acme');
+    expect((container.querySelector('.app-shell') as HTMLElement).style.getPropertyValue('--color-primary')).toBe('');
+  });
+
+  it('recrutador: com cor da marca, o modo empresa usa a cor da empresa', async () => {
+    vi.mocked(companyApi.get).mockResolvedValueOnce({
+      id: 'c1', nome: 'Acme', cnpj: null, criadoEm: null, meuPapel: 'ADMIN', totalMembros: 1, corMarca: '#1e3a8a',
+    } as Awaited<ReturnType<typeof companyApi.get>>);
+    const { container } = renderWithProviders(<Layout><p>página</p></Layout>, { auth: { ...auth, tipo: 'RECRUTADOR' } });
+
+    await screen.findByText('Acme');
+    const shell = container.querySelector('.app-shell') as HTMLElement;
+    expect(shell.style.getPropertyValue('--color-primary')).toBe('#1e3a8a');
+    expect(shell.style.getPropertyValue('--color-empresa-header')).not.toBe('');
   });
 
   it('candidato: sem modo empresa', () => {

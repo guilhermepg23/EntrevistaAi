@@ -1,8 +1,9 @@
 import type { CSSProperties } from 'react';
 
-// Cor da marca da empresa (v1.2, etapa 4), aplicada só nas telas que o
-// candidato vê da empresa. A empresa escolhe qualquer cor; aqui ela vira uma
-// paleta que sempre passa no contraste do WCAG AA (4,5:1 para texto).
+// Cor da marca da empresa (v1.2, etapa 4), aplicada nas telas que o
+// candidato vê da empresa e em todo o modo empresa. A empresa escolhe qualquer
+// cor; aqui ela vira uma paleta que sempre passa no contraste do WCAG AA
+// (4,5:1 para texto).
 
 type Rgb = [number, number, number];
 
@@ -76,4 +77,37 @@ export function propsMarca(hex: string | null | undefined, classe: string): { cl
     className: `${classe} com-marca`,
     style: { '--marca-acento': p.acento, '--marca-fundo': p.fundo, '--marca-borda': p.borda } as CSSProperties,
   };
+}
+
+// Clareia a cor (puxando para o branco) até ela ter contraste de texto sobre
+// `fundo` escuro. Usada nos destaques do header escuro do modo empresa.
+function clarearAteContraste(rgb: Rgb, fundo: string, minimo = CONTRASTE_MINIMO): string {
+  let peso = 0.6;
+  while (peso > 0 && contraste(paraHex(sobreBranco(rgb, peso)), fundo) < minimo) peso -= 0.05;
+  return paraHex(sobreBranco(rgb, Math.max(peso, 0)));
+}
+
+// Variáveis de CSS do modo empresa com a cor da marca (v1.2, etapa 4b): o
+// recrutador também vê o app com a identidade da empresa. Substituem os
+// tokens verde-petróleo de .modo-empresa; sem cor válida, nada muda.
+// - primary: texto branco por cima (botões) e texto sobre o fundo claro, >= 4,5:1.
+// - header: tom bem escuro da cor, com texto branco por cima.
+// - destaque: tom claro da cor para textos e bordas sobre o header escuro.
+export function varsModoEmpresa(hex: string | null | undefined): CSSProperties | undefined {
+  if (!corValida(hex)) return undefined;
+  const rgb = paraRgb(hex.toLowerCase());
+  // O acento já passa de 4,5:1 sobre `fundo`, que vira o primary-light.
+  const { acento, fundo } = paletaMarca(hex);
+  const acentoRgb = paraRgb(acento);
+  const header = paraHex(acentoRgb.map(c => c * 0.28) as Rgb);
+  const destaque = clarearAteContraste(rgb, header);
+  return {
+    '--color-primary': acento,
+    '--color-primary-hover': paraHex(acentoRgb.map(c => c * 0.85) as Rgb),
+    '--color-primary-light': fundo,
+    '--color-primary-gradient': `linear-gradient(135deg, ${paraHex(sobreBranco(acentoRgb, 0.9))}, ${acento})`,
+    '--color-empresa-header': header,
+    '--color-empresa-destaque': destaque,
+    '--color-empresa-destaque-fundo': `${destaque}29`,
+  } as CSSProperties;
 }

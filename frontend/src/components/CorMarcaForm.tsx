@@ -75,7 +75,7 @@ export function CorMarcaForm({ company, somenteLeitura, onSalvar }: {
           ? 'Use o formato #RRGGBB, como #0f766e.'
           : ajustada
             ? `Esta cor é clara demais para texto (contraste de ${contraste(normalizada, '#ffffff').toFixed(1)}:1). Nos textos ela aparece escurecida, como na prévia.`
-            : 'Ela aparece para o candidato no convite, na lista de convites e durante o teste.'}
+            : 'Ela vira a cor do modo empresa para toda a equipe e aparece para o candidato no convite, na lista de convites e durante o teste.'}
       </p>
 
       <div className="cor-marca-previa" aria-label="Prévia do banner do teste">

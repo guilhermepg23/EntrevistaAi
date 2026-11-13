@@ -74,9 +74,10 @@ describe('RegisterPage', () => {
     });
     expect(localStorage.getItem('token')).toBe('tok-novo');
   });
-  // Recrutador: sem campo de CPF; funda a empresa (nome obrigatório, CNPJ opcional).
+  // Recrutador que funda a empresa: sem campo de CPF (nome da empresa
+  // obrigatório, CNPJ opcional).
   async function preencherRecrutador(user: ReturnType<typeof userEvent.setup>, cnpj?: string) {
-    await user.click(screen.getByRole('radio', { name: /Sou recrutador/ }));
+    await user.click(screen.getByRole('radio', { name: /Quero cadastrar minha empresa/ }));
     await user.type(screen.getByLabelText('Nome'), 'Bruno');
     await user.type(screen.getByLabelText('Nome da empresa'), 'Acme');
     await user.type(screen.getByLabelText('Email'), 'bruno@teste.com');
@@ -113,6 +114,22 @@ describe('RegisterPage', () => {
     await waitFor(() => expect(authApi.register).toHaveBeenCalledWith({
       email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR', nomeEmpresa: 'Acme', cnpj: '11222333000181',
     }));
+  });
+
+  it('recrutador de empresa já cadastrada: explica o convite de equipe e não oferece cadastro', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await user.click(screen.getByRole('radio', { name: /empresa já cadastrada/ }));
+
+    const explicacao = screen.getByRole('region', { name: 'Como entrar na equipe da sua empresa' });
+    expect(explicacao).toHaveTextContent('própria conta');
+    expect(explicacao).toHaveTextContent('Equipe');
+    expect(screen.queryByRole('button', { name: 'Cadastrar' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
+    // Dá pra voltar e cadastrar normalmente.
+    await user.click(screen.getByRole('radio', { name: /Sou candidato/ }));
+    expect(screen.getByRole('button', { name: 'Cadastrar' })).toBeInTheDocument();
   });
 
   it('recrutador com CNPJ inválido: mostra erro e nem chama a API', async () => {

@@ -467,9 +467,11 @@ input[aria-invalid='true'] {
   margin: 0;
   padding: 0;
   border: 0;
+  /* Uma opção por linha: os títulos dos três caminhos são longos demais
+     para dividir a largura do formulário. */
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
 }
 
 .tipo-conta legend {
@@ -518,10 +520,34 @@ input[aria-invalid='true'] {
   line-height: 1.35;
 }
 
-@media (max-width: 600px) {
-  .tipo-conta {
-    grid-template-columns: 1fr;
-  }
+/* Cadastro, caminho "recrutador de uma empresa já cadastrada": no lugar do
+   formulário, a explicação de como entrar pelo convite de equipe. */
+.convite-equipe-explicacao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.convite-equipe-explicacao p,
+.convite-equipe-explicacao ol {
+  margin: 0;
+}
+
+.convite-equipe-explicacao ol {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.convite-equipe-explicacao .hint-campo {
+  margin: 0;
 }
 
 /* ===================================================== Modo empresa ======
@@ -535,6 +561,10 @@ input[aria-invalid='true'] {
   --color-primary-light: #e3f4f1;
   --color-primary-gradient: linear-gradient(135deg, #0e8074, #0f766e);
   --color-empresa-header: #0b2b29;
+  /* Textos e bordas claros sobre o header escuro. Com cor da marca, o Layout
+     troca todos esses tokens (ver varsModoEmpresa em lib/cor.ts). */
+  --color-empresa-destaque: #99f6e4;
+  --color-empresa-destaque-fundo: rgba(94, 234, 212, 0.16);
 }
 
 .modo-empresa .app-header {
@@ -557,7 +587,7 @@ input[aria-invalid='true'] {
 .modo-empresa .header-back:hover:not(:disabled),
 .modo-empresa .header-conta-trigger:hover:not(:disabled) {
   color: #ffffff;
-  border-color: #5eead4;
+  border-color: var(--color-empresa-destaque);
 }
 
 .modo-empresa .header-conta-caret {
@@ -565,8 +595,8 @@ input[aria-invalid='true'] {
 }
 
 .modo-empresa .header-avatar {
-  background: rgba(94, 234, 212, 0.18);
-  color: #99f6e4;
+  background: var(--color-empresa-destaque-fundo);
+  color: var(--color-empresa-destaque);
 }
 
 .modo-empresa .header-nav-link {
@@ -585,8 +615,8 @@ input[aria-invalid='true'] {
   gap: 0.4rem;
   padding: 0.22rem 0.6rem;
   border-radius: 999px;
-  background: rgba(94, 234, 212, 0.16);
-  color: #99f6e4;
+  background: var(--color-empresa-destaque-fundo, rgba(94, 234, 212, 0.16));
+  color: var(--color-empresa-destaque, #99f6e4);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -630,7 +660,7 @@ input[aria-invalid='true'] {
 .painel-hero {
   padding: 1.75rem;
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, #0b2b29, #0f766e);
+  background: linear-gradient(135deg, var(--color-empresa-header), var(--color-primary));
   color: #ffffff;
   box-shadow: var(--shadow-md);
 }
@@ -641,7 +671,7 @@ input[aria-invalid='true'] {
 }
 
 .painel-hero .painel-sobretitulo {
-  color: #99f6e4;
+  color: var(--color-empresa-destaque);
 }
 
 .painel-hero .painel-texto {
