@@ -103,14 +103,23 @@ describe('RegisterPage', () => {
     expect(localStorage.getItem('tipo')).toBe('RECRUTADOR');
   });
 
-  it('recrutador com CNPJ: formata enquanto digita e envia só os dígitos', async () => {
+  it('recrutador com CNPJ: formata enquanto digita', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await user.click(screen.getByRole('radio', { name: /Quero cadastrar minha empresa/ }));
+    await user.type(screen.getByLabelText('CNPJ da empresa (opcional)'), '11222333000181');
+
+    expect(screen.getByLabelText('CNPJ da empresa (opcional)')).toHaveValue('11.222.333/0001-81');
+  });
+
+  it('recrutador com CNPJ: envia só os dígitos', async () => {
     const user = userEvent.setup();
     vi.mocked(authApi.register).mockResolvedValue({ token: 'tok-rh', nome: 'Bruno', tipo: 'RECRUTADOR' });
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
     await preencherRecrutador(user, '11222333000181');
 
-    expect(screen.getByLabelText('CNPJ da empresa (opcional)')).toHaveValue('11.222.333/0001-81');
     await waitFor(() => expect(authApi.register).toHaveBeenCalledWith({
       email: 'bruno@teste.com', senha: 'segredo123', nome: 'Bruno', tipo: 'RECRUTADOR', nomeEmpresa: 'Acme', cnpj: '11222333000181',
     }));
@@ -130,6 +139,12 @@ describe('RegisterPage', () => {
     // Dá pra voltar e cadastrar normalmente.
     await user.click(screen.getByRole('radio', { name: /Sou candidato/ }));
     expect(screen.getByRole('button', { name: 'Cadastrar' })).toBeInTheDocument();
+  });
+
+  it('já logado: não mostra o formulário de cadastro', () => {
+    renderWithProviders(<RegisterPage />, { route: '/register', auth: { token: 'tok', nome: 'Bruno' } });
+
+    expect(screen.queryByRole('heading', { name: 'Criar conta' })).not.toBeInTheDocument();
   });
 
   it('recrutador com CNPJ inválido: mostra erro e nem chama a API', async () => {

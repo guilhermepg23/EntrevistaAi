@@ -97,4 +97,10 @@ O usuário pediu para publicar o que estava pendente e fechar a versão. Como a 
 - o envio de email pela Brevo (sai quando `BREVO_API_KEY` for configurada no Render);
 - o nome novo, **Entrevix**.
 
-A versão foi atualizada no pom e no package.json, e o README ganhou a seção da v1.3. A tag `v1.2.0` foi corrigida para o commit do lançamento (f48f0c6); antes apontava para c39a2d5, a etapa 1. A ideia 4 (assinatura) continua adiada.
+A versão foi atualizada no pom e no package.json, e o README ganhou a seção da v1.3. A tag `v1.2.0` ainda aponta para c39a2d5 (a etapa 1), e não para o commit do lançamento (f48f0c6). A correção exige reescrever a tag no GitHub, ficou com o usuário. A ideia 4 (assinatura) continua adiada.
+
+## v1.3.1 (2026-11-16): sessão vencida
+
+- **Problema:** com a sessão vencida (o JWT dura 24 h), o topo continuava mostrando o nome, o menu e as cores da conta até a próxima chamada à API.
+- **Correção:** o front lê o `exp` do token (`lib/jwt.ts`, sem validar a assinatura) ao abrir o app e ao voltar para a aba. Se venceu, limpa a sessão e o login avisa "sua sessão expirou".
+- **Login e cadastro:** quem já está logado e abre essas telas vai para a tela inicial.

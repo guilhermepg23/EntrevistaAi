@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { HintServidor } from '../components/HintServidor';
@@ -45,7 +45,7 @@ export function RegisterPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [errosCampo, setErrosCampo] = useState<Partial<Record<'email' | 'cpf' | 'cnpj' | 'confirmarSenha', string>>>({});
   const [carregando, setCarregando] = useState(false);
-  const { login } = useAuth();
+  const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e: FormEvent) {
@@ -96,6 +96,9 @@ export function RegisterPage() {
       setCarregando(false);
     }
   }
+
+  // Já logado: mesmo motivo do LoginPage.
+  if (isAuthenticated) return <Navigate to={voltar ?? '/'} replace />;
 
   return (
     <div className="auth-page">

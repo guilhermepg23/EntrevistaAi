@@ -40,11 +40,11 @@ describe('LoginPage', () => {
     const user = userEvent.setup();
     vi.mocked(authApi.login).mockResolvedValue({ token: 't', nome: 'Ana', tipo: 'CANDIDATO' });
     renderWithProviders(<LoginPage />, { route: '/login?voltar=%2Fteste%2Ftok' });
+    expect(screen.getByRole('link', { name: 'Cadastre-se' })).toHaveAttribute('href', '/register?voltar=%2Fteste%2Ftok');
 
     await preencherEEnviar(user);
 
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/teste/tok'));
-    expect(screen.getByRole('link', { name: 'Cadastre-se' })).toHaveAttribute('href', '/register?voltar=%2Fteste%2Ftok');
   });
 
   it('login com sucesso: chama authApi.login, persiste sessão e navega pra "/"', async () => {
@@ -57,6 +57,13 @@ describe('LoginPage', () => {
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/'));
     expect(authApi.login).toHaveBeenCalledWith('ana@teste.com', 'segredo123');
     expect(localStorage.getItem('token')).toBe('tok-123');
+  });
+
+  it('já logado: não mostra o formulário (redireciona em vez de exibir o login com a conta no topo)', () => {
+    renderWithProviders(<LoginPage />, { route: '/login', auth: { token: 'tok', nome: 'Ana' } });
+
+    expect(screen.queryByRole('heading', { name: 'Entrar' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
   });
 
   it('erro da API aparece na tela e não navega', async () => {

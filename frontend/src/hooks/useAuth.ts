@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { createElement } from 'react';
 import type { TipoConta } from '../types/interview';
 import { recarregarPagina } from '../lib/navegador';
+import { tokenVencido } from '../lib/jwt';
 
 const TOKEN_KEY = 'token';
 const NOME_KEY = 'nome';
@@ -32,20 +33,40 @@ function lerTipo(): TipoConta {
   return localStorage.getItem(TIPO_KEY) === 'RECRUTADOR' ? 'RECRUTADOR' : 'CANDIDATO';
 }
 
+function limparSessao() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(NOME_KEY);
+  localStorage.removeItem(TIPO_KEY);
+}
+
+// Sessão que venceu enquanto o app estava fechado: o estado inicial já nasce
+// deslogado (o topo não abre com o nome e o menu da conta antiga) e o login
+// avisa "sua sessão expirou". Só lê; quem limpa o storage é um efeito no
+// AuthProvider, porque o StrictMode roda os inicializadores duas vezes.
+function sessaoVencida(): boolean {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return token !== null && tokenVencido(token);
+}
+
 // Context (não useState solto) de propósito: login/logout precisam ser vistos
 // por TODOS os componentes que consultam auth (Layout, ProtectedRoute) na
 // mesma renderização — com hooks independentes cada um tinha seu próprio
 // estado e o header nunca sabia que o usuário tinha acabado de logar.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [nome, setNome] = useState<string | null>(() => localStorage.getItem(NOME_KEY));
-  const [tipo, setTipo] = useState<TipoConta>(lerTipo);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem(TOKEN_KEY) !== null);
-  const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(sessaoVencida);
+  const [nome, setNome] = useState<string | null>(() => (sessaoVencida() ? null : localStorage.getItem(NOME_KEY)));
+  const [tipo, setTipo] = useState<TipoConta>(() => (sessaoVencida() ? 'CANDIDATO' : lerTipo()));
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem(TOKEN_KEY) !== null && !sessaoVencida(),
+  );
+
+  // Tira do storage a sessão vencida que o estado inicial já ignorou.
+  useEffect(() => {
+    if (sessaoVencida()) limparSessao();
+  }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(NOME_KEY);
-    localStorage.removeItem(TIPO_KEY);
+    limparSessao();
     setNome(null);
     setTipo('CANDIDATO');
     setIsAuthenticated(false);
@@ -78,6 +99,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, [logout]);
+
+  // Aba que ficou aberta até a sessão vencer (ex.: de um dia para o outro):
+  // ao voltar para ela, sai na hora, em vez de esperar a próxima chamada à API.
+  useEffect(() => {
+    function aoVoltarParaAba() {
+      if (document.visibilityState !== 'visible') return;
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (token !== null && tokenVencido(token)) {
+        logout();
+        setSessionExpired(true);
+      }
+    }
+    document.addEventListener('visibilitychange', aoVoltarParaAba);
+    return () => document.removeEventListener('visibilitychange', aoVoltarParaAba);
   }, [logout]);
 
   // O token fica no localStorage, que é um só para todas as abas. Se outra aba

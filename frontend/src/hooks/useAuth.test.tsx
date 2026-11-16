@@ -10,6 +10,12 @@ function wrapper({ children }: { children: ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;
 }
 
+// JWT só com o "exp" (o front não confere a assinatura).
+function jwtComExp(expSegundos: number): string {
+  const payload = btoa(JSON.stringify({ sub: 'u1', exp: Math.floor(expSegundos) })).replace(/=+$/, '');
+  return `eyJhbGciOiJIUzI1NiJ9.${payload}.assinatura`;
+}
+
 describe('useAuth', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -35,6 +41,53 @@ describe('useAuth', () => {
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.nome).toBe('Fulano');
+  });
+
+  it('sessão que venceu com o app fechado: começa deslogado, avisa que expirou e limpa o storage', () => {
+    localStorage.setItem('token', jwtComExp(Date.now() / 1000 - 60));
+    localStorage.setItem('nome', 'Fulano');
+    localStorage.setItem('tipo', 'RECRUTADOR');
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.nome).toBeNull();
+    expect(result.current.tipo).toBe('CANDIDATO');
+    expect(result.current.sessionExpired).toBe(true);
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('nome')).toBeNull();
+  });
+
+  it('sessão ainda válida continua logada', () => {
+    localStorage.setItem('token', jwtComExp(Date.now() / 1000 + 3600));
+    localStorage.setItem('nome', 'Fulano');
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.sessionExpired).toBe(false);
+  });
+
+  it('aba aberta até a sessão vencer: ao voltar para a aba, sai e avisa', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-11-16T12:00:00Z'));
+      localStorage.setItem('token', jwtComExp(Date.parse('2026-11-16T13:00:00Z') / 1000));
+      localStorage.setItem('nome', 'Fulano');
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      expect(result.current.isAuthenticated).toBe(true);
+
+      vi.setSystemTime(new Date('2026-11-17T09:00:00Z'));
+      act(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.sessionExpired).toBe(true);
+      expect(localStorage.getItem('token')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('login persiste token/nome no localStorage e atualiza o estado', () => {

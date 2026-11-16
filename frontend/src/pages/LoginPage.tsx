@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { HintServidor } from '../components/HintServidor';
@@ -12,7 +12,7 @@ export function LoginPage() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const { login, sessionExpired, clearSessionExpired } = useAuth();
+  const { isAuthenticated, login, sessionExpired, clearSessionExpired } = useAuth();
   const navigate = useNavigate();
   // ?voltar= : quem veio do link de um teste volta pra ele depois de entrar.
   const [searchParams] = useSearchParams();
@@ -33,6 +33,10 @@ export function LoginPage() {
       setCarregando(false);
     }
   }
+
+  // Já logado: o login não faz sentido e mostraria o topo com a conta atual
+  // por cima de um formulário vazio.
+  if (isAuthenticated) return <Navigate to={voltar ?? '/'} replace />;
 
   return (
     <div className="auth-page">
