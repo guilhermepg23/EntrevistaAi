@@ -1,4 +1,4 @@
-# Entrevista IA: o que vale para todas as contas
+# Entrevix: o que vale para todas as contas
 
 ## O que é o app
 Simulador de entrevistas técnicas com IA. Há dois tipos de conta, escolhidos no cadastro, e o tipo não muda depois:
@@ -30,4 +30,4 @@ Fica no menu que abre ao clicar no seu nome, no canto superior direito.
 - **Rascunhos:** o que você digita numa resposta ou no formulário de teste fica guardado na aba do navegador. Se a página recarregar, o texto volta. Fechar a aba apaga o rascunho.
 - **Sem internet:** quando a conexão cai, o app mostra a mensagem e o botão "Tentar de novo".
 - **Muitas ações seguidas:** o app limita quantas ações com IA cada pessoa faz por minuto. Se aparecer "Muitas requisições", espere um minuto.
-- **Navegação:** o botão "Voltar" no topo volta para a página anterior. O nome "Entrevista IA" no topo leva para a tela inicial.
+- **Navegação:** o botão "Voltar" no topo volta para a página anterior. O nome "Entrevix" no topo leva para a tela inicial.

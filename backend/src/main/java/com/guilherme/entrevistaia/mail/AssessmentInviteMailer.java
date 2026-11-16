@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
  * Entrega o convite para um candidato fazer o teste de uma empresa. Interface
  * pelo mesmo motivo do {@link TeamInviteMailer}: o
  * {@link com.guilherme.entrevistaia.service.AssessmentService} é testado sem
- * mandar email. Implementação real: {@link SmtpAssessmentInviteMailer}.
+ * mandar email. Implementação real: {@link EmailAssessmentInviteMailer}.
  */
 public interface AssessmentInviteMailer {
 

@@ -33,14 +33,17 @@ services:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       OPENAI_API_KEY: ${OPENAI_API_KEY:?defina OPENAI_API_KEY no .env}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
-      # Recuperação de senha por email — opcional. Sem MAIL_HOST, o backend só
-      # loga o link em vez de enviar (ver SmtpPasswordResetMailer).
+      # Emails (recuperação de senha e convites) — opcional. Com BREVO_API_KEY,
+      # saem pela Brevo; senão pelo SMTP (MAIL_HOST); sem nenhum, o backend só
+      # loga o link de recuperação (ver mail/EmailSender).
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
       MAIL_HOST: ${MAIL_HOST:-}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@entrevista-ia.local}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Entrevix}
       ASSESSMENT_VALIDITY_MONTHS: ${ASSESSMENT_VALIDITY_MONTHS:-3}
     ports:
       # Porta do host configurável (default 8080) — útil se já houver algo

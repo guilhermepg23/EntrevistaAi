@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
  * Entrega o convite pra entrar na equipe de uma empresa. Mesmo motivo do
  * {@link PasswordResetMailer} pra ser interface: o
  * {@link com.guilherme.entrevistaia.service.CompanyService} é testado sem
- * mandar email. Implementação real: {@link SmtpTeamInviteMailer}.
+ * mandar email. Implementação real: {@link EmailTeamInviteMailer}.
  */
 public interface TeamInviteMailer {
 

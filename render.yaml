@@ -49,9 +49,12 @@ services:
         sync: false
       - key: CORS_ALLOWED_ORIGINS
         sync: false
-      # Recuperação de senha por email. Todos com "sync: false": preenchidos no
-      # dashboard. Enquanto MAIL_HOST ficar em branco, o backend sobe normal e
-      # só loga o link de recuperação em vez de enviar (ver SmtpPasswordResetMailer).
+      # Emails (recuperação de senha e convites). Todos com "sync: false":
+      # preenchidos no dashboard. Em produção use BREVO_API_KEY e
+      # MAIL_FROM (remetente verificado na Brevo): o plano grátis do Render
+      # bloqueia as portas de SMTP, então MAIL_HOST e companhia só servem fora
+      # dele. Sem nenhum, o backend sobe normal e só
+      # loga o link de recuperação (ver mail/EmailSender).
       - key: FRONTEND_BASE_URL
         sync: false
       - key: MAIL_HOST
@@ -62,5 +65,9 @@ services:
         sync: false
       - key: MAIL_PASSWORD
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: MAIL_FROM
+        sync: false
+      - key: MAIL_FROM_NAME
         sync: false

@@ -13,7 +13,7 @@
 
     <groupId>com.guilherme</groupId>
     <artifactId>entrevista-ia</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <name>entrevista-ia</name>
     <description>Simulador de Entrevista Tecnica com IA</description>
 
@@ -44,7 +44,7 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <!-- Envio do email com o link de recuperação de senha (ver
-             service/PasswordResetService e mail/SmtpPasswordResetMailer). O
+             service/PasswordResetService e mail/EmailSender; canal alternativo à Brevo). O
              JavaMailSender só é autoconfigurado quando spring.mail.host está
              preenchido; sem isso, o mailer cai no modo "loga o link no servidor". -->
         <dependency>

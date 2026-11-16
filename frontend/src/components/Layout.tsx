@@ -84,8 +84,8 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="header-left">
             {mostrarVoltar && <BackButton />}
             <Link to="/" className="brand">
-              <span className="brand-mark" aria-hidden="true">IA</span>
-              <span className="brand-nome">Entrevista IA</span>
+              <span className="brand-mark" aria-hidden="true">Ex</span>
+              <span className="brand-nome">Entrevix</span>
             </Link>
             {modoEmpresa && (
               <span className="selo-empresa">

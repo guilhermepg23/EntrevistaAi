@@ -5,7 +5,7 @@ package com.guilherme.entrevistaia.mail;
  * implementação pelo mesmo motivo dos pontos de IA: dá pra testar o
  * {@link com.guilherme.entrevistaia.service.PasswordResetService} sem mandar
  * email de verdade. Implementação real:
- * {@link com.guilherme.entrevistaia.mail.SmtpPasswordResetMailer}.
+ * {@link com.guilherme.entrevistaia.mail.EmailPasswordResetMailer}.
  */
 public interface PasswordResetMailer {
     void sendPasswordReset(String destinatario, String nome, String linkRecuperacao);

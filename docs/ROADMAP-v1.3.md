@@ -88,3 +88,13 @@ Pedido em 2026-11-03, depois do fechamento da v1.2.0. O foco volta ao candidato.
 ## Ideia 4: adiada (2026-11-11)
 
 O usuário preferiu ver outras coisas antes de ter uma assinatura. Nada foi decidido: o modelo (grátis com limite e Pro, créditos ou só limite), o provedor (Mercado Pago, Stripe ou Asaas), o que conta no limite e o tamanho do limite continuam em aberto. Hoje não há nenhum limite de uso dos treinos.
+
+## Fechamento: v1.3.0 em 2026-11-16
+
+O usuário pediu para publicar o que estava pendente e fechar a versão. Como a tag `v1.2.0` já marcava o lançamento de 2026-11-03, o trabalho feito depois virou a **v1.3.0**, com:
+- as ideias 1 a 3 deste roadmap (evolução das notas, pontos fracos recorrentes e convites do lado do candidato);
+- as etapas 3 a 5 adiadas da v1.2 (foto dos recrutadores, cor da marca e chatbot de suporte), mais os ajustes de 2026-11-13 (cor no modo empresa inteiro e cadastro com 3 caminhos);
+- o envio de email pela Brevo (sai quando `BREVO_API_KEY` for configurada no Render);
+- o nome novo, **Entrevix**.
+
+A versão foi atualizada no pom e no package.json, e o README ganhou a seção da v1.3. A tag `v1.2.0` foi corrigida para o commit do lançamento (f48f0c6); antes apontava para c39a2d5, a etapa 1. A ideia 4 (assinatura) continua adiada.

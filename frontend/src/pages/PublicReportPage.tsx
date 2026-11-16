@@ -29,7 +29,7 @@ export function PublicReportPage() {
     return (
       <div className="report-page">
         <ErroCarga mensagem={erro} onTentar={() => setTentativa(t => t + 1)} />
-        <Link to="/">Ir para o Entrevista IA</Link>
+        <Link to="/">Ir para o Entrevix</Link>
       </div>
     );
   }
@@ -80,7 +80,7 @@ export function PublicReportPage() {
         </section>
       )}
 
-      <Link to="/" className="nova-entrevista">Feito com Entrevista IA</Link>
+      <Link to="/" className="nova-entrevista">Feito com Entrevix</Link>
     </div>
   );
 }

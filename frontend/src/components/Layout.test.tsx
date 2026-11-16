@@ -22,9 +22,9 @@ const auth = { token: 'tok', nome: 'Guilherme' };
 describe('Layout', () => {
   afterEach(() => localStorage.clear());
 
-  it('sempre mostra a marca "Entrevista IA"', () => {
+  it('sempre mostra a marca "Entrevix"', () => {
     renderWithProviders(<Layout><p>página</p></Layout>);
-    expect(screen.getByText('Entrevista IA')).toBeInTheDocument();
+    expect(screen.getByText('Entrevix')).toBeInTheDocument();
   });
 
   it('mostra o botão "Voltar" fora da home/login', () => {

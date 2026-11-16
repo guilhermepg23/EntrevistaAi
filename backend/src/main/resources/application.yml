@@ -29,9 +29,9 @@ spring:
       # errado/gigante antes de gastar processamento.
       max-file-size: 20MB
       max-request-size: 20MB
-  # SMTP do email de recuperação de senha. Sem MAIL_HOST definido, o
-  # spring-boot-starter-mail NÃO autoconfigura o JavaMailSender e o
-  # SmtpPasswordResetMailer passa a só logar o link (ver a classe).
+  # SMTP, o canal alternativo de email (o principal é a Brevo, ver app.mail).
+  # Sem MAIL_HOST definido, o spring-boot-starter-mail NÃO autoconfigura o
+  # JavaMailSender (ver mail/EmailSender).
   mail:
     host: ${MAIL_HOST:}
     port: ${MAIL_PORT:587}
@@ -90,9 +90,14 @@ app:
   # (<base>/redefinir-senha?token=...). Em produção aponta pra URL da Vercel.
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
   mail:
-    # Remetente do email de recuperação. Alguns provedores SMTP exigem que
-    # bata com o usuário autenticado / domínio verificado.
+    # Chave da API da Brevo (email por HTTPS). Com ela, todos os emails saem
+    # pela Brevo; sem ela, pelo SMTP (MAIL_HOST) ou não saem (ver mail/EmailSender).
+    brevo-api-key: ${BREVO_API_KEY:}
+    # Remetente dos emails. Na Brevo precisa ser um remetente (ou domínio)
+    # verificado na conta; no SMTP, alguns provedores exigem que bata com o
+    # usuário autenticado.
     from: ${MAIL_FROM:no-reply@entrevista-ia.local}
+    from-name: ${MAIL_FROM_NAME:Entrevix}
   password-reset:
     # Validade do token de recuperação, em minutos.
     ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}

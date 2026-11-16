@@ -181,3 +181,7 @@ O usuário testou na Vercel e levantou três pontos:
 Hoje qualquer pessoa pode criar uma "empresa" com qualquer nome: o CNPJ é opcional e só tem os dígitos verificadores conferidos. Alguém poderia se passar por uma empresa real e convidar candidatos. O usuário pediu para não mexer agora, para não atrapalhar os testes enquanto o app está em construção.
 
 Ideias para quando for retomar (nada decidido): CNPJ obrigatório e consultado numa base pública (situação ativa e razão social), selo "empresa verificada" para o candidato, e um único cadastro por CNPJ.
+
+## Etapas 3 a 5 lançadas na v1.3.0 (2026-11-16)
+
+A v1.2.0 já estava publicada, então as etapas retomadas saíram junto com a v1.3.0 (ver o fechamento em ROADMAP-v1.3). As capturas de tela previstas na etapa 6 ficaram para depois.

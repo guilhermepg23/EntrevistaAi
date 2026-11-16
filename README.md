@@ -1,4 +1,4 @@
-# Simulador de Entrevista Técnica com IA
+# Entrevix: simulador de entrevistas técnicas com IA
 
 [![CI](https://github.com/guilhermepg23/EntrevistaAi/actions/workflows/ci.yml/badge.svg)](https://github.com/guilhermepg23/EntrevistaAi/actions/workflows/ci.yml)
 &nbsp;·&nbsp; **Demo:** https://entrevista-ai-five.vercel.app
@@ -39,8 +39,8 @@ capturas em [`docs/`](docs/).
 - **Recuperação de senha por email** (`POST /auth/forgot-password` → `/auth/reset-password`):
   `PasswordResetToken` com hash SHA-256 do token (nunca em texto puro), validade curta
   (`app.password-reset.ttl-minutes`, 30min) e uso único. `forgot-password` responde sempre
-  200 (não revela se o email existe). Envio via `PasswordResetMailer`/SMTP
-  (`spring-boot-starter-mail`); sem `MAIL_HOST` configurado, o mailer só loga o link
+  200 (não revela se o email existe). Envio via `PasswordResetMailer` sobre o `EmailSender`
+  (API da Brevo ou SMTP); sem nenhum dos dois configurado, o mailer só loga o link
 - **Conta do usuário** (`/account`): `GET` (nome, email, CPF mascarado `123.***.***-09`,
   membro desde), `PATCH` (editar nome), `POST /change-password` (senha atual + nova),
   `DELETE` (exclui a conta e cascateia entrevistas, análises de currículo e tokens)
@@ -202,6 +202,35 @@ Histórico das etapas e decisões em [docs/ROADMAP-v1.1.md](docs/ROADMAP-v1.1.md
 
 Plano e decisões em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md).
 
+## v1.3: área do candidato, identidade da empresa e Entrevix
+
+- **Nome novo:** o app passou a se chamar **Entrevix**. As URLs e os nomes internos
+  continuam os antigos até a migração para o domínio próprio.
+- **Área do candidato:**
+  - **Evolução das notas:** gráfico das notas dos treinos na tela inicial.
+  - **Pontos fracos recorrentes:** a IA agrupa os pontos fracos dos relatórios em temas,
+    com cache (`GET /interviews/pontos-fracos`, migration V9), e oferece "Treinar esses
+    pontos". Aparece a partir de 2 treinos com relatório.
+  - **Convites:** a aba Convites explica como o teste funciona e mostra o andamento, os
+    prazos e uma seção "Vencidos" (últimos 30 dias).
+- **Identidade da empresa:**
+  - **Foto dos recrutadores:** cada um troca a própria foto em Minha conta
+    (`PUT`/`DELETE /account/foto`, V10). As fotos aparecem na tela Equipe.
+  - **Cor da marca:** o ADMIN escolhe a cor (`PATCH /company/cor-marca`, V11). Ela vira a
+    cor do modo empresa para toda a equipe e aparece para o candidato no convite e no
+    teste. A paleta é ajustada para ter contraste de 4,5:1 ou mais.
+- **Chatbot de suporte:** botão "Ajuda" nas telas logadas (`POST /support/chat`, com
+  streaming). Responde a partir de uma base de ajuda (`resources/ajuda/*.md`) e não vê
+  dados da conta.
+- **Cadastro com 3 caminhos:** candidato, "Quero cadastrar minha empresa" ou recrutador de
+  uma empresa já cadastrada. O último só explica o convite de equipe: cada recrutador tem
+  o próprio login.
+- **Email pela Brevo:** os emails de recuperação de senha e de convites saem por API HTTPS
+  (ver [Deploy](#deploy)).
+
+Planos e decisões em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md) (etapas 3 a 5) e
+[docs/ROADMAP-v1.3.md](docs/ROADMAP-v1.3.md).
+
 ## Deploy
 
 Publicado e validado ponta a ponta em produção:
@@ -225,21 +254,29 @@ Publicado e validado ponta a ponta em produção:
   ela os links de convite de teste, convite de equipe e recuperação de senha; sem ela, os
   links saem com `http://localhost:5173`.
 - **`ASSESSMENT_VALIDITY_MONTHS`** (opcional, padrão 3): validade dos testes de empresa.
-- **Email** (convites e recuperação de senha): setar no Render `MAIL_HOST`, `MAIL_PORT`,
-  `MAIL_USERNAME`, `MAIL_PASSWORD` e `MAIL_FROM`. Sem `MAIL_HOST`, o backend sobe
-  normalmente e só **loga** o link em vez de enviar; os convites seguem funcionando pelo
-  link copiado na tela.
+- **Email** (convites e recuperação de senha): sai pela **Brevo** (API por HTTPS), porque o
+  plano grátis do Render bloqueia as portas de SMTP. Setar no Render `BREVO_API_KEY` (Brevo
+  → SMTP & API → API Keys) e `MAIL_FROM` (um remetente verificado na Brevo; com domínio
+  próprio autenticado na Brevo, qualquer endereço do domínio). `MAIL_FROM_NAME` é opcional
+  (padrão "Entrevix"). Fora do Render dá para usar SMTP (`MAIL_HOST`, `MAIL_PORT`,
+  `MAIL_USERNAME`, `MAIL_PASSWORD`). Sem nenhum dos dois, o backend sobe normalmente e só
+  **loga** o link em vez de enviar; os convites seguem funcionando pelo link copiado na
+  tela. O log de início mostra o canal escolhido: `[MAIL_CANAL] brevo`, `smtp` ou `nenhum`.
 
 ## Próximos passos
 
-A v1.2.0 está concluída. A próxima versão volta o foco para a área do candidato.
+A v1.3.0 está concluída.
 
 Pendências:
-1. **Adiado da v1.2:** foto dos recrutadores, cor da marca e chatbot de suporte. O plano
-   está em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md).
-2. **Assinatura:** limitar ou cobrar os treinos (`origem=TREINO`) e escolher o provedor de
+1. **Domínio e contas:** `entrevix.com.br` registrado. Faltam o email do projeto, a
+   migração das contas (Render, Supabase, Vercel, GitHub e OpenAI) para ele e o app no
+   domínio.
+2. **Email em produção:** autenticar o domínio na Brevo e configurar `BREVO_API_KEY` e
+   `MAIL_FROM` no Render, para os convites e a recuperação de senha chegarem por email.
+3. **Verificação da empresa:** CNPJ obrigatório e consultado numa base pública, para
+   ninguém se passar por uma empresa real (ver [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md)).
+4. **Assinatura:** limitar ou cobrar os treinos (`origem=TREINO`) e escolher o provedor de
    pagamento.
-3. **SMTP no Render:** para os convites e a recuperação de senha chegarem por email.
 
 ## Como rodar tudo localmente (um comando)
 
@@ -312,7 +349,7 @@ configurável via `BACKEND_PORT` no `.env`.
   antes da coluna não têm CPF; só o cadastro novo exige
 - Recuperação de senha: fluxo padrão por email com token de uso único e hash SHA-256 no
   banco. `forgot-password` sempre responde 200 (não revela emails cadastrados). O envio é
-  abstraído em `PasswordResetMailer` — sem SMTP configurado, cai no modo "loga o link",
+  abstraído em `PasswordResetMailer` — sem email configurado, cai no modo "loga o link",
   então dá pra rodar o fluxo inteiro sem infra de email
 - Exclusão de conta apaga em cascata: `Interview` (e o que pendura nela) sai por cascade do
   `User`; `ResumeReview` e `PasswordResetToken` têm FK sem cascade e são apagados

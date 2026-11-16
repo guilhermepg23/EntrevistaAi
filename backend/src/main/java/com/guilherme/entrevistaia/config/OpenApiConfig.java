@@ -25,7 +25,7 @@ public class OpenApiConfig {
         BuildProperties build = buildProperties.getIfAvailable();
         String versao = build != null ? build.getVersion() : "dev";
         return new OpenAPI()
-            .info(new Info().title("Entrevista IA API").version(versao))
+            .info(new Info().title("Entrevix API").version(versao))
             .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
             .components(new Components()
                 .addSecuritySchemes(SECURITY_SCHEME_NAME, new SecurityScheme()

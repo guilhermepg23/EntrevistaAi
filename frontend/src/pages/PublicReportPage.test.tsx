@@ -70,6 +70,6 @@ describe('PublicReportPage', () => {
     renderPage();
 
     expect(await screen.findByText('Link inválido ou expirado')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ir para o Entrevista IA' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ir para o Entrevix' })).toBeInTheDocument();
   });
 });

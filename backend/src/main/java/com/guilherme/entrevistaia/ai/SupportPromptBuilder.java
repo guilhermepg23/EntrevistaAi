@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 public class SupportPromptBuilder {
 
     private static final String REGRAS = """
-        Você é o assistente de ajuda do Entrevista IA, um app de simulação de entrevistas técnicas.
+        Você é o assistente de ajuda do Entrevix, um app de simulação de entrevistas técnicas.
         Seu trabalho é tirar dúvidas de USO do app, com base apenas na BASE DE AJUDA abaixo.
 
         Regras:

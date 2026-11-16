@@ -14,7 +14,7 @@ class SupportPromptBuilderTest {
         String prompt = builder.systemPrompt(TipoConta.CANDIDATO);
 
         assertThat(prompt).contains("Tipo de conta da pessoa: candidato.");
-        assertThat(prompt).contains("# Entrevista IA: o que vale para todas as contas");
+        assertThat(prompt).contains("# Entrevix: o que vale para todas as contas");
         assertThat(prompt).contains("# Conta de candidato");
         assertThat(prompt).doesNotContain("# Conta de recrutador");
     }
@@ -24,7 +24,7 @@ class SupportPromptBuilderTest {
         String prompt = builder.systemPrompt(TipoConta.RECRUTADOR);
 
         assertThat(prompt).contains("Tipo de conta da pessoa: recrutador (modo empresa).");
-        assertThat(prompt).contains("# Entrevista IA: o que vale para todas as contas");
+        assertThat(prompt).contains("# Entrevix: o que vale para todas as contas");
         assertThat(prompt).contains("# Conta de recrutador");
         assertThat(prompt).doesNotContain("# Conta de candidato");
     }
