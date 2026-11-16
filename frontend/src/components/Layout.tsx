@@ -18,6 +18,8 @@ const SEM_VOLTAR = new Set(['/', '/login']);
 // de resposta, e a atenção da pessoa está na pergunta.
 const ROTA_ENTREVISTA = /^\/interview\/[^/]+\/?$/;
 
+const ROTAS_DE_ACESSO = new Set(['/login', '/register']);
+
 function BackButton() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -74,7 +76,13 @@ export function Layout({ children }: { children: ReactNode }) {
   // ninguém confundir os dois.
   const modoEmpresa = isAuthenticated && tipo === 'RECRUTADOR';
   const mostrarAjuda = isAuthenticated && !ROTA_ENTREVISTA.test(location.pathname);
-  const classes = ['app-shell', modoEmpresa && 'modo-empresa', mostrarAjuda && 'com-ajuda'].filter(Boolean).join(' ');
+  // Página inicial pública: mais larga que as telas do app.
+  const paginaInicial = !isAuthenticated && location.pathname === '/';
+  // Deslogado: "Entrar" e "Criar conta" no topo, menos nas próprias telas de
+  // login e cadastro.
+  const mostrarAcessoVisitante = !isAuthenticated && !ROTAS_DE_ACESSO.has(location.pathname);
+  const classes = ['app-shell', modoEmpresa && 'modo-empresa', mostrarAjuda && 'com-ajuda', paginaInicial && 'pagina-inicial']
+    .filter(Boolean).join(' ');
   const estiloMarca = modoEmpresa ? varsModoEmpresa(company?.corMarca) : undefined;
 
   return (
@@ -95,6 +103,12 @@ export function Layout({ children }: { children: ReactNode }) {
               </span>
             )}
           </div>
+          {mostrarAcessoVisitante && (
+            <nav className="header-visitante" aria-label="Acesso">
+              <Link to="/login" className="header-nav-link">Entrar</Link>
+              <Link to="/register" className="botao-link header-criar-conta">Criar conta</Link>
+            </nav>
+          )}
           {isAuthenticated && (
             <div className="header-user">
               {tipo === 'CANDIDATO' && (

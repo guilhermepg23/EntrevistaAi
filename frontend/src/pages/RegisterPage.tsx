@@ -37,7 +37,8 @@ export function RegisterPage() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   // Fixo depois do cadastro (um tipo por conta) — por isso a escolha vem
   // primeiro no formulário, antes dos dados pessoais.
-  const [caminho, setCaminho] = useState<Caminho>('CANDIDATO');
+  // ?perfil=empresa: vindo de "Cadastrar minha empresa" na página inicial.
+  const [caminho, setCaminho] = useState<Caminho>(() => (searchParams.get('perfil') === 'empresa' ? 'EMPRESA' : 'CANDIDATO'));
   const [nomeEmpresa, setNomeEmpresa] = useState('');
   const [cnpj, setCnpj] = useState('');
   const ehCandidato = caminho === 'CANDIDATO';

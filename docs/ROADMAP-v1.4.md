@@ -37,3 +37,22 @@ A ordem recomendada é landing → termos e privacidade → cold start. Com isso
 - **Domínio** `entrevix.com.br`: registrado em 2026-11-13. O DNS vai para o Cloudflare, com Email Routing para `contato@entrevix.com.br`, encaminhado ao Gmail do usuário.
 - **Email do app**: Brevo. O SMTP da Brevo também serve para o "Enviar como" do Gmail.
 - **Migração das contas** (Supabase, OpenAI, Render, Vercel e, por último, GitHub) para o email do projeto. O Registro.br e o Cloudflare ficam no Gmail pessoal, para não depender do próprio domínio.
+
+## Andamento
+
+### Item 1: página inicial pública, implementada em 2026-11-16
+
+**Decisões do usuário:** o candidato em primeiro plano, com a parte para empresas mais abaixo, e ícones e ilustrações no lugar de capturas de tela.
+
+- **Rota `/`:** o visitante vê a `LandingPage`; quem está logado continua na tela inicial do seu tipo de conta. Sessão que acabou de vencer vai para o login, que avisa "sua sessão expirou".
+- **Conteúdo:**
+  - topo com "Começar grátis", "Já tenho conta" e o atalho "Sou empresa";
+  - como funciona, em 3 passos;
+  - 6 recursos do candidato;
+  - seção para empresas, com a paleta verde-petróleo e "Cadastrar minha empresa", que abre `/register?perfil=empresa` já no caminho certo;
+  - chamada final e rodapé.
+  Todos os textos descrevem recursos que existem no app.
+- **Ilustração:** uma entrevista em miniatura feita em HTML e CSS, decorativa (`aria-hidden`), que não fica desatualizada quando as telas mudam.
+- **Ícones:** `components/Icone.tsx`, em SVG inline no estilo Lucide, sem dependência nova.
+- **Topo para visitantes:** "Entrar" e "Criar conta" em todas as páginas públicas, menos no login e no cadastro. A página inicial usa um layout mais largo (1120 px).
+- **Verificação:** front com 351 testes, build ok. Conferida em captura a 1280 px e num quadro de 375 px, sem rolagem lateral. O Edge headless não desce de 496 px de janela, por isso a captura de celular é feita num iframe.

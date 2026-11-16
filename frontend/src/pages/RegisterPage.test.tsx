@@ -103,6 +103,13 @@ describe('RegisterPage', () => {
     expect(localStorage.getItem('tipo')).toBe('RECRUTADOR');
   });
 
+  it('?perfil=empresa (vindo da página inicial): já abre no caminho de cadastrar a empresa', () => {
+    renderWithProviders(<RegisterPage />, { route: '/register?perfil=empresa' });
+
+    expect(screen.getByRole('radio', { name: /Quero cadastrar minha empresa/ })).toBeChecked();
+    expect(screen.getByLabelText('Nome da empresa')).toBeInTheDocument();
+  });
+
   it('recrutador com CNPJ: formata enquanto digita', async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { route: '/register' });

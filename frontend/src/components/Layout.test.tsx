@@ -40,6 +40,30 @@ describe('Layout', () => {
     expect(screen.queryByRole('button', { name: 'Voltar' })).not.toBeInTheDocument();
   });
 
+  it('deslogado: "Entrar" e "Criar conta" no topo, e a página inicial mais larga', () => {
+    const { container } = renderWithProviders(<Layout><p>x</p></Layout>, { route: '/' });
+
+    const acesso = screen.getByRole('navigation', { name: 'Acesso' });
+    expect(acesso).toContainElement(screen.getByRole('link', { name: 'Entrar' }));
+    expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/register');
+    expect(container.querySelector('.app-shell')).toHaveClass('pagina-inicial');
+  });
+
+  it('deslogado no login ou no cadastro: sem os atalhos de acesso no topo', () => {
+    const { unmount } = renderWithProviders(<Layout><p>x</p></Layout>, { route: '/login' });
+    expect(screen.queryByRole('navigation', { name: 'Acesso' })).not.toBeInTheDocument();
+    unmount();
+    renderWithProviders(<Layout><p>x</p></Layout>, { route: '/register' });
+    expect(screen.queryByRole('navigation', { name: 'Acesso' })).not.toBeInTheDocument();
+  });
+
+  it('logado: sem os atalhos de acesso nem o layout largo da página inicial', () => {
+    const { container } = renderWithProviders(<Layout><p>x</p></Layout>, { route: '/', auth });
+
+    expect(screen.queryByRole('navigation', { name: 'Acesso' })).not.toBeInTheDocument();
+    expect(container.querySelector('.app-shell')).not.toHaveClass('pagina-inicial');
+  });
+
   it('deslogado: não mostra o menu de conta nem o link de currículo', () => {
     renderWithProviders(<Layout><p>página</p></Layout>);
     expect(screen.queryByRole('button', { name: 'Guilherme' })).not.toBeInTheDocument();

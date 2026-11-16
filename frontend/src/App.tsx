@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
@@ -22,6 +22,7 @@ import { AssessmentInvitePage } from './pages/AssessmentInvitePage';
 import { CandidateInvitesPage } from './pages/CandidateInvitesPage';
 import { CandidateResultPage } from './pages/CandidateResultPage';
 import { NaoEncontradoPage } from './pages/NaoEncontradoPage';
+import { LandingPage } from './pages/LandingPage';
 import { useAuth } from './hooks/useAuth';
 
 // "/" é a raiz de quem está logado, e cada tipo de conta tem a sua: o candidato
@@ -29,6 +30,15 @@ import { useAuth } from './hooks/useAuth';
 function HomePorTipo() {
   const { tipo } = useAuth();
   return tipo === 'RECRUTADOR' ? <RecruiterHomePage /> : <HomePage />;
+}
+
+// Quem não está logado vê a página inicial pública (v1.4). A exceção é a sessão
+// que acabou de expirar: aí vai pro login, que avisa "sua sessão expirou".
+function Inicio() {
+  const { isAuthenticated, sessionExpired } = useAuth();
+  if (isAuthenticated) return <HomePorTipo />;
+  if (sessionExpired) return <Navigate to="/login" replace />;
+  return <LandingPage />;
 }
 
 export function App() {
@@ -50,7 +60,7 @@ export function App() {
         <Route path="/empresa/testes/:id/editar" element={<ProtectedRoute tipo="RECRUTADOR"><AssessmentFormPage /></ProtectedRoute>} />
         <Route path="/empresa/equipe" element={<ProtectedRoute tipo="RECRUTADOR"><TeamPage /></ProtectedRoute>} />
         <Route path="/empresa/configuracoes" element={<ProtectedRoute tipo="RECRUTADOR"><CompanySettingsPage /></ProtectedRoute>} />
-        <Route path="/" element={<ProtectedRoute><HomePorTipo /></ProtectedRoute>} />
+        <Route path="/" element={<Inicio />} />
         <Route path="/convites" element={<ProtectedRoute tipo="CANDIDATO"><CandidateInvitesPage /></ProtectedRoute>} />
         <Route path="/curriculo" element={<ProtectedRoute tipo="CANDIDATO"><ResumeReviewPage /></ProtectedRoute>} />
         <Route path="/conta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
