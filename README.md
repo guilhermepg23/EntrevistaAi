@@ -265,8 +265,8 @@ Publicado e validado ponta a ponta em produção:
 
 ## Próximos passos
 
-A v1.3.1 está no ar. As próximas ideias, por bloco e em ordem de prioridade, estão em
-[docs/ROADMAP-v1.4.md](docs/ROADMAP-v1.4.md); a primeira é a página inicial pública.
+A v1.4.0 está no ar, com a página inicial pública. As próximas ideias, por bloco e em ordem de prioridade, estão em
+[docs/ROADMAP-v1.4.md](docs/ROADMAP-v1.4.md).
 
 Pendências:
 1. **Domínio e contas:** `entrevix.com.br` registrado. Faltam o email do projeto, a

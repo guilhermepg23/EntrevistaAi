@@ -56,3 +56,5 @@ A ordem recomendada é landing → termos e privacidade → cold start. Com isso
 - **Ícones:** `components/Icone.tsx`, em SVG inline no estilo Lucide, sem dependência nova.
 - **Topo para visitantes:** "Entrar" e "Criar conta" em todas as páginas públicas, menos no login e no cadastro. A página inicial usa um layout mais largo (1120 px).
 - **Verificação:** front com 351 testes, build ok. Conferida em captura a 1280 px e num quadro de 375 px, sem rolagem lateral. O Edge headless não desce de 496 px de janela, por isso a captura de celular é feita num iframe.
+
+**Publicada como v1.4.0 em 2026-11-17** (tag `v1.4.0`), depois de o usuário ver a página na Vercel. Os próximos itens saem nas versões seguintes.
