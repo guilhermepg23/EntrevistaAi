@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -75,8 +76,17 @@ public class InterviewService {
     @Transactional
     public Interview startInterview(User user, String stack, String nivel, int totalPerguntas,
                                      String descricaoVaga, String focoPratica) {
+        return startInterview(user, TipoEntrevista.TECNICA, stack, nivel, totalPerguntas, descricaoVaga, focoPratica);
+    }
+
+    // tipo: TECNICA ou COMPORTAMENTAL (v1.4). No comportamental, stack é o
+    // cargo ou a área.
+    @Transactional
+    public Interview startInterview(User user, TipoEntrevista tipo, String stack, String nivel, int totalPerguntas,
+                                     String descricaoVaga, String focoPratica) {
         Interview interview = new Interview();
         interview.setUser(user);
+        interview.setTipo(tipo);
         interview.setStack(stack);
         interview.setNivel(nivel);
         interview.setTotalPerguntas(totalPerguntas);
@@ -86,8 +96,8 @@ public class InterviewService {
         interview.setCriadoEm(OffsetDateTime.now());
         interviewRepository.save(interview);
 
-        log.info("[INTERVIEW_STARTED] interviewId={} userId={} stack={} nivel={}",
-            interview.getId(), user.getId(), stack, nivel);
+        log.info("[INTERVIEW_STARTED] interviewId={} userId={} tipo={} stack={} nivel={}",
+            interview.getId(), user.getId(), tipo, stack, nivel);
 
         return interview;
     }
@@ -154,7 +164,12 @@ public class InterviewService {
     // entidades JPA não sobrevivem a isso (sessão do Hibernate fecha).
     // perguntaFixa: preenchida (e já salva) quando a próxima é uma pergunta fixa
     // de teste de empresa — aí não há IA a chamar e userPrompt vem null.
-    public record NextQuestionPromptContext(int numeroAtual, String userPrompt, Question perguntaFixa) {}
+    public record NextQuestionPromptContext(int numeroAtual, String userPrompt, Question perguntaFixa,
+                                            TipoEntrevista tipo) {
+        public NextQuestionPromptContext(int numeroAtual, String userPrompt, Question perguntaFixa) {
+            this(numeroAtual, userPrompt, perguntaFixa, TipoEntrevista.TECNICA);
+        }
+    }
 
     // Chamado por GET /interviews/{id}/next-question/stream — ETAPA 1 de 2.
     // Faz toda a leitura no banco (valida estado, monta o prompt com o
@@ -186,7 +201,7 @@ public class InterviewService {
         }
 
         String userPrompt = questionPromptBuilder.build(interview, proximaOrdem);
-        return new NextQuestionPromptContext(proximaOrdem, userPrompt, null);
+        return new NextQuestionPromptContext(proximaOrdem, userPrompt, null, interview.getTipo());
     }
 
     // Chamado por GET /interviews/{id}/next-question/stream — ETAPA 2 de 2,
@@ -245,6 +260,7 @@ public class InterviewService {
         answer.setGaps(result.gaps());
         answer.setNivelDominio(result.nivelDominio());
         answer.setRespostaModelo(result.respostaModelo());
+        answer.setStar(new ArrayList<>(result.star() == null ? List.of() : result.star()));
         answer.setCriadoEm(OffsetDateTime.now());
         answerRepository.save(answer);
 

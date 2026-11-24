@@ -1,5 +1,6 @@
 package com.guilherme.entrevistaia.dto;
 
+import com.guilherme.entrevistaia.entity.TipoEntrevista;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -10,10 +11,23 @@ import jakarta.validation.constraints.NotBlank;
 // focoPratica são opcionais (sem @NotBlank de propósito) — nem toda entrevista
 // é pra uma vaga específica, e focoPratica só vem preenchido quando a
 // entrevista nasceu do botão "Praticar os gaps" (ver InterviewReportPage).
+//
+// tipo (v1.4): TECNICA ou COMPORTAMENTAL. Opcional; sem ele, TECNICA (é o que
+// os clientes antigos esperam). No COMPORTAMENTAL, stack é o cargo ou a área.
 public record StartInterviewRequest(
     @NotBlank String stack,
     @NotBlank String nivel,
     @Min(5) @Max(15) int totalPerguntas,
     String descricaoVaga,
-    String focoPratica
-) {}
+    String focoPratica,
+    TipoEntrevista tipo
+) {
+    public StartInterviewRequest(String stack, String nivel, int totalPerguntas,
+                                 String descricaoVaga, String focoPratica) {
+        this(stack, nivel, totalPerguntas, descricaoVaga, focoPratica, null);
+    }
+
+    public TipoEntrevista tipoOuPadrao() {
+        return tipo != null ? tipo : TipoEntrevista.TECNICA;
+    }
+}

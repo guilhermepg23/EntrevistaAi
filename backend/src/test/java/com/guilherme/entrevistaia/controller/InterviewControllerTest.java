@@ -113,7 +113,7 @@ class InterviewControllerTest {
     @Test
     void start_deveRetornar201ComEntrevistaCriada() throws Exception {
         Interview interview = novaInterview(UUID.randomUUID(), InterviewStatus.EM_ANDAMENTO, 5);
-        when(interviewService.startInterview(eq(user), eq("Java"), eq("junior"), eq(5), isNull(), isNull()))
+        when(interviewService.startInterview(eq(user), eq(TipoEntrevista.TECNICA), eq("Java"), eq("junior"), eq(5), isNull(), isNull()))
             .thenReturn(interview);
 
         mockMvc.perform(post("/interviews")
@@ -125,7 +125,26 @@ class InterviewControllerTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(interview.getId().toString()))
             .andExpect(jsonPath("$.status").value("EM_ANDAMENTO"))
-            .andExpect(jsonPath("$.totalPerguntas").value(5));
+            .andExpect(jsonPath("$.totalPerguntas").value(5))
+            .andExpect(jsonPath("$.tipo").value("TECNICA"));
+    }
+
+    @Test
+    void start_comportamental_passaOTipoAdiante() throws Exception {
+        Interview interview = novaInterview(UUID.randomUUID(), InterviewStatus.EM_ANDAMENTO, 6);
+        interview.setTipo(TipoEntrevista.COMPORTAMENTAL);
+        when(interviewService.startInterview(eq(user), eq(TipoEntrevista.COMPORTAMENTAL), eq("Desenvolvedor back-end"),
+                eq("pleno"), eq(6), isNull(), isNull()))
+            .thenReturn(interview);
+
+        mockMvc.perform(post("/interviews")
+                .with(authentication(auth()))
+                .contentType("application/json")
+                .content("""
+                    {"stack": "Desenvolvedor back-end", "nivel": "pleno", "totalPerguntas": 6, "tipo": "COMPORTAMENTAL"}
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tipo").value("COMPORTAMENTAL"));
     }
 
     @Test

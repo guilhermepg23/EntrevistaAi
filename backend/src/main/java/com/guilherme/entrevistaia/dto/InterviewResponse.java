@@ -33,7 +33,8 @@ public record InterviewResponse(
     UUID logoEmpresaId,
     OffsetDateTime finalizadoEm,
     Integer notaGeral,
-    String corMarcaEmpresa
+    String corMarcaEmpresa,
+    String tipo
 ) {
     public static InterviewResponse from(Interview interview) {
         // perguntasRespondidas não é uma coluna do banco: é calculado aqui,
@@ -51,7 +52,8 @@ public record InterviewResponse(
             assessment != null ? assessment.getCompany().getLogoId() : null,
             interview.getFinalizadoEm(),
             !interview.deConvite() && interview.getReport() != null ? interview.getReport().getNotaGeral() : null,
-            assessment != null ? assessment.getCompany().getCorMarca() : null
+            assessment != null ? assessment.getCompany().getCorMarca() : null,
+            interview.getTipo().name()
         );
     }
 }

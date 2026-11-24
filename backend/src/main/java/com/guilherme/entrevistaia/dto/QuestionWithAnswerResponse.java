@@ -23,7 +23,8 @@ public record QuestionWithAnswerResponse(
     List<String> pontosFortes,
     List<String> gaps,
     String nivelDominio,
-    String respostaModelo
+    String respostaModelo,
+    List<StarEtapaResponse> star
 ) {
     public static QuestionWithAnswerResponse from(Question question) {
         Answer answer = question.getAnswer();
@@ -36,7 +37,8 @@ public record QuestionWithAnswerResponse(
             answer != null ? answer.getPontosFortes() : List.of(),
             answer != null ? answer.getGaps() : List.of(),
             answer != null ? answer.getNivelDominio().name() : null,
-            answer != null ? answer.getRespostaModelo() : null
+            answer != null ? answer.getRespostaModelo() : null,
+            answer != null ? StarEtapaResponse.de(answer) : List.of()
         );
     }
 
@@ -48,7 +50,7 @@ public record QuestionWithAnswerResponse(
             question.getId(), question.getInterview().getId(), question.getOrdem(),
             question.getPergunta(), question.getTopico(), question.getDificuldade().name(),
             answer != null ? answer.getRespostaTexto() : null,
-            null, null, List.of(), List.of(), null, null
+            null, null, List.of(), List.of(), null, null, List.of()
         );
     }
 }

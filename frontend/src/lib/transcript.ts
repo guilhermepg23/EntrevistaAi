@@ -23,6 +23,7 @@ export function transcriptToChatItems(transcript: TranscriptItem[]): ChatItem[] 
           gaps: t.gaps,
           nivelDominio: t.nivelDominio,
           respostaModelo: t.respostaModelo,
+          star: t.star ?? [],
           interviewFinalizada: true,
         },
       });

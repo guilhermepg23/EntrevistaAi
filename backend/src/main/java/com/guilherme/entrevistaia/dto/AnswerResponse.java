@@ -23,20 +23,22 @@ public record AnswerResponse(
     String nivelDominio,
     String respostaModelo,
     boolean interviewFinalizada,
-    boolean feedbackOculto
+    boolean feedbackOculto,
+    List<StarEtapaResponse> star
 ) {
     public static AnswerResponse from(Answer answer, boolean interviewFinalizada) {
         return new AnswerResponse(
             answer.getId(), answer.getQuestion().getId(), answer.getNota(),
             answer.getResumoAvaliacao(), answer.getPontosFortes(), answer.getGaps(),
-            answer.getNivelDominio().name(), answer.getRespostaModelo(), interviewFinalizada, false
+            answer.getNivelDominio().name(), answer.getRespostaModelo(), interviewFinalizada, false,
+            StarEtapaResponse.de(answer)
         );
     }
 
     public static AnswerResponse semFeedback(Answer answer, boolean interviewFinalizada) {
         return new AnswerResponse(
             answer.getId(), answer.getQuestion().getId(), null,
-            null, List.of(), List.of(), null, null, interviewFinalizada, true
+            null, List.of(), List.of(), null, null, interviewFinalizada, true, List.of()
         );
     }
 }

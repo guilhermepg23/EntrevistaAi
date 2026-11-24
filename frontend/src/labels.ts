@@ -1,6 +1,6 @@
 import type {
-  AssessmentInviteStatus, Dificuldade, InterviewStatus, NivelDominio, NivelPercebido, PapelEmpresa,
-  Recomendacao, TamanhoEmpresa, TipoConta, VeredictoCurriculo,
+  AssessmentInviteStatus, Dificuldade, EtapaStar, InterviewStatus, NivelDominio, NivelPercebido, PapelEmpresa,
+  Recomendacao, StatusEtapaStar, TamanhoEmpresa, TipoConta, TipoEntrevista, VeredictoCurriculo,
 } from './types/interview';
 
 export const tamanhoEmpresaLabel: Record<TamanhoEmpresa, string> = {
@@ -75,4 +75,23 @@ export const andamentoTesteLabel: Record<InterviewStatus, string> = {
   EM_ANDAMENTO: 'Fazendo o teste',
   FINALIZADA: 'Concluiu',
   ABANDONADA: 'Desistiu',
+};
+
+// Treino comportamental (v1.4): tipo e etapas do método STAR.
+export const tipoEntrevistaLabel: Record<TipoEntrevista, string> = {
+  TECNICA: 'Técnica',
+  COMPORTAMENTAL: 'Comportamental',
+};
+
+export const etapaStarLabel: Record<EtapaStar, string> = {
+  SITUACAO: 'Situação',
+  TAREFA: 'Tarefa',
+  ACAO: 'Ação',
+  RESULTADO: 'Resultado',
+};
+
+export const statusEtapaStarLabel: Record<StatusEtapaStar, string> = {
+  CLARA: 'Clara',
+  FRACA: 'Fraca',
+  AUSENTE: 'Faltou',
 };

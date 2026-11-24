@@ -75,7 +75,8 @@ public class PontosFracosService {
     public PontosFracosRecorrentesResponse recorrentes(User user) {
         // Do mais recente ao mais antigo: o "Treino 1" para a IA é o último feito.
         List<Interview> treinos = interviewRepository.findByUserOrderByCriadoEmDesc(user).stream()
-            .filter(i -> !i.deConvite() && i.getStatus() == InterviewStatus.FINALIZADA)
+            // Só treinos técnicos: o "próximo treino" sugerido é técnico (v1.4).
+            .filter(i -> !i.deConvite() && !i.comportamental() && i.getStatus() == InterviewStatus.FINALIZADA)
             .filter(i -> i.getReport() != null && !i.getReport().getPontosFracos().isEmpty())
             .sorted(Comparator.comparing(PontosFracosService::dataDeTermino).reversed())
             .limit(MAX_TREINOS)

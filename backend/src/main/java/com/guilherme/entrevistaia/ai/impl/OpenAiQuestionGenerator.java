@@ -3,6 +3,7 @@ package com.guilherme.entrevistaia.ai.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.guilherme.entrevistaia.ai.AiQuestionGenerator;
 import com.guilherme.entrevistaia.ai.AiQuestionResult;
+import com.guilherme.entrevistaia.ai.ComportamentalPrompts;
 import com.guilherme.entrevistaia.ai.QuestionPromptBuilder;
 import com.guilherme.entrevistaia.entity.Dificuldade;
 import com.guilherme.entrevistaia.entity.Interview;
@@ -43,6 +44,19 @@ public class OpenAiQuestionGenerator implements AiQuestionGenerator {
         }
         """;
 
+    // Treino comportamental (v1.4): mesma saída em JSON, com "topico" sendo a
+    // competência avaliada.
+    private static final String SYSTEM_PROMPT_COMPORTAMENTAL = ComportamentalPrompts.GERAR_PERGUNTA + """
+
+        Responda SOMENTE com um objeto JSON válido, sem nenhum texto adicional, no formato:
+        {
+          "pergunta": "texto da pergunta",
+          "topico": "nome curto da competência avaliada",
+          "dificuldade": "BASICO | INTERMEDIARIO | AVANCADO",
+          "motivo_escolha": "breve justificativa de por que essa pergunta foi escolhida agora"
+        }
+        """;
+
     private final OpenAiClient client;
     private final QuestionPromptBuilder promptBuilder;
 
@@ -56,7 +70,8 @@ public class OpenAiQuestionGenerator implements AiQuestionGenerator {
         String userPrompt = promptBuilder.build(interview, numeroAtual);
         String contexto = "geracao_pergunta interviewId=" + interview.getId() + " numero=" + numeroAtual;
 
-        JsonNode json = client.requestJson(SYSTEM_PROMPT, userPrompt, contexto);
+        JsonNode json = client.requestJson(
+            interview.comportamental() ? SYSTEM_PROMPT_COMPORTAMENTAL : SYSTEM_PROMPT, userPrompt, contexto);
 
         // json.path("dificuldade") nunca lança exceção mesmo se o campo não
         // existir (diferente de json.get(...)) — devolve um "MissingNode" que

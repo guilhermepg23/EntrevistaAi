@@ -49,6 +49,12 @@ public class Answer {
     @Column(columnDefinition = "TEXT")
     private String respostaModelo;
 
+    // Só no treino comportamental: a avaliação de cada etapa STAR, na ordem
+    // Situação, Tarefa, Ação, Resultado. Vazia numa resposta técnica.
+    @ElementCollection
+    @CollectionTable(name = "answer_star", joinColumns = @JoinColumn(name = "answer_id"))
+    private List<AvaliacaoEtapaStar> star = new ArrayList<>();
+
     private OffsetDateTime criadoEm;
 
     // getters e setters
@@ -79,6 +85,14 @@ public class Answer {
 
     public String getRespostaModelo() { return respostaModelo; }
     public void setRespostaModelo(String respostaModelo) { this.respostaModelo = respostaModelo; }
+
+    public List<AvaliacaoEtapaStar> getStar() { return star; }
+    public void setStar(List<AvaliacaoEtapaStar> star) { this.star = star; }
+
+    // A tabela não guarda a ordem das linhas: quem mostra as etapas usa esta.
+    public List<AvaliacaoEtapaStar> starEmOrdem() {
+        return star.stream().sorted(java.util.Comparator.comparing(AvaliacaoEtapaStar::getEtapa)).toList();
+    }
 
     public OffsetDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(OffsetDateTime criadoEm) { this.criadoEm = criadoEm; }

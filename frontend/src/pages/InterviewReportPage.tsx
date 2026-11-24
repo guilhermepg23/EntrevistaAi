@@ -89,7 +89,7 @@ export function InterviewReportPage() {
     try {
       const foco = [...report.pontosFracos, ...report.sugestoesEstudo].join('; ');
       const nova = await interviewApi.start(
-        interview.stack, interview.nivel, interview.totalPerguntas, null, foco);
+        interview.stack, interview.nivel, interview.totalPerguntas, null, foco, interview.tipo ?? 'TECNICA');
       navigate(`/interview/${nova.id}`);
     } catch (err) {
       setErroAcao(err instanceof Error ? err.message : 'Erro ao criar entrevista de prática');
@@ -112,7 +112,7 @@ export function InterviewReportPage() {
 
   return (
     <div className="report-page">
-      <h1>Relatório da entrevista</h1>
+      <h1>{interview?.tipo === 'COMPORTAMENTAL' ? 'Relatório da entrevista comportamental' : 'Relatório da entrevista'}</h1>
 
       <RelatorioConteudo report={report} resumeAnalysis={resumeAnalysis} transcript={transcript} />
 

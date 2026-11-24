@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { AnswerFeedback } from '../types/interview';
 import { nivelDominioLabel } from '../labels';
+import { StarEtapas } from './StarEtapas';
 
 function CheckIcon() {
   return (
@@ -30,6 +31,7 @@ export function FeedbackBadge({ feedback }: { feedback: AnswerFeedback }) {
         <span className="nivel-dominio">{nivelDominioLabel[feedback.nivelDominio]}</span>
       </div>
       <p className="feedback-resumo">{feedback.resumo}</p>
+      {feedback.star && feedback.star.length > 0 && <StarEtapas etapas={feedback.star} />}
       {feedback.pontosFortes.length > 0 && (
         <ul className="feedback-lista pontos-fortes">
           {feedback.pontosFortes.map((ponto, idx) => (

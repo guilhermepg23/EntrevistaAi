@@ -3,6 +3,7 @@ package com.guilherme.entrevistaia.ai.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.guilherme.entrevistaia.ai.AiReportGenerator;
 import com.guilherme.entrevistaia.ai.AiReportResult;
+import com.guilherme.entrevistaia.ai.QuestionPromptBuilder;
 import com.guilherme.entrevistaia.entity.Answer;
 import com.guilherme.entrevistaia.entity.Interview;
 import com.guilherme.entrevistaia.entity.NivelPercebido;
@@ -39,6 +40,35 @@ public class OpenAiReportGenerator implements AiReportGenerator {
         }
         """;
 
+    // Treino comportamental (v1.4): mesmo JSON, olhando competências e a
+    // estrutura STAR das respostas em vez de domínio técnico.
+    private static final String SYSTEM_PROMPT_COMPORTAMENTAL = """
+        Você é um recrutador experiente redigindo o relatório final de uma entrevista
+        comportamental conduzida pelo método STAR (Situação, Tarefa, Ação, Resultado). Você recebe
+        o histórico completo: perguntas, competências, respostas e avaliações individuais,
+        incluindo o status de cada etapa STAR. Pondere a EVOLUÇÃO ao longo da entrevista, não só a
+        média das notas. No resumo executivo, diga quais competências o candidato demonstrou bem e
+        qual etapa STAR ele mais costuma deixar fraca ou de fora (por exemplo, resultados sem
+        números, ou ações contadas só com "nós"). Pontos fortes e fracos falam de competências e de
+        como ele conta as histórias. Em sugestoes_estudo, dê sugestões práticas de preparação: que
+        histórias reais preparar e como contá-las melhor. nivel_percebido é a maturidade
+        profissional demonstrada nas situações contadas. Se houver uma leitura prévia do currículo,
+        compare-a com o que as histórias mostraram. A recomendação precisa ser coerente com a nota
+        geral: abaixo de 5, NAO_APROVADO; de 5 a 6, APROVADO_COM_RESSALVAS no máximo; APROVADO só
+        a partir de 7. Seja objetivo e acionável.
+
+        Responda SOMENTE com um objeto JSON válido, sem nenhum texto adicional, no formato:
+        {
+          "nota_geral": 0,
+          "resumo_executivo": "resumo objetivo do desempenho geral",
+          "pontos_fortes": ["..."],
+          "pontos_fracos": ["..."],
+          "sugestoes_estudo": ["..."],
+          "nivel_percebido": "JUNIOR | PLENO | SENIOR",
+          "recomendacao": "APROVADO | APROVADO_COM_RESSALVAS | NAO_APROVADO"
+        }
+        """;
+
     private final OpenAiClient client;
 
     public OpenAiReportGenerator(OpenAiClient client) {
@@ -50,7 +80,8 @@ public class OpenAiReportGenerator implements AiReportGenerator {
         String userPrompt = buildUserPrompt(interview);
         String contexto = "geracao_relatorio interviewId=" + interview.getId();
 
-        JsonNode json = client.requestJson(SYSTEM_PROMPT, userPrompt, contexto);
+        JsonNode json = client.requestJson(
+            interview.comportamental() ? SYSTEM_PROMPT_COMPORTAMENTAL : SYSTEM_PROMPT, userPrompt, contexto);
 
         int notaGeral = AiJsonSupport.parseNota("nota_geral", json.path("nota_geral"));
         NivelPercebido nivelPercebido = AiJsonSupport.parseEnum(
@@ -75,7 +106,7 @@ public class OpenAiReportGenerator implements AiReportGenerator {
     // ponderar a EVOLUÇÃO do candidato (ver SYSTEM_PROMPT acima).
     private String buildUserPrompt(Interview interview) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Stack: ").append(interview.getStack()).append("\n");
+        sb.append(interview.comportamental() ? "Cargo ou área: " : "Stack: ").append(interview.getStack()).append("\n");
         sb.append("Nível do candidato: ").append(interview.getNivel()).append("\n");
         sb.append("Total de perguntas: ").append(interview.getTotalPerguntas()).append("\n");
 
@@ -106,6 +137,9 @@ public class OpenAiReportGenerator implements AiReportGenerator {
                     .append(" | Resumo: ").append(a.getResumoAvaliacao()).append("\n");
                 sb.append("Pontos fortes: ").append(String.join(", ", a.getPontosFortes())).append("\n");
                 sb.append("Gaps: ").append(String.join(", ", a.getGaps())).append("\n");
+                if (!a.getStar().isEmpty()) {
+                    sb.append("STAR: ").append(QuestionPromptBuilder.resumoStar(a.getStar())).append("\n");
+                }
             }
             sb.append("\n");
         }

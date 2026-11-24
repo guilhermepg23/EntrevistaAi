@@ -4,7 +4,8 @@ No topo ficam os links "Convites" e "Analisar currículo". A tela inicial é a d
 
 ## Treinar uma entrevista
 Na tela inicial, no bloco "Nova entrevista":
-- **Stack:** a tecnologia do treino, por exemplo Java, React ou Python.
+- **Tipo de entrevista:** Técnica (perguntas sobre uma tecnologia) ou Comportamental (veja "Entrevista comportamental (STAR)" abaixo).
+- **Stack:** a tecnologia do treino, por exemplo Java, React ou Python. No tipo Comportamental, esse campo vira **Cargo ou área**, por exemplo Desenvolvedor back-end ou Analista de dados.
 - **Nível:** Júnior, Pleno ou Sênior.
 - **Número de perguntas:** de 5 a 15.
 - **Descrição da vaga (opcional):** cole os requisitos de uma vaga. As perguntas seguem a vaga, e o relatório mostra a aderência a ela.
@@ -18,16 +19,24 @@ Depois é só clicar em "Começar entrevista".
 - **Sair da entrevista:** o botão "Sair da entrevista" encerra o treino. Uma entrevista encerrada assim não pode ser retomada.
 - Se você fechar a página sem sair, a entrevista continua "Em andamento" e pode ser retomada clicando nela na lista "Treinos anteriores".
 
+## Entrevista comportamental (STAR)
+No tipo Comportamental, as perguntas pedem situações reais que você viveu ("Conte sobre uma vez em que..."), sobre competências como trabalho em equipe, conflito, prazo apertado, erros e liderança. As perguntas se adequam ao cargo e ao nível.
+- Responda pelo método **STAR**: **Situação** (o contexto), **Tarefa** (o que cabia a você), **Ação** (o que você fez, em primeira pessoa) e **Resultado** (o desfecho, de preferência com números, e o que aprendeu).
+- Depois de cada resposta, além da nota e do comentário, aparece o bloco "Método STAR": cada etapa fica marcada como Clara, Fraca ou Faltou, com uma frase sobre o que funcionou ou faltou.
+- A resposta modelo é um exemplo de resposta forte em STAR, para estudo; não é uma reescrita da sua história.
+- Respostas hipotéticas ("eu faria...") contam como situação e resultado faltando: conte algo que aconteceu de verdade, mesmo que seja da faculdade ou de um projeto pessoal.
+- Por enquanto, o tipo comportamental existe só nos treinos; os testes de empresas continuam técnicos.
+
 ## Relatório do treino
 No fim da entrevista, clique em "Ver relatório completo". O relatório traz nota geral, nível demonstrado, pontos fortes, pontos de melhoria e sugestões de estudo. Quando houve currículo ou vaga, ele mostra também a comparação com o currículo e a aderência à vaga.
-- **Praticar os gaps identificados:** cria um treino novo, com a mesma stack e o mesmo nível, focado nos pontos de melhoria.
+- **Praticar os gaps identificados:** cria um treino novo, do mesmo tipo, com a mesma stack (ou cargo) e o mesmo nível, focado nos pontos de melhoria.
 - **Compartilhar relatório:** gera um link público, que pode ser aberto sem login. "Parar de compartilhar" desativa o link.
 - A lista "Treinos anteriores", na tela inicial, mostra todos os treinos. Para ver a nota de um treino, abra o relatório dele.
 
 ## Acompanhar a evolução
 Na tela inicial:
 - **Sua evolução:** gráfico com a nota de cada treino com relatório, ao longo do tempo. Dá para filtrar por stack e ver os dados como tabela.
-- **Pontos fracos que se repetem:** aparece quando há 2 ou mais treinos com relatório. A IA agrupa os pontos de melhoria que voltam de um treino para outro. O botão "Treinar esses pontos" cria um treino focado neles.
+- **Pontos fracos que se repetem:** aparece quando há 2 ou mais treinos técnicos com relatório (os comportamentais não entram). A IA agrupa os pontos de melhoria que voltam de um treino para outro. O botão "Treinar esses pontos" cria um treino focado neles.
 
 ## Analisar o currículo sem entrevista
 Pelo link "Analisar currículo", no topo: envie o PDF e receba nota de 0 a 10, um veredito (ruim, regular, bom ou excelente), pontos fortes e melhorias sugeridas. As análises anteriores ficam listadas na mesma página. Só PDF é aceito, e o arquivo precisa ter texto selecionável (um PDF que é só imagem escaneada não é lido).

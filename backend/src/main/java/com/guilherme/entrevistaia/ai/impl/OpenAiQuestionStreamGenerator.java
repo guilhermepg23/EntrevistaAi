@@ -2,7 +2,9 @@ package com.guilherme.entrevistaia.ai.impl;
 
 import com.guilherme.entrevistaia.ai.AiQuestionResult;
 import com.guilherme.entrevistaia.ai.AiQuestionStreamGenerator;
+import com.guilherme.entrevistaia.ai.ComportamentalPrompts;
 import com.guilherme.entrevistaia.entity.Dificuldade;
+import com.guilherme.entrevistaia.entity.TipoEntrevista;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -42,6 +44,18 @@ public class OpenAiQuestionStreamGenerator implements AiQuestionStreamGenerator 
         texto da pergunta (pode ter mais de uma frase, sem repetir "TOPICO"/"DIFICULDADE" aqui)
         """;
 
+    // Treino comportamental (v1.4): o mesmo formato com marcador, e TOPICO
+    // sendo a competência avaliada.
+    private static final String SYSTEM_PROMPT_COMPORTAMENTAL = ComportamentalPrompts.GERAR_PERGUNTA + """
+
+        Responda em TEXTO SIMPLES (sem markdown, sem JSON), seguindo EXATAMENTE este formato,
+        nesta ordem — primeiro os metadados, depois o marcador, só então a pergunta:
+        TOPICO: nome curto da competência avaliada
+        DIFICULDADE: BASICO ou INTERMEDIARIO ou AVANCADO
+        ###
+        texto da pergunta (pode ter mais de uma frase, sem repetir "TOPICO"/"DIFICULDADE" aqui)
+        """;
+
     private final OpenAiStreamingClient client;
 
     public OpenAiQuestionStreamGenerator(OpenAiStreamingClient client) {
@@ -49,12 +63,13 @@ public class OpenAiQuestionStreamGenerator implements AiQuestionStreamGenerator 
     }
 
     @Override
-    public AiQuestionResult generateStreaming(String userPrompt, Consumer<String> onDelta) {
+    public AiQuestionResult generateStreaming(TipoEntrevista tipo, String userPrompt, Consumer<String> onDelta) {
         StringBuilder metaBuffer = new StringBuilder();
         StringBuilder perguntaBuffer = new StringBuilder();
         boolean[] passouMarcador = { false };
+        String systemPrompt = tipo == TipoEntrevista.COMPORTAMENTAL ? SYSTEM_PROMPT_COMPORTAMENTAL : SYSTEM_PROMPT;
 
-        client.streamChatCompletion(SYSTEM_PROMPT, userPrompt, delta -> {
+        client.streamChatCompletion(systemPrompt, userPrompt, delta -> {
             if (passouMarcador[0]) {
                 perguntaBuffer.append(delta);
                 onDelta.accept(delta);

@@ -90,6 +90,39 @@ class InterviewServiceTest {
         assertThat(criada.getStatus()).isEqualTo(InterviewStatus.EM_ANDAMENTO);
         assertThat(criada.getCriadoEm()).isNotNull();
         verify(interviewRepository).save(criada);
+        assertThat(criada.getTipo()).isEqualTo(TipoEntrevista.TECNICA);
+    }
+
+    @Test
+    void startInterview_comportamental_guardaOTipo() {
+        Interview criada = service.startInterview(owner, TipoEntrevista.COMPORTAMENTAL, "Analista de dados",
+            "junior", 5, null, null);
+
+        assertThat(criada.getTipo()).isEqualTo(TipoEntrevista.COMPORTAMENTAL);
+        assertThat(criada.getStack()).isEqualTo("Analista de dados");
+    }
+
+    @Test
+    void submitAnswer_comportamental_salvaAsEtapasStar() {
+        Interview interview = novaInterview(InterviewStatus.EM_ANDAMENTO, 3);
+        interview.setTipo(TipoEntrevista.COMPORTAMENTAL);
+        Question question = new Question();
+        question.setId(UUID.randomUUID());
+        question.setInterview(interview);
+        question.setOrdem(1);
+        List<AvaliacaoEtapaStar> star = List.of(
+            new AvaliacaoEtapaStar(EtapaStar.SITUACAO, StatusEtapaStar.CLARA, "ok"),
+            new AvaliacaoEtapaStar(EtapaStar.TAREFA, StatusEtapaStar.CLARA, "ok"),
+            new AvaliacaoEtapaStar(EtapaStar.ACAO, StatusEtapaStar.FRACA, "só nós"),
+            new AvaliacaoEtapaStar(EtapaStar.RESULTADO, StatusEtapaStar.AUSENTE, "faltou"));
+        when(questionRepository.findById(question.getId())).thenReturn(Optional.of(question));
+        when(answerEvaluator.evaluate(question, "minha história"))
+            .thenReturn(new AiEvaluationResult(6, "ok", List.of(), List.of(), NivelDominio.INTERMEDIARIO, "modelo", star));
+
+        Answer answer = service.submitAnswer(question.getId(), owner, "minha história");
+
+        assertThat(answer.starEmOrdem()).extracting(AvaliacaoEtapaStar::getStatus)
+            .containsExactly(StatusEtapaStar.CLARA, StatusEtapaStar.CLARA, StatusEtapaStar.FRACA, StatusEtapaStar.AUSENTE);
     }
 
     // ---- getNextQuestion ----

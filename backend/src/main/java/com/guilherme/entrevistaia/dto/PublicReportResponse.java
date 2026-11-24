@@ -17,14 +17,15 @@ public record PublicReportResponse(
     List<String> pontosFracos,
     List<String> sugestoesEstudo,
     String nivelPercebido,
-    String recomendacao
+    String recomendacao,
+    String tipo
 ) {
     public static PublicReportResponse from(FeedbackReport report) {
         return new PublicReportResponse(
             report.getInterview().getStack(), report.getInterview().getNivel(), report.getNotaGeral(),
             report.getResumoExecutivo(), report.getPontosFortes(), report.getPontosFracos(),
             report.getSugestoesEstudo(), report.getNivelPercebido().name(),
-            report.getRecomendacao().name()
+            report.getRecomendacao().name(), report.getInterview().getTipo().name()
         );
     }
 }

@@ -2507,6 +2507,145 @@ p.convite-prazo-curto {
   margin-top: 0.15rem;
 }
 
+/* Treino comportamental: as 4 etapas STAR da resposta. Fica dentro do balão
+   do candidato (texto branco sobre o gradiente), por isso os status usam o
+   mesmo "selo branco com texto colorido" da nota. */
+.star-etapas {
+  margin: 0.55rem 0 0.35rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.star-etapas-titulo {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.star-etapas ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.star-etapa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.star-etapa-cabeca {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.star-etapa-nome {
+  font-weight: 600;
+  font-size: 0.84rem;
+}
+
+.star-etapa-status {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.star-clara .star-etapa-status { color: var(--color-success); }
+.star-fraca .star-etapa-status { color: var(--color-warning); }
+.star-ausente .star-etapa-status { color: var(--color-danger); }
+
+.star-etapa-comentario {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  opacity: 0.92;
+}
+
+/* Escolha Técnica / Comportamental no formulário de novo treino. Mesmo
+   desenho dos cartões do cadastro, lado a lado. */
+.tipo-treino {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.tipo-treino legend {
+  margin-bottom: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.start-interview .tipo-treino-opcao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.tipo-treino-opcao input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.tipo-treino-opcao:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.tipo-treino-opcao:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.tipo-treino-titulo {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tipo-treino-descricao {
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 420px) {
+  .tipo-treino { grid-template-columns: 1fr; }
+}
+
+.historico-tipo {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .resposta-modelo {
   margin-top: 0.6rem;
 }

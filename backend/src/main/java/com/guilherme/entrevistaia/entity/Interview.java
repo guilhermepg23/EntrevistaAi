@@ -59,6 +59,12 @@ public class Interview {
 
     private Integer totalPerguntas;
 
+    // TECNICA (sobre a stack) ou COMPORTAMENTAL (método STAR, e aí stack
+    // guarda o cargo ou a área). Ver TipoEntrevista.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoEntrevista tipo = TipoEntrevista.TECNICA;
+
     // TREINO (iniciada pelo candidato) ou CONVITE (teste de empresa). No
     // CONVITE o candidato não vê o feedback (ver InterviewService.exigirFeedbackVisivel).
     @Enumerated(EnumType.STRING)
@@ -120,6 +126,11 @@ public class Interview {
 
     public Integer getTotalPerguntas() { return totalPerguntas; }
     public void setTotalPerguntas(Integer totalPerguntas) { this.totalPerguntas = totalPerguntas; }
+
+    public TipoEntrevista getTipo() { return tipo; }
+    public void setTipo(TipoEntrevista tipo) { this.tipo = tipo; }
+
+    public boolean comportamental() { return tipo == TipoEntrevista.COMPORTAMENTAL; }
 
     public OrigemEntrevista getOrigem() { return origem; }
     public void setOrigem(OrigemEntrevista origem) { this.origem = origem; }

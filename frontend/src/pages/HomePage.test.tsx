@@ -98,8 +98,34 @@ describe('HomePage', () => {
     await user.click(screen.getByRole('button', { name: 'Começar entrevista' }));
 
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/interview/nova-1'));
-    expect(interviewApi.start).toHaveBeenCalledWith('Java + Spring', 'junior', 8, null);
+    expect(interviewApi.start).toHaveBeenCalledWith('Java + Spring', 'junior', 8, null, null, 'TECNICA');
     expect(interviewApi.uploadResume).not.toHaveBeenCalled();
+  });
+
+  it('no tipo comportamental, pede o cargo e cria o treino comportamental', async () => {
+    const user = userEvent.setup();
+    vi.mocked(interviewApi.start).mockResolvedValue(makeInterview({ id: 'nova-3', status: 'EM_ANDAMENTO' }));
+    renderWithProviders(<HomePage />);
+    await screen.findByText(/^Nenhuma entrevista ainda\./);
+
+    await user.click(screen.getByRole('radio', { name: /Comportamental/ }));
+    expect(screen.queryByLabelText('Stack')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Cargo ou área/), 'Analista de dados');
+    await user.click(screen.getByRole('button', { name: 'Começar entrevista' }));
+
+    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/interview/nova-3'));
+    expect(interviewApi.start).toHaveBeenCalledWith('Analista de dados', 'junior', 8, null, null, 'COMPORTAMENTAL');
+  });
+
+  it('marca os treinos comportamentais no histórico', async () => {
+    vi.mocked(interviewApi.history).mockResolvedValue([
+      makeInterview({ id: 'c1', stack: 'Analista de dados', tipo: 'COMPORTAMENTAL' }),
+      makeInterview({ id: 't1', stack: 'Java' }),
+    ]);
+    renderWithProviders(<HomePage />);
+
+    expect(await screen.findByText('Analista de dados', { exact: false })).toBeInTheDocument();
+    expect(screen.getAllByText('Comportamental', { selector: '.historico-tipo' })).toHaveLength(1);
   });
 
   it('quando um PDF é anexado, faz upload do currículo antes de navegar', async () => {

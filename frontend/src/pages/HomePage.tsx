@@ -7,7 +7,7 @@ import { EvolucaoNotas } from '../components/EvolucaoNotas';
 import { PontosFracosRecorrentes } from '../components/PontosFracosRecorrentes';
 import { Carregando, HintServidor } from '../components/HintServidor';
 import { conviteEmAberto } from './CandidateInvitesPage';
-import type { Interview } from '../types/interview';
+import type { Interview, TipoEntrevista } from '../types/interview';
 
 const statusLabel: Record<Interview['status'], string> = {
   EM_ANDAMENTO: 'Em andamento',
@@ -15,7 +15,17 @@ const statusLabel: Record<Interview['status'], string> = {
   ABANDONADA: 'Abandonada',
 };
 
+const TIPOS: { valor: TipoEntrevista; titulo: string; descricao: string }[] = [
+  { valor: 'TECNICA', titulo: 'Técnica', descricao: 'Perguntas sobre a tecnologia que você usa.' },
+  {
+    valor: 'COMPORTAMENTAL',
+    titulo: 'Comportamental',
+    descricao: '"Conte uma situação em que..." com feedback pelo método STAR.',
+  },
+];
+
 export function HomePage() {
+  const [tipo, setTipo] = useState<TipoEntrevista>('TECNICA');
   const [stack, setStack] = useState('');
   const [nivel, setNivel] = useState('junior');
   const [totalPerguntas, setTotalPerguntas] = useState(8);
@@ -57,7 +67,7 @@ export function HomePage() {
     setEtapaCriacao('entrevista');
     try {
       const interview = await interviewApi.start(
-        stack.trim(), nivel, totalPerguntas, descricaoVaga.trim() || null);
+        stack.trim(), nivel, totalPerguntas, descricaoVaga.trim() || null, null, tipo);
 
       if (curriculo) {
         setEtapaCriacao('curriculo');
@@ -90,13 +100,36 @@ export function HomePage() {
         <h1>Nova entrevista</h1>
         <form onSubmit={handleSubmit}>
           {erro && <p className="erro" role="alert">{erro}</p>}
+          <fieldset className="tipo-treino">
+            <legend>Tipo de entrevista</legend>
+            {TIPOS.map(opcao => (
+              <label key={opcao.valor} className="tipo-treino-opcao">
+                <input
+                  type="radio"
+                  name="tipo"
+                  value={opcao.valor}
+                  checked={tipo === opcao.valor}
+                  onChange={() => setTipo(opcao.valor)}
+                />
+                <span className="tipo-treino-titulo">{opcao.titulo}</span>
+                <span className="tipo-treino-descricao">{opcao.descricao}</span>
+              </label>
+            ))}
+          </fieldset>
           <label>
-            Stack
+            {tipo === 'COMPORTAMENTAL' ? 'Cargo ou área' : 'Stack'}
+            {tipo === 'COMPORTAMENTAL' && (
+              <span className="curriculo-hint">
+                Conte situações reais em Situação, Tarefa, Ação e Resultado. A IA diz qual parte ficou clara, fraca ou faltou.
+              </span>
+            )}
             <input
               type="text"
               value={stack}
               onChange={e => setStack(e.target.value)}
-              placeholder="Ex: Java, React, Python..."
+              placeholder={tipo === 'COMPORTAMENTAL'
+                ? 'Ex: Desenvolvedor back-end, Analista de dados...'
+                : 'Ex: Java, React, Python...'}
               required
             />
           </label>
@@ -179,7 +212,10 @@ export function HomePage() {
                 }
               >
                 <span className="historico-item-row">
-                  <span className="historico-stack">{interview.stack} · {interview.nivel}</span>
+                  <span className="historico-stack">
+                    {interview.stack} · {interview.nivel}
+                    {interview.tipo === 'COMPORTAMENTAL' && <span className="historico-tipo">Comportamental</span>}
+                  </span>
                   <span className={`historico-status status-${interview.status.toLowerCase()}`}>
                     {statusLabel[interview.status]}
                   </span>

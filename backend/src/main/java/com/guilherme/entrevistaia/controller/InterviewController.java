@@ -61,7 +61,7 @@ public class InterviewController {
     public ResponseEntity<InterviewResponse> start(@RequestBody @Valid StartInterviewRequest request,
                                                      @AuthenticationPrincipal User user) {
         Interview interview = interviewService.startInterview(
-            user, request.stack(), request.nivel(), request.totalPerguntas(),
+            user, request.tipoOuPadrao(), request.stack(), request.nivel(), request.totalPerguntas(),
             request.descricaoVaga(), request.focoPratica());
         return ResponseEntity.status(HttpStatus.CREATED).body(InterviewResponse.from(interview));
     }
@@ -114,7 +114,7 @@ public class InterviewController {
                     return;
                 }
 
-                AiQuestionResult result = questionStreamGenerator.generateStreaming(ctx.userPrompt(), token -> {
+                AiQuestionResult result = questionStreamGenerator.generateStreaming(ctx.tipo(), ctx.userPrompt(), token -> {
                     try {
                         emitter.send(SseEmitter.event().name("delta").data(token));
                     } catch (IOException e) {

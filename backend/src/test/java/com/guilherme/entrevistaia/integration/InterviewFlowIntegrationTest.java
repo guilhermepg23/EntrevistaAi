@@ -3,7 +3,10 @@ package com.guilherme.entrevistaia.integration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.guilherme.entrevistaia.ai.*;
+import com.guilherme.entrevistaia.entity.AvaliacaoEtapaStar;
 import com.guilherme.entrevistaia.entity.Dificuldade;
+import com.guilherme.entrevistaia.entity.EtapaStar;
+import com.guilherme.entrevistaia.entity.StatusEtapaStar;
 import com.guilherme.entrevistaia.entity.NivelDominio;
 import com.guilherme.entrevistaia.entity.NivelPercebido;
 import com.guilherme.entrevistaia.entity.Recomendacao;
@@ -71,6 +74,69 @@ class InterviewFlowIntegrationTest {
     @MockBean private AiQuestionGenerator questionGenerator;
     @MockBean private AiAnswerEvaluator answerEvaluator;
     @MockBean private AiReportGenerator reportGenerator;
+
+    // v1.4: o tipo e as etapas STAR (tabela answer_star, V12) vão ao banco e
+    // voltam na transcrição em ordem S, T, A, R.
+    @Test
+    void treinoComportamental_salvaEDevolveAsEtapasStar() throws Exception {
+        String email = "star-" + UUID.randomUUID() + "@teste.com";
+        MvcResult registerResult = mockMvc.perform(post("/auth/register")
+                .contentType("application/json")
+                .content("""
+                    {"email": "%s", "senha": "123456", "nome": "Star", "cpf": "39053344705"}
+                    """.formatted(email)))
+            .andExpect(status().isCreated())
+            .andReturn();
+        String token = objectMapper.readTree(registerResult.getResponse().getContentAsString())
+            .get("token").asText();
+
+        MvcResult startResult = mockMvc.perform(post("/interviews")
+                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .content("""
+                    {"stack": "Desenvolvedor back-end", "nivel": "pleno", "totalPerguntas": 5, "tipo": "COMPORTAMENTAL"}
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tipo").value("COMPORTAMENTAL"))
+            .andReturn();
+        UUID interviewId = UUID.fromString(
+            objectMapper.readTree(startResult.getResponse().getContentAsString()).get("id").asText());
+
+        when(questionGenerator.generate(any(), eq(1))).thenReturn(
+            new AiQuestionResult("Conte sobre um conflito no time.", "Conflito", Dificuldade.INTERMEDIARIO, "motivo"));
+        MvcResult questionResult = mockMvc.perform(get("/interviews/{id}/next-question", interviewId)
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andReturn();
+        UUID questionId = UUID.fromString(
+            objectMapper.readTree(questionResult.getResponse().getContentAsString()).get("id").asText());
+
+        when(answerEvaluator.evaluate(any(), eq("Uma vez no projeto X..."))).thenReturn(
+            new AiEvaluationResult(6, "ok", List.of(), List.of(), NivelDominio.INTERMEDIARIO, "modelo", List.of(
+                new AvaliacaoEtapaStar(EtapaStar.RESULTADO, StatusEtapaStar.AUSENTE, "Faltou o desfecho."),
+                new AvaliacaoEtapaStar(EtapaStar.SITUACAO, StatusEtapaStar.CLARA, "Contexto claro."),
+                new AvaliacaoEtapaStar(EtapaStar.TAREFA, StatusEtapaStar.CLARA, null),
+                new AvaliacaoEtapaStar(EtapaStar.ACAO, StatusEtapaStar.FRACA, "Só \"nós\"."))));
+
+        mockMvc.perform(post("/interviews/questions/{id}/answer", questionId)
+                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .content("""
+                    {"resposta": "Uma vez no projeto X..."}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.star[0].etapa").value("SITUACAO"))
+            .andExpect(jsonPath("$.star[3].status").value("AUSENTE"));
+
+        mockMvc.perform(get("/interviews/{id}/transcript", interviewId)
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].star.length()").value(4))
+            .andExpect(jsonPath("$[0].star[0].etapa").value("SITUACAO"))
+            .andExpect(jsonPath("$[0].star[2].etapa").value("ACAO"))
+            .andExpect(jsonPath("$[0].star[2].comentario").value("Só \"nós\"."))
+            .andExpect(jsonPath("$[0].star[3].comentario").value("Faltou o desfecho."));
+    }
 
     @Test
     void fluxoCompletoDeEntrevista_deveFuncionarDoRegistroAoRelatorio() throws Exception {

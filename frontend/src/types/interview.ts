@@ -11,6 +11,18 @@ export type VeredictoCurriculo = 'RUIM' | 'REGULAR' | 'BOM' | 'EXCELENTE';
 // Tipo da conta, escolhido no cadastro (ver TipoConta no backend). Decide o
 // conjunto de telas: candidato treina/faz testes, recrutador cria testes.
 export type TipoConta = 'CANDIDATO' | 'RECRUTADOR';
+// Tipo do treino (v1.4): técnico (sobre a stack) ou comportamental (método
+// STAR; aí `stack` guarda o cargo ou a área).
+export type TipoEntrevista = 'TECNICA' | 'COMPORTAMENTAL';
+export type EtapaStar = 'SITUACAO' | 'TAREFA' | 'ACAO' | 'RESULTADO';
+export type StatusEtapaStar = 'CLARA' | 'FRACA' | 'AUSENTE';
+
+// Avaliação de uma etapa STAR numa resposta de treino comportamental.
+export interface StarEtapa {
+  etapa: EtapaStar;
+  status: StatusEtapaStar;
+  comentario: string | null;
+}
 
 export interface Question {
   id: string;
@@ -30,6 +42,9 @@ export interface AnswerFeedback {
   gaps: string[];
   nivelDominio: NivelDominio;
   respostaModelo: string | null;
+  // As 4 etapas STAR, em ordem, num treino comportamental; vazia no técnico.
+  // Respostas antigas não trazem o campo.
+  star?: StarEtapa[];
   interviewFinalizada: boolean;
 }
 
@@ -76,6 +91,8 @@ export interface Interview {
   // Nota geral do relatório (0 a 10). Só num treino que já tem relatório:
   // ele é gerado quando o candidato o abre. Num CONVITE é sempre null.
   notaGeral?: number | null;
+  // Respostas antigas não trazem o campo: são técnicas.
+  tipo?: TipoEntrevista;
 }
 
 export type OrigemEntrevista = 'TREINO' | 'CONVITE';
@@ -113,6 +130,7 @@ export interface TranscriptItem {
   gaps: string[];
   nivelDominio: NivelDominio | null;
   respostaModelo: string | null;
+  star?: StarEtapa[];
 }
 
 // Devolvido por POST e GET /interviews/{id}/resume — leitura do currículo
@@ -157,6 +175,7 @@ export interface PublicReport {
   sugestoesEstudo: string[];
   nivelPercebido: NivelPercebido;
   recomendacao: Recomendacao;
+  tipo?: TipoEntrevista;
 }
 
 export interface AuthResponse {

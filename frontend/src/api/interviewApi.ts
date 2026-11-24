@@ -1,16 +1,17 @@
-import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PontosFracosRecorrentes, PublicReport, Question, ResumeAnalysis, ResumeReview, TranscriptItem } from '../types/interview';
+import type { AnswerSubmission, CandidateAssessmentInvite, FeedbackReport, Interview, PontosFracosRecorrentes, PublicReport, Question, ResumeAnalysis, ResumeReview, TipoEntrevista, TranscriptItem } from '../types/interview';
 import { API_BASE, apiFetch, authHeaders, authHeadersMultipart, handleResponse } from './client';
 import { lerEventosSse } from './sse';
 
 export const interviewApi = {
   start: (
     stack: string, nivel: string, totalPerguntas: number,
-    descricaoVaga: string | null, focoPratica: string | null = null
+    descricaoVaga: string | null, focoPratica: string | null = null,
+    tipo: TipoEntrevista = 'TECNICA'
   ) =>
     apiFetch(`${API_BASE}/interviews`, {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ stack, nivel, totalPerguntas, descricaoVaga, focoPratica }),
+      body: JSON.stringify({ stack, nivel, totalPerguntas, descricaoVaga, focoPratica, tipo }),
     }).then(res => handleResponse<Interview>(res)),
 
   get: (interviewId: string) =>

@@ -1,9 +1,15 @@
 package com.guilherme.entrevistaia.ai;
 
+import com.guilherme.entrevistaia.entity.AvaliacaoEtapaStar;
+import com.guilherme.entrevistaia.entity.EtapaStar;
 import com.guilherme.entrevistaia.entity.Interview;
 import com.guilherme.entrevistaia.entity.Question;
 import com.guilherme.entrevistaia.entity.ResumeAnalysis;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 // Monta o "contexto" que a IA recebe pra decidir a próxima pergunta: stack,
 // nível, vaga, leitura de currículo, foco de prática, e o HISTÓRICO completo
@@ -21,7 +27,13 @@ public class QuestionPromptBuilder {
 
     public String build(Interview interview, int numeroAtual) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Stack: ").append(interview.getStack()).append("\n");
+        boolean comportamental = interview.comportamental();
+        if (comportamental) {
+            sb.append("Tipo: entrevista comportamental (método STAR)\n");
+            sb.append("Cargo ou área: ").append(interview.getStack()).append("\n");
+        } else {
+            sb.append("Stack: ").append(interview.getStack()).append("\n");
+        }
         sb.append("Nível do candidato: ").append(interview.getNivel()).append("\n");
         sb.append("Pergunta ").append(numeroAtual).append(" de ").append(interview.getTotalPerguntas()).append("\n");
 
@@ -52,8 +64,13 @@ public class QuestionPromptBuilder {
         sb.append("\n");
 
         if (interview.getQuestions().isEmpty()) {
-            sb.append("Esta é a primeira pergunta da entrevista. Escolha um tópico introdutório ")
-                .append("compatível com a stack e o nível informados.");
+            if (comportamental) {
+                sb.append("Esta é a primeira pergunta da entrevista. Comece com uma situação ")
+                    .append("acessível, compatível com o cargo ou a área e o nível informados.");
+            } else {
+                sb.append("Esta é a primeira pergunta da entrevista. Escolha um tópico introdutório ")
+                    .append("compatível com a stack e o nível informados.");
+            }
             return sb.toString();
         }
 
@@ -66,9 +83,27 @@ public class QuestionPromptBuilder {
                 sb.append("  Avaliação: nota ").append(q.getAnswer().getNota())
                     .append(", nível de domínio ").append(q.getAnswer().getNivelDominio())
                     .append(", resumo: ").append(q.getAnswer().getResumoAvaliacao()).append("\n");
+                if (!q.getAnswer().getStar().isEmpty()) {
+                    sb.append("  STAR: ").append(resumoStar(q.getAnswer().getStar())).append("\n");
+                }
             }
         }
 
         return sb.toString();
     }
+
+    // "Situação CLARA, Tarefa FRACA, Ação CLARA, Resultado AUSENTE". Também
+    // usado no relatório (ver OpenAiReportGenerator).
+    public static String resumoStar(List<AvaliacaoEtapaStar> star) {
+        return star.stream()
+            .sorted(java.util.Comparator.comparing(AvaliacaoEtapaStar::getEtapa))
+            .map(e -> NOMES_ETAPAS.get(e.getEtapa()) + " " + e.getStatus())
+            .collect(Collectors.joining(", "));
+    }
+
+    private static final Map<EtapaStar, String> NOMES_ETAPAS = Map.of(
+        EtapaStar.SITUACAO, "Situação",
+        EtapaStar.TAREFA, "Tarefa",
+        EtapaStar.ACAO, "Ação",
+        EtapaStar.RESULTADO, "Resultado");
 }

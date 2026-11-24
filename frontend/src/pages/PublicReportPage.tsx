@@ -40,7 +40,9 @@ export function PublicReportPage() {
 
   return (
     <div className="report-page">
-      <p className="public-report-tag">Relatório de entrevista técnica — {report.stack} · {report.nivel}</p>
+      <p className="public-report-tag">
+        Relatório de entrevista {report.tipo === 'COMPORTAMENTAL' ? 'comportamental' : 'técnica'} — {report.stack} · {report.nivel}
+      </p>
       <h1>Resultado da entrevista</h1>
 
       <div className={`recomendacao recomendacao-${report.recomendacao.toLowerCase()}`}>

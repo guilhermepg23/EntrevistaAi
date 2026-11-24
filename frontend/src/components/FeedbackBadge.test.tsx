@@ -30,6 +30,30 @@ describe('FeedbackBadge', () => {
     expect(screen.getByText('Não mencionou isolation levels')).toBeInTheDocument();
   });
 
+  it('sem STAR (treino técnico), não mostra o bloco do método', () => {
+    render(<FeedbackBadge feedback={makeFeedback()} />);
+    expect(screen.queryByText('Método STAR')).not.toBeInTheDocument();
+  });
+
+  it('no treino comportamental, mostra as 4 etapas STAR com status e comentário', () => {
+    render(<FeedbackBadge feedback={makeFeedback({
+      star: [
+        { etapa: 'SITUACAO', status: 'CLARA', comentario: 'Contexto concreto.' },
+        { etapa: 'TAREFA', status: 'CLARA', comentario: null },
+        { etapa: 'ACAO', status: 'FRACA', comentario: 'Falou só em "nós".' },
+        { etapa: 'RESULTADO', status: 'AUSENTE', comentario: 'Não disse o desfecho.' },
+      ],
+    })} />);
+
+    expect(screen.getByText('Método STAR')).toBeInTheDocument();
+    const etapas = screen.getAllByRole('listitem').filter(li => li.classList.contains('star-etapa'));
+    expect(etapas.map(li => li.querySelector('.star-etapa-nome')?.textContent))
+      .toEqual(['Situação', 'Tarefa', 'Ação', 'Resultado']);
+    expect(etapas[2]).toHaveClass('star-fraca');
+    expect(etapas[3]).toHaveTextContent('Faltou');
+    expect(screen.getByText('Falou só em "nós".')).toBeInTheDocument();
+  });
+
   it('aplica a classe de nota conforme a faixa (>=7 boa, 4-6 média, <4 baixa)', () => {
     const { rerender } = render(<FeedbackBadge feedback={makeFeedback({ nota: 9 })} />);
     expect(screen.getByText('9/10')).toHaveClass('nota-boa');
