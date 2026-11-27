@@ -88,3 +88,5 @@ Itens que dá para desenvolver sem LGPD e sem email, com o esforço estimado:
 - **Front:** escolha do tipo na "Nova entrevista" (o campo vira "Cargo ou área"), bloco "Método STAR" na avaliação de cada resposta (`components/StarEtapas.tsx`), selo "Comportamental" na lista de treinos, título do relatório e do relatório público, e "Praticar os gaps" mantendo o tipo.
 - **Fora desta versão:** os pontos fracos recorrentes consideram só os treinos técnicos (o "próximo treino" sugerido é técnico). O teste de empresa comportamental fica para depois.
 - **Verificação:** back com 304 testes (Docker ligado, 0 pulados, V12 aplicada num Postgres vazio), front com 355, build ok. Testado contra a OpenAI real num backend local na 8081, com 5 respostas de qualidades diferentes. Isso levou a 2 ajustes de prompt: a resposta modelo recontava a história do candidato, e o relatório dava "aprovado com ressalvas" com nota 4 (agora a recomendação segue a nota). Não visto no navegador.
+
+**Publicado como v1.5.0 em 2026-11-27** (tag `v1.5.0`), junto com o link "Página inicial" no login e no cadastro, depois de o usuário testar em produção.

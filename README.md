@@ -231,6 +231,24 @@ Plano e decisões em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md).
 Planos e decisões em [docs/ROADMAP-v1.2.md](docs/ROADMAP-v1.2.md) (etapas 3 a 5) e
 [docs/ROADMAP-v1.3.md](docs/ROADMAP-v1.3.md).
 
+## v1.4 e v1.5: página inicial e entrevista comportamental
+
+- **v1.4.0, página inicial pública:** quem não está logado vê em `/` o que é o Entrevix,
+  com uma parte para candidatos e outra para empresas. Login e cadastro têm um link de
+  volta para ela.
+- **v1.5.0, entrevista comportamental (método STAR):** o treino pode ser Técnico ou
+  Comportamental (`tipo` em `POST /interviews`, migration V12). No comportamental:
+  - as perguntas pedem situações reais, sobre competências variadas, adequadas ao cargo
+    ou à área e ao nível;
+  - cada resposta é avaliada nas 4 etapas STAR (Situação, Tarefa, Ação, Resultado), cada
+    uma como clara, fraca ou ausente, com um comentário (`star` na avaliação e na
+    transcrição, tabela `answer_star`);
+  - o relatório fala de competências e da etapa que mais falta.
+  Por enquanto só no treino do candidato. Os pontos fracos recorrentes consideram só os
+  treinos técnicos.
+
+Planos e decisões em [docs/ROADMAP-v1.4.md](docs/ROADMAP-v1.4.md).
+
 ## Deploy
 
 Publicado e validado ponta a ponta em produção:
@@ -265,7 +283,7 @@ Publicado e validado ponta a ponta em produção:
 
 ## Próximos passos
 
-A v1.4.0 está no ar, com a página inicial pública. As próximas ideias, por bloco e em ordem de prioridade, estão em
+A v1.5.0 está no ar, com a entrevista comportamental (método STAR). As próximas ideias, por bloco e em ordem de prioridade, estão em
 [docs/ROADMAP-v1.4.md](docs/ROADMAP-v1.4.md).
 
 Pendências:
