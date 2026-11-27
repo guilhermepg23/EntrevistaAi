@@ -49,6 +49,20 @@ describe('Layout', () => {
     expect(container.querySelector('.app-shell')).toHaveClass('pagina-inicial');
   });
 
+  it('deslogado no login ou no cadastro: link para a página inicial no lugar do "Voltar"', () => {
+    for (const route of ['/login', '/register']) {
+      const { unmount } = renderWithProviders(<Layout><p>x</p></Layout>, { route });
+      expect(screen.getByRole('link', { name: 'Página inicial' })).toHaveAttribute('href', '/');
+      expect(screen.queryByRole('button', { name: 'Voltar' })).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('fora do login e do cadastro, não mostra o link "Página inicial"', () => {
+    renderWithProviders(<Layout><p>x</p></Layout>, { route: '/conta', auth });
+    expect(screen.queryByRole('link', { name: 'Página inicial' })).not.toBeInTheDocument();
+  });
+
   it('deslogado no login ou no cadastro: sem os atalhos de acesso no topo', () => {
     const { unmount } = renderWithProviders(<Layout><p>x</p></Layout>, { route: '/login' });
     expect(screen.queryByRole('navigation', { name: 'Acesso' })).not.toBeInTheDocument();

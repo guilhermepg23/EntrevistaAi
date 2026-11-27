@@ -22,7 +22,6 @@ const ROTAS_DE_ACESSO = new Set(['/login', '/register']);
 
 function BackButton() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
 
   function voltar() {
     // O react-router guarda em window.history.state.idx o índice da entrada
@@ -30,7 +29,8 @@ function BackButton() {
     // do app pra onde voltar; senão (ex.: link aberto direto), cai na home.
     const idx: number = window.history.state?.idx ?? 0;
     if (idx > 0) navigate(-1);
-    else navigate(isAuthenticated ? '/' : '/login', { replace: true });
+    // Deslogado também cai em "/": desde a v1.4 é a página inicial pública.
+    else navigate('/', { replace: true });
   }
 
   return (
@@ -49,7 +49,10 @@ export function Layout({ children }: { children: ReactNode }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const mostrarVoltar = !SEM_VOLTAR.has(location.pathname);
+  // Login e cadastro, deslogado: no lugar do "Voltar" (que podia levar de uma
+  // tela de acesso para a outra), um link direto para a página inicial.
+  const naTelaDeAcesso = !isAuthenticated && ROTAS_DE_ACESSO.has(location.pathname);
+  const mostrarVoltar = !SEM_VOLTAR.has(location.pathname) && !naTelaDeAcesso;
 
   // Fecha o menu ao clicar fora dele.
   useEffect(() => {
@@ -91,6 +94,12 @@ export function Layout({ children }: { children: ReactNode }) {
         <header className="app-header">
           <div className="header-left">
             {mostrarVoltar && <BackButton />}
+            {naTelaDeAcesso && (
+              <Link to="/" className="header-back" aria-label="Página inicial">
+                <span aria-hidden="true">←</span>
+                <span className="header-back-label">Página inicial</span>
+              </Link>
+            )}
             <Link to="/" className="brand">
               <span className="brand-mark" aria-hidden="true">Ex</span>
               <span className="brand-nome">Entrevix</span>
